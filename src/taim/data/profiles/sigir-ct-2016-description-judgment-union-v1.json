@@ -1,0 +1,19 @@
+{
+  "corpus_policy": "judgment_union",
+  "evaluation": {
+    "cutoffs": [5, 10, 20],
+    "discount": "log2(rank + 1)",
+    "gain_mapping": {"0": 0, "1": 1, "2": 2},
+    "ideal_policy": "all_topic_qrels",
+    "precision_denominator": "fixed_cutoff",
+    "precision_metric": "referral_candidate_precision",
+    "precision_relevance_minimum": 1,
+    "ranking_source": "primary",
+    "topic_policy": "all_declared_topics",
+    "unjudged_policy": "retain_as_zero_gain"
+  },
+  "expected_pool_count": null,
+  "paper_pool_identity_status": "judgment-union-within-pool-only",
+  "profile_id": "sigir-ct-2016-description-judgment-union",
+  "profile_version": "1.0"
+}

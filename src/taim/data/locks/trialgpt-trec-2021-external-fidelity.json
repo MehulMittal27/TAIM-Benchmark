@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "pool_id": "trialgpt-trec-2021-external-fidelity-26149-v1",
+  "track": "trec-ct-2021",
+  "source": {
+    "repository": "https://github.com/ncbi-nlp/TrialGPT.git",
+    "commit": "1b3242cd50c153a9c324661d4a0bd94fc68a4226",
+    "corpus_url": "https://ftp.ncbi.nlm.nih.gov/pub/lu/TrialGPT/trec_2021_corpus.jsonl",
+    "byte_size": 137406767,
+    "sha256": "sha256:01692c847b2da798c57a8e0a74273ec262a7e42ad3f02b4ff5a87a6442462f9c"
+  },
+  "membership": {
+    "json_field": "_id",
+    "record_count": 26149,
+    "unique_trial_id_count": 26149,
+    "canonicalization": "UTF-8 trial IDs sorted bytewise, one ID plus LF per record",
+    "sorted_unique_trial_ids_sha256": "sha256:fed85fadb5a0e0a42a39ed9cf65984926a13f66d4a2a0a1deb100996ac56ffa7"
+  },
+  "release_policy": {
+    "source_bytes_shipped": false,
+    "membership_file_shipped": false,
+    "operator_must_supply_checksum_verified_source": true,
+    "taim_orders_membership_by_prepared_corpus": true,
+    "count_alone_establishes_identity": false
+  }
+}

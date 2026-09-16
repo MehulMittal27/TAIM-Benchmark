@@ -1,0 +1,87 @@
+{
+  "schema_version": "2.0",
+  "dataset_id": "sigir-ct-2016",
+  "lock_status": "complete",
+  "sources": [
+    {
+      "role": "adhoc_queries",
+      "filename": "adhoc-queries.json",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692379",
+      "byte_size": 141562,
+      "sha256": "sha256:53adb8f1a8e75dac8cdae8215808b2616deeeb5e424096f521b0bc79b732e474",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Public CSIRO Data Access Portal collection version 4, DOI 10.4225/08/58e2e83d92c2b.",
+      "redistribution_terms": "CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    },
+    {
+      "role": "trials",
+      "filename": "clinicaltrials.gov-16_dec_2015.tgz",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692378",
+      "byte_size": 525110950,
+      "sha256": "sha256:10e63f2f3e06315546243ac7114383ea31ac52930cb1d1c04aeee46afec20f80",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Public CSIRO Data Access Portal collection version 4; ClinicalTrials.gov terms are included as a separate locked artifact.",
+      "redistribution_terms": "Keep the corpus outside Git; CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    },
+    {
+      "role": "terms",
+      "filename": "CLINICALTRIALS.GOV_TERMS_AND_CONDITIONS.txt",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692373",
+      "byte_size": 3308,
+      "sha256": "sha256:6029ee4b49d2b043233b0a6c499b15ef5a20b591f59b9e85a726f9ca91ff9eb4",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Terms file distributed with public CSIRO collection version 4.",
+      "redistribution_terms": "CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    },
+    {
+      "role": "qrels",
+      "filename": "qrels-clinical_trials.txt",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692372",
+      "byte_size": 87532,
+      "sha256": "sha256:f0b9aa8aa22b4c4eb5405c0bd2dc8220ac43a9c1d75e08782a410324270ce45e",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Public CSIRO Data Access Portal collection version 4, DOI 10.4225/08/58e2e83d92c2b.",
+      "redistribution_terms": "CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    },
+    {
+      "role": "readme",
+      "filename": "README.html",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692375",
+      "byte_size": 18901,
+      "sha256": "sha256:4dd0d387e45b8d6c493f3343a8f80fa380d90436fca89009c6f722511d38ca44",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Public CSIRO Data Access Portal collection version 4, DOI 10.4225/08/58e2e83d92c2b.",
+      "redistribution_terms": "CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    },
+    {
+      "role": "topics_description",
+      "filename": "topics-2014_2015-description.topics",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692376",
+      "byte_size": 34229,
+      "sha256": "sha256:f150a44a5d6226734aead0e1daa555876159615e9248a05dc093fca48e1e2c3e",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Public CSIRO Data Access Portal collection version 4, DOI 10.4225/08/58e2e83d92c2b.",
+      "redistribution_terms": "CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    },
+    {
+      "role": "topics_summary",
+      "filename": "topics-2014_2015-summary.topics",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692377",
+      "byte_size": 14179,
+      "sha256": "sha256:7ba3aff45fe4896a20bf67ce6c5a3a3cb4e50e0ffde480ff50591546fcda5f01",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Public CSIRO Data Access Portal collection version 4, DOI 10.4225/08/58e2e83d92c2b.",
+      "redistribution_terms": "CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    },
+    {
+      "role": "expected_relevant_counts",
+      "filename": "Ts.tsv",
+      "url": "https://data.csiro.au/dap/ws/v2/collections/22333/data/49692374",
+      "byte_size": 568,
+      "sha256": "sha256:81bd833339cc87059f44fd655769d692863dd05ba0b350ff7681b2a944154b65",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Public CSIRO Data Access Portal collection version 4, DOI 10.4225/08/58e2e83d92c2b.",
+      "redistribution_terms": "CSIRO identifies the collection license as Creative Commons Attribution-ShareAlike 4.0 International."
+    }
+  ]
+}

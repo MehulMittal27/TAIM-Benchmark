@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "paper": {
+    "directory": "external/trialmatchai-paper",
+    "repository": "https://github.com/cbib/TrialMatchAI.git",
+    "commit": "395a486cabd3769c8a8da49d629f799d4c31a7b4",
+    "release": "v0.01",
+    "archive": "https://doi.org/10.5281/zenodo.18329084",
+    "license": {
+      "expression": "MIT",
+      "path": "LICENSE",
+      "git_blob": "f9867b3fd94a498f85d9b1058fbdfc5000bed30d",
+      "sha256": "sha256:6e7c895646567e0ad3160ef47c9ddc7fb775f864e054d69352cafd151fc22c7f"
+    }
+  },
+  "current": {
+    "directory": "external/trialmatchai-current",
+    "repository": "https://github.com/MehulMittal27/TrialMatchAI.git",
+    "commit": "7eba8f399336fcd988b00ce98f2e025e5ec04119",
+    "git_tree": "3364185b56dd6dfe5420292405ef5aea6db24d16",
+    "source_manifest_sha256": "sha256:db2db9f156b26a51bebcf19aa8c83d4c0279f2f18b494a1d986ad87dda076e7f",
+    "verify_remote": true,
+    "release": "taim-l4-cuda-development-v3",
+    "license": {
+      "expression": "MIT",
+      "path": "LICENSE",
+      "git_blob": "0a521cf528cd39dcb341c5bd2fb33eae10190230",
+      "sha256": "sha256:0145278d2aaf6f87db7fa367ed47e84f377f54f62e41cf3f8a47d95eb699f8f1"
+    }
+  }
+}

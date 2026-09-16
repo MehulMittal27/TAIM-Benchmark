@@ -1,0 +1,56 @@
+{
+  "name": "CI",
+  "on": {"pull_request": {}, "push": {"branches": ["main"]}},
+  "permissions": {"contents": "read"},
+  "jobs": {
+    "verify": {
+      "runs-on": "ubuntu-latest",
+      "strategy": {"fail-fast": false, "matrix": {"python-version": ["3.11", "3.12", "3.13", "3.14"]}},
+      "steps": [
+        {"uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"},
+        {"uses": "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e", "with": {"python-version": "${{ matrix.python-version }}"}},
+        {"run": "uv sync --locked --extra dev"},
+        {"run": "uv lock --check"},
+        {"run": "uv run ruff check ."},
+        {"run": "uv run ruff format --check ."},
+        {"run": "uv run mypy"},
+        {"run": "uv run pytest -q"}
+      ]
+    },
+    "package-smoke": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        {"uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"},
+        {"uses": "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e", "with": {"python-version": "3.12"}},
+        {"run": "uv build\nuv venv --python 3.12 .venv-sdist\nuv pip install --python .venv-sdist/bin/python dist/*.tar.gz\n.venv-sdist/bin/trial-benchmark support list\n.venv-sdist/bin/trial-benchmark patient-to-trial fixture run --run-id sdist-forward --output-dir /tmp/sdist\n.venv-sdist/bin/trial-benchmark patient-to-trial run validate --run-dir /tmp/sdist/sdist-forward\n.venv-sdist/bin/trial-benchmark patient-to-trial run evaluate --run-dir /tmp/sdist/sdist-forward\n.venv-sdist/bin/trial-benchmark trial-to-patient fixture run --run-id sdist-reverse --output-dir /tmp/sdist\n.venv-sdist/bin/trial-benchmark trial-to-patient run validate --run-dir /tmp/sdist/sdist-reverse\n.venv-sdist/bin/trial-benchmark trial-to-patient run evaluate --run-dir /tmp/sdist/sdist-reverse\nuv venv --python 3.12 .venv-wheel\nuv pip install --python .venv-wheel/bin/python dist/*.whl\n.venv-wheel/bin/trial-benchmark support list\n.venv-wheel/bin/trial-benchmark patient-to-trial fixture run --run-id wheel-forward --output-dir /tmp/wheel\n.venv-wheel/bin/trial-benchmark patient-to-trial run validate --run-dir /tmp/wheel/wheel-forward\n.venv-wheel/bin/trial-benchmark patient-to-trial run evaluate --run-dir /tmp/wheel/wheel-forward\n.venv-wheel/bin/trial-benchmark trial-to-patient fixture run --run-id wheel-reverse --output-dir /tmp/wheel\n.venv-wheel/bin/trial-benchmark trial-to-patient run validate --run-dir /tmp/wheel/wheel-reverse\n.venv-wheel/bin/trial-benchmark trial-to-patient run evaluate --run-dir /tmp/wheel/wheel-reverse"}
+      ]
+    },
+    "dense-import-smoke": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        {"uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"},
+        {"uses": "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e", "with": {"python-version": "3.12"}},
+        {"run": "uv sync --locked --extra dense"},
+        {"run": "uv run python -c \"from taim.baselines.encoder_registry import DENSE_ENCODER_REGISTRY; assert DENSE_ENCODER_REGISTRY.available_system_ids() == ('dense-bge-m3', 'dense-qwen3-embedding-0.6b', 'dense-qwen3-embedding-0.6b-no-template')\""}
+      ]
+    },
+    "folding-import-smoke": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        {"uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"},
+        {"uses": "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e", "with": {"python-version": "3.12"}},
+        {"run": "uv sync --locked --extra folding"},
+        {"run": "uv run python -c \"from taim.query_folding import FOLDED_QUERY_POLICY; assert FOLDED_QUERY_POLICY\""}
+      ]
+    },
+    "staged-import-smoke": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        {"uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"},
+        {"uses": "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e", "with": {"python-version": "3.12"}},
+        {"run": "uv sync --locked --extra staged"},
+        {"run": "uv run python -c \"from taim.release_staged_pipeline import load_staged_pipeline; assert load_staged_pipeline().output_depth == 1000\""}
+      ]
+    }
+  }
+}

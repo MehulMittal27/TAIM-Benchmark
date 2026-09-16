@@ -1,0 +1,77 @@
+{
+  "schema_version": "2.0",
+  "dataset_id": "trec-ct-2022",
+  "lock_status": "complete",
+  "sources": [
+    {
+      "role": "topics",
+      "filename": "topics2022.xml",
+      "url": "https://trec.nist.gov/data/trials/topics2022.xml",
+      "byte_size": 32423,
+      "sha256": "sha256:c5d37709ba14f6cb341b0bea35a7f43bd1cf93647f939659667975229a7abe91",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official NIST TREC Clinical Trials 2022 data page; access explicitly authorized under protocol trec-ct-2022-2023-ingestion-2026-08-26-v1.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the file outside Git."
+    },
+    {
+      "role": "qrels",
+      "filename": "qrels2022.txt",
+      "url": "https://trec.nist.gov/data/trials/qrels2022.txt",
+      "byte_size": 666030,
+      "sha256": "sha256:e569a531489e03f7b1fab03fe169c8ea66f4a59e8180fa9858b1a6e4bdcb0c5c",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official NIST TREC Clinical Trials 2022 data page; access explicitly authorized under protocol trec-ct-2022-2023-ingestion-2026-08-26-v1.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the file outside Git."
+    },
+    {
+      "role": "trials_part_1",
+      "filename": "ClinicalTrials.2021-04-27.part1.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part1.zip",
+      "byte_size": 382792518,
+      "sha256": "sha256:4caa9579290adaa974efae6f5be170c8964c0fb5d110c1bdb935b331d0bf3ec2",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials historical ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_2",
+      "filename": "ClinicalTrials.2021-04-27.part2.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part2.zip",
+      "byte_size": 378478271,
+      "sha256": "sha256:6f4800b0c9e57af5bcef039c2d0661b2c5e844bb5025f959d7a940c03c2d902d",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials historical ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_3",
+      "filename": "ClinicalTrials.2021-04-27.part3.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part3.zip",
+      "byte_size": 375998752,
+      "sha256": "sha256:1190a5bd629d011dc7011b42b92f94cb7ec0ec21522bafb7701aaee826a42fce",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials historical ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_4",
+      "filename": "ClinicalTrials.2021-04-27.part4.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part4.zip",
+      "byte_size": 360825058,
+      "sha256": "sha256:d10ecad6993dea01e9f581e0104cdff6cd8120d0bc851de87d088cf799a7dd98",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials historical ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_5",
+      "filename": "ClinicalTrials.2021-04-27.part5.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part5.zip",
+      "byte_size": 296625845,
+      "sha256": "sha256:17c773184de8fea9cfcac5cd0cca45c816f4c4ac7568d35d7b0873f63bfc1602",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials historical ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    }
+  ]
+}

@@ -1,0 +1,1182 @@
+{
+  "release_version": "0.1.0",
+  "schema_version": "1.0",
+  "support_matrix": [
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "description",
+      "required_files": [
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/description-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "description",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/description-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "description",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/description-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "description",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/description-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-description-judgment-union",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "docs/paper-analysis-protocol-2026-09-02-v5.md",
+        "docs/paper-analysis-protocol-2026-09-02-v6.md",
+        "docs/paper-analysis-protocol-2026-09-02-v7.md",
+        "external/trialgpt-lock.json",
+        "scripts/freeze_trialgpt_retrieval.py",
+        "scripts/generate_trialgpt_retrieval_queries.py",
+        "src/taim/adapters/trialgpt.py",
+        "src/taim/data/external-system-dependencies-v1.json",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/pipeline_extensions/trialgpt.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py",
+        "src/taim/trialgpt_generation.py",
+        "src/taim/trialgpt_paper.py",
+        "src/taim/trialgpt_publication.py",
+        "src/taim/trialgpt_retrieval_backends.py",
+        "src/taim/trialgpt_retrieval_producer.py"
+      ],
+      "system": "TrialGPT-TAIM-Luna-v1",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-description-judgment-union",
+      "required_files": [
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-description-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-description-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-description-judgment-union",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-summary-judgment-union",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "docs/paper-analysis-protocol-2026-09-02-v5.md",
+        "docs/paper-analysis-protocol-2026-09-02-v6.md",
+        "docs/paper-analysis-protocol-2026-09-02-v7.md",
+        "external/trialgpt-lock.json",
+        "scripts/freeze_trialgpt_retrieval.py",
+        "scripts/generate_trialgpt_retrieval_queries.py",
+        "src/taim/adapters/trialgpt.py",
+        "src/taim/data/external-system-dependencies-v1.json",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/pipeline_extensions/trialgpt.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py",
+        "src/taim/trialgpt_generation.py",
+        "src/taim/trialgpt_paper.py",
+        "src/taim/trialgpt_publication.py",
+        "src/taim/trialgpt_retrieval_backends.py",
+        "src/taim/trialgpt_retrieval_producer.py"
+      ],
+      "system": "TrialGPT-TAIM-Luna-v1",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-summary-judgment-union",
+      "required_files": [
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-summary-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-summary-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "sigir-ct-2016-summary-judgment-union",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "summary",
+      "required_files": [
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/summary-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "summary",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/summary-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "summary",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/summary-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "summary",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/sigir-ct-2016.json",
+        "src/taim/data/profiles/summary-v1.json",
+        "src/taim/data/sigir_ct_2016.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-patient-to-trial",
+      "required_files": [
+        "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
+        "src/taim/fixtures/__init__.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-trial-to-patient",
+      "required_files": [
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/reverse_fixture.py",
+        "src/taim/trial_to_patient.py"
+      ],
+      "system": "bm25-trial-to-patient",
+      "task": "trial_to_patient",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "official-full",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/official-full-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "official-full",
+      "required_files": [
+        "src/taim/baselines/bm25.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/official-full-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/folded_query_bundle.py",
+        "src/taim/query_folding.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "bm25-folded",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "official-full",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/official-full-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "official-full",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/official-full-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "official-full",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/official-full-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/query_folding.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b-no-template",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "official-full",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/official-full-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "real_effectiveness",
+      "profile": "official-full",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
+        "src/taim/data/profiles/official-full-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/public_patient_to_trial.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_staged_pipeline.py"
+      ],
+      "system": "staged-bm25-qwen3-rrf-rerank",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-patient-to-trial",
+      "required_files": [
+        "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
+        "src/taim/fixtures/__init__.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-patient-to-trial",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
+        "src/taim/fixtures/__init__.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-patient-to-trial",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
+        "src/taim/fixtures/__init__.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "docs/paper-analysis-protocol-2026-09-02-v5.md",
+        "docs/paper-analysis-protocol-2026-09-02-v6.md",
+        "docs/paper-analysis-protocol-2026-09-02-v7.md",
+        "external/trialgpt-lock.json",
+        "scripts/freeze_trialgpt_retrieval.py",
+        "scripts/generate_trialgpt_retrieval_queries.py",
+        "src/taim/adapters/trialgpt.py",
+        "src/taim/data/external-system-dependencies-v1.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/pipeline_extensions/trialgpt.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py",
+        "src/taim/trialgpt_generation.py",
+        "src/taim/trialgpt_paper.py",
+        "src/taim/trialgpt_publication.py",
+        "src/taim/trialgpt_retrieval_backends.py",
+        "src/taim/trialgpt_retrieval_producer.py"
+      ],
+      "system": "TrialGPT-TAIM-Luna-v1",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py",
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/release_support.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/baselines/bm25.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/folded_query_bundle.py",
+        "src/taim/query_folding.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py"
+      ],
+      "system": "bm25-folded",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/release_support.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/release_support.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/query_folding.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b-no-template",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py",
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/release_support.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/public_patient_to_trial.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_staged_pipeline.py",
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/release_support.py"
+      ],
+      "system": "staged-bm25-qwen3-rrf-rerank",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "external_fidelity_effectiveness",
+      "profile": "trec-ct-2021-external-fidelity-26149",
+      "required_files": [
+        "external/trialmatchai-lock.json",
+        "src/taim/adapters/trialmatchai.py",
+        "src/taim/data/external-system-dependencies-v1.json",
+        "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+        "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "src/taim/release_support.py",
+        "src/taim/pipeline_extensions/trialmatchai.py"
+      ],
+      "system": "trialmatchai-current-cuda-l4-trec21-development-v3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "trec-ct-2021-judgment-union",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "trec-ct-2021-judgment-union",
+      "required_files": [
+        "src/taim/baselines/bm25.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/folded_query_bundle.py",
+        "src/taim/query_folding.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "bm25-folded",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "trec-ct-2021-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "trec-ct-2021-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "trec-ct-2021-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/query_folding.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b-no-template",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "trec-ct-2021-judgment-union",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness",
+      "profile": "trec-ct-2021-judgment-union",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
+        "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+        "src/taim/data/trec_ct_2021.py",
+        "src/taim/public_patient_to_trial.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_staged_pipeline.py"
+      ],
+      "system": "staged-bm25-qwen3-rrf-rerank",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-trial-to-patient",
+      "required_files": [
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/reverse_fixture.py",
+        "src/taim/trial_to_patient.py"
+      ],
+      "system": "bm25-trial-to-patient",
+      "task": "trial_to_patient",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "reverse_viability_effectiveness",
+      "profile": "trec-ct-2021-reverse-complete10",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2021.json",
+        "src/taim/release_cli.py",
+        "src/taim/reverse_viability.py",
+        "src/taim/trial_to_patient.py"
+      ],
+      "system": "bm25-trial-to-patient",
+      "task": "trial_to_patient",
+      "track": "trec-ct-2021"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-patient-to-trial",
+      "required_files": [
+        "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
+        "src/taim/fixtures/__init__.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2022-judgment-union",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "docs/paper-analysis-protocol-2026-09-02-v5.md",
+        "docs/paper-analysis-protocol-2026-09-02-v6.md",
+        "docs/paper-analysis-protocol-2026-09-02-v7.md",
+        "external/trialgpt-lock.json",
+        "scripts/freeze_trialgpt_retrieval.py",
+        "scripts/generate_trialgpt_retrieval_queries.py",
+        "src/taim/adapters/trialgpt.py",
+        "src/taim/data/external-system-dependencies-v1.json",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/pipeline_extensions/trialgpt.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py",
+        "src/taim/trialgpt_generation.py",
+        "src/taim/trialgpt_paper.py",
+        "src/taim/trialgpt_publication.py",
+        "src/taim/trialgpt_retrieval_backends.py",
+        "src/taim/trialgpt_retrieval_producer.py"
+      ],
+      "system": "TrialGPT-TAIM-Luna-v1",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2022-judgment-union",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2022-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2022-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2022-judgment-union",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2022-judgment-union",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "external/trialmatchai-lock.json",
+        "src/taim/adapters/trialmatchai.py",
+        "src/taim/data/external-system-dependencies-v1.json",
+        "src/taim/data/locks/trec-ct-2022.json",
+        "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/pipeline_extensions/trialmatchai.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py"
+      ],
+      "system": "trialmatchai-current-cuda-l4-trec22-development-v3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-trial-to-patient",
+      "required_files": [
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/reverse_fixture.py",
+        "src/taim/trial_to_patient.py"
+      ],
+      "system": "bm25-trial-to-patient",
+      "task": "trial_to_patient",
+      "track": "trec-ct-2022"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "real_effectiveness_requires_protocol",
+      "profile": "confirmation-full",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/confirmation-full-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2023-judgment-union",
+      "required_files": [
+        "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "external/trialmatchai-lock.json",
+        "src/taim/adapters/trialmatchai.py",
+        "src/taim/data/external-system-dependencies-v1.json",
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/pipeline_extensions/trialmatchai.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_support.py"
+      ],
+      "system": "trialmatchai-current-cuda-l4-trec23-development-v3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-patient-to-trial",
+      "required_files": [
+        "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
+        "src/taim/fixtures/__init__.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2023-judgment-union",
+      "required_files": [
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "bm25",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2023-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-bge-m3",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2023-judgment-union",
+      "required_files": [
+        "src/taim/baselines/dense.py",
+        "src/taim/baselines/encoder_registry.py",
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py"
+      ],
+      "system": "dense-qwen3-embedding-0.6b",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "within_pool_effectiveness_requires_protocol",
+      "profile": "trec-ct-2023-judgment-union",
+      "required_files": [
+        "src/taim/baselines/rrf.py",
+        "src/taim/data/locks/trec-ct-2023.json",
+        "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
+        "src/taim/data/trec_ct.py",
+        "src/taim/release_cli.py",
+        "src/taim/release_profiles.py",
+        "src/taim/release_reference_systems.py"
+      ],
+      "system": "rrf",
+      "task": "patient_to_trial",
+      "track": "trec-ct-2023"
+    },
+    {
+      "evidence_scope": "synthetic_conformance",
+      "profile": "synthetic-trial-to-patient",
+      "required_files": [
+        "src/taim/release_cli.py",
+        "src/taim/release_fixture.py",
+        "src/taim/reverse_fixture.py",
+        "src/taim/trial_to_patient.py"
+      ],
+      "system": "bm25-trial-to-patient",
+      "task": "trial_to_patient",
+      "track": "trec-ct-2023"
+    }
+  ]
+}

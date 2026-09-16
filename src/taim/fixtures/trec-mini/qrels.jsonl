@@ -1,0 +1,12 @@
+{"schema_version":"1.0","topic_id":"T001","trial_id":"NCT-BREAST-EXCLUDED","label":1}
+{"schema_version":"1.0","topic_id":"T001","trial_id":"NCT-BREAST-ELIGIBLE","label":2}
+{"schema_version":"1.0","topic_id":"T001","trial_id":"NCT-DIABETES-ELIGIBLE","label":0}
+{"schema_version":"1.0","topic_id":"T001","trial_id":"NCT-LUNG","label":0}
+{"schema_version":"1.0","topic_id":"T002","trial_id":"NCT-DIABETES-ELIGIBLE","label":2}
+{"schema_version":"1.0","topic_id":"T002","trial_id":"NCT-DIABETES-EXCLUDED","label":1}
+{"schema_version":"1.0","topic_id":"T002","trial_id":"NCT-BREAST-ELIGIBLE","label":0}
+{"schema_version":"1.0","topic_id":"T002","trial_id":"NCT-MELANOMA","label":0}
+{"schema_version":"1.0","topic_id":"T003","trial_id":"NCT-LYMPHOMA-ELIGIBLE","label":2}
+{"schema_version":"1.0","topic_id":"T003","trial_id":"NCT-LYMPHOMA-EXCLUDED","label":1}
+{"schema_version":"1.0","topic_id":"T003","trial_id":"NCT-LUNG","label":0}
+{"schema_version":"1.0","topic_id":"T003","trial_id":"NCT-MELANOMA","label":0}

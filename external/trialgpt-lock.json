@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "canonical": {
+    "directory": "external/trialgpt",
+    "repository": "https://github.com/ncbi-nlp/TrialGPT.git",
+    "commit": "1b3242cd50c153a9c324661d4a0bd94fc68a4226",
+    "git_tree": "9e111af1693329230341b9d295575fb5ca6a9d8d",
+    "source_manifest_sha256": "sha256:2bf3aad30d098b9803ac0d2285fed28d4eda2c614d1853a72cff2a1a667c7a19",
+    "verify_remote": true,
+    "detached": true,
+    "partial_clone_filter": "blob:none",
+    "sparse_paths": [
+      "results",
+      "trialgpt_matching",
+      "trialgpt_ranking",
+      "trialgpt_retrieval"
+    ],
+    "excluded_worktree_paths": [
+      "dataset"
+    ],
+    "license": {
+      "expression": "LicenseRef-NCBI-Public-Domain",
+      "path": "LICENSE",
+      "sha256": "sha256:dfd379b97683cdc76a33597eef09057a8de122e5f91b8fe7975d272e9bfa6f87"
+    }
+  }
+}

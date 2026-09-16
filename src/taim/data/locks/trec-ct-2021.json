@@ -1,0 +1,77 @@
+{
+  "schema_version": "2.0",
+  "dataset_id": "trec-ct-2021",
+  "lock_status": "complete",
+  "sources": [
+    {
+      "role": "topics",
+      "filename": "topics2021.xml",
+      "url": "https://trec.nist.gov/data/trials/topics2021.xml",
+      "byte_size": 64618,
+      "sha256": "sha256:94bda921ce7c40a0353f251abb2ea938c77331759a9f83a36abd145ab5840aca",
+      "acquisition_date": "2026-07-21",
+      "access_terms": "Official NIST TREC data page; TAIM performs no automatic acquisition.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; users must acquire and supply this file locally."
+    },
+    {
+      "role": "qrels",
+      "filename": "qrels2021.txt",
+      "url": "https://trec.nist.gov/data/trials/qrels2021.txt",
+      "byte_size": 676496,
+      "sha256": "sha256:ba7a2cddc90285e75cd76adcd483394a6c9bacf7017113222058ba6537e6d8ac",
+      "acquisition_date": "2026-07-21",
+      "access_terms": "Official NIST TREC data page; TAIM performs no automatic acquisition.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; users must acquire and supply this file locally."
+    },
+    {
+      "role": "trials_part_1",
+      "filename": "ClinicalTrials.2021-04-27.part1.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part1.zip",
+      "byte_size": 382792518,
+      "sha256": "sha256:4caa9579290adaa974efae6f5be170c8964c0fb5d110c1bdb935b331d0bf3ec2",
+      "acquisition_date": "2026-07-21",
+      "access_terms": "Official TREC Clinical Trials track snapshot; TAIM performs no automatic acquisition.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; users must acquire and supply this file locally."
+    },
+    {
+      "role": "trials_part_2",
+      "filename": "ClinicalTrials.2021-04-27.part2.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part2.zip",
+      "byte_size": 378478271,
+      "sha256": "sha256:6f4800b0c9e57af5bcef039c2d0661b2c5e844bb5025f959d7a940c03c2d902d",
+      "acquisition_date": "2026-07-21",
+      "access_terms": "Official TREC Clinical Trials track snapshot; TAIM performs no automatic acquisition.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; users must acquire and supply this file locally."
+    },
+    {
+      "role": "trials_part_3",
+      "filename": "ClinicalTrials.2021-04-27.part3.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part3.zip",
+      "byte_size": 375998752,
+      "sha256": "sha256:1190a5bd629d011dc7011b42b92f94cb7ec0ec21522bafb7701aaee826a42fce",
+      "acquisition_date": "2026-07-21",
+      "access_terms": "Official TREC Clinical Trials track snapshot; TAIM performs no automatic acquisition.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; users must acquire and supply this file locally."
+    },
+    {
+      "role": "trials_part_4",
+      "filename": "ClinicalTrials.2021-04-27.part4.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part4.zip",
+      "byte_size": 360825058,
+      "sha256": "sha256:d10ecad6993dea01e9f581e0104cdff6cd8120d0bc851de87d088cf799a7dd98",
+      "acquisition_date": "2026-07-21",
+      "access_terms": "Official TREC Clinical Trials track snapshot; TAIM performs no automatic acquisition.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; users must acquire and supply this file locally."
+    },
+    {
+      "role": "trials_part_5",
+      "filename": "ClinicalTrials.2021-04-27.part5.zip",
+      "url": "https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part5.zip",
+      "byte_size": 296625845,
+      "sha256": "sha256:17c773184de8fea9cfcac5cd0cca45c816f4c4ac7568d35d7b0873f63bfc1602",
+      "acquisition_date": "2026-07-21",
+      "access_terms": "Official TREC Clinical Trials track snapshot; TAIM performs no automatic acquisition.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; users must acquire and supply this file locally."
+    }
+  ]
+}

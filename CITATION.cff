@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "TAIM: A Multi-Track, Executable Benchmark for Clinical Trial Matching"
+type: software
+version: 0.1.0
+repository-code: "https://github.com/MehulMittal27/TAIM-Benchmark"
+authors:
+  - family-names: Ill
+    given-names: Hannes
+    email: hannes.ill@tum.de
+  - family-names: Mittal
+    given-names: Mehul

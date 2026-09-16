@@ -1,0 +1,54 @@
+{
+  "arms": [
+    {
+      "name": "bm25-folded",
+      "query_form": "folded",
+      "system_id": "bm25-folded"
+    },
+    {
+      "name": "qwen3-raw-no-template",
+      "query_form": "raw-no-template",
+      "system_id": "dense-qwen3-embedding-0.6b-no-template"
+    }
+  ],
+  "benchmark_profile_ids": [
+    "official-full",
+    "trec-ct-2021-external-fidelity-26149",
+    "trec-ct-2021-judgment-union"
+  ],
+  "component_depth": 5000,
+  "fusion": {
+    "constant": 60,
+    "implementation": "taim.baselines.rrf.fuse_rrf_n",
+    "output_depth": 2000,
+    "raw_component_scores_used": false,
+    "tie_breaking": "RRF score descending, trial_id ascending"
+  },
+  "licensed_inputs": [
+    {
+      "acquisition": "user-supplied",
+      "input_id": "SNOMED-CT:user-supplied-release",
+      "output_policy": "source-topic-spans-only-no-concept-identifiers-or-descriptions",
+      "redistribution": "not-included",
+      "role": "folded-query-lexicon"
+    }
+  ],
+  "output_depth": 1000,
+  "pipeline_id": "staged-bm25-qwen3-rrf-rerank-v1",
+  "pipeline_version": "1.0",
+  "reranker": {
+    "attention_backend": "runtime-recorded",
+    "batch_size": 16,
+    "dtype": "float16",
+    "format": "F-summary folded query",
+    "implementation": "taim.release_staged_pipeline.score_staged_pairs",
+    "max_length": 2048,
+    "model_id": "Qwen/Qwen3-Reranker-4B",
+    "model_revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+    "ordering": "score descending, fused rank ascending",
+    "scoring_depth": 2000,
+    "tokenizer_revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5"
+  },
+  "system_id": "staged-bm25-qwen3-rrf-rerank",
+  "track": "trec-ct-2021"
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": "2.0",
+  "dataset_id": "trec-ct-2023",
+  "lock_status": "complete",
+  "sources": [
+    {
+      "role": "topics",
+      "filename": "topics2023.xml",
+      "url": "https://trec.nist.gov/data/trials/topics2023.xml",
+      "byte_size": 19307,
+      "sha256": "sha256:12987f6311f518fa64abe41ada207a442e4deb72e7926f5185b2be82e29ac122",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official NIST TREC Clinical Trials 2023 data page; access explicitly authorized under protocol trec-ct-2022-2023-ingestion-2026-08-26-v1.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the file outside Git."
+    },
+    {
+      "role": "qrels",
+      "filename": "qrels2023.txt",
+      "url": "https://trec.nist.gov/data/trials/qrels2023.txt",
+      "byte_size": 636340,
+      "sha256": "sha256:4f0cd4ad573e37d08002fb401bb7ab22a643537753880d9427c96119696582a3",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official NIST TREC Clinical Trials 2023 data page; access explicitly authorized under protocol trec-ct-2022-2023-ingestion-2026-08-26-v1.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the file outside Git."
+    },
+    {
+      "role": "trials_part_1",
+      "filename": "ClinicalTrials.2023-05-08.trials0.zip",
+      "url": "https://www.trec-cds.org/2023_data/ClinicalTrials.2023-05-08.trials0.zip",
+      "byte_size": 386540401,
+      "sha256": "sha256:b12bcf01505c6815f2df8607c5371338c716a3c700907f492f6c7b857a89e328",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials May 8, 2023 ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_2",
+      "filename": "ClinicalTrials.2023-05-08.trials1.zip",
+      "url": "https://www.trec-cds.org/2023_data/ClinicalTrials.2023-05-08.trials1.zip",
+      "byte_size": 384658003,
+      "sha256": "sha256:57022c2003c5291cbbfa27b8f6102e20cf972c5cda88aa7369677d6a0e41f29d",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials May 8, 2023 ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_3",
+      "filename": "ClinicalTrials.2023-05-08.trials2.zip",
+      "url": "https://www.trec-cds.org/2023_data/ClinicalTrials.2023-05-08.trials2.zip",
+      "byte_size": 392904165,
+      "sha256": "sha256:6a81601ba3184b8ded1bfe9e4fd67e15a8f1aa7046a1d56de700cb5a38ded793",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials May 8, 2023 ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_4",
+      "filename": "ClinicalTrials.2023-05-08.trials3.zip",
+      "url": "https://www.trec-cds.org/2023_data/ClinicalTrials.2023-05-08.trials3.zip",
+      "byte_size": 385041289,
+      "sha256": "sha256:99a112ed6e3f5b55a20be021d22c916e939e4885c0f56b7bec0604a6d16e8880",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials May 8, 2023 ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_5",
+      "filename": "ClinicalTrials.2023-05-08.trials4.zip",
+      "url": "https://www.trec-cds.org/2023_data/ClinicalTrials.2023-05-08.trials4.zip",
+      "byte_size": 361436281,
+      "sha256": "sha256:d4f0c1ce2c219c79f38c001628e94e6e832c06abdc87b6fa52652a35b5713a87",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials May 8, 2023 ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    },
+    {
+      "role": "trials_part_6",
+      "filename": "ClinicalTrials.2023-05-08.trials5.zip",
+      "url": "https://www.trec-cds.org/2023_data/ClinicalTrials.2023-05-08.trials5.zip",
+      "byte_size": 297803357,
+      "sha256": "sha256:5427bf1b7a1e776cce9be34882989b4faa5b7caed5f0804f73a0d505db40a821",
+      "acquisition_date": "2026-08-26",
+      "access_terms": "Official TREC Clinical Trials May 8, 2023 ClinicalTrials.gov snapshot.",
+      "redistribution_terms": "Artifact-specific redistribution terms are not explicit on the source page; keep the archive outside Git."
+    }
+  ]
+}

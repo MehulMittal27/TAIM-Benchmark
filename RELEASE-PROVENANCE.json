@@ -1,0 +1,793 @@
+{
+  "artifact_type": "taim-benchmark-release-provenance",
+  "release_version": "0.1.0",
+  "schema_version": "2.0",
+  "source_files": [
+    {
+      "byte_size": 4155,
+      "destination": ".github/workflows/ci.yml",
+      "generator": "workflow-jobs",
+      "sha256": "sha256:883af04eb988791017a4ba7f9795a7984d433828cf7f3e7c5da155bf91e6f082",
+      "source": "release/public/.github/workflows/ci.approved.yml"
+    },
+    {
+      "byte_size": 126,
+      "destination": ".gitignore",
+      "sha256": "sha256:dbed2757624abebe215f5e85b1243e22d8835da994ce925c47550be525ce13f7",
+      "source": "release/public/.gitignore"
+    },
+    {
+      "byte_size": 405,
+      "destination": "CITATION.cff",
+      "sha256": "sha256:1cd096af905342ed7c6d02dc644a176a9b1c2bef8f88b09d52a7beaad568f654",
+      "source": "release/public/CITATION.cff.approved"
+    },
+    {
+      "byte_size": 822,
+      "destination": "CONTRIBUTING.md",
+      "sha256": "sha256:d56f8be2ac6c73a3e1c4abdd1421c3bacaafbbcfcd3482cbbe0e60fc0ecd0894",
+      "source": "release/public/CONTRIBUTING.md"
+    },
+    {
+      "byte_size": 11412,
+      "destination": "LICENSE",
+      "sha256": "sha256:cc1dfe9f98a5d3a7b197c3b423fe0d6e0e682bf4de769f619b0644738dbf82fc",
+      "source": "release/public/LICENSE.approved"
+    },
+    {
+      "byte_size": 18250,
+      "destination": "README.md",
+      "generator": "markdown-sections",
+      "sha256": "sha256:1c7173e5106eff61b835b813baded4fe94ca1e0f8f4b8d5d7884f00ccb51b2ee",
+      "source": "release/public/README.md"
+    },
+    {
+      "byte_size": 505,
+      "destination": "SECURITY.md",
+      "sha256": "sha256:5055c02200791bb24a02dc507e91521a06b48f9c31d2bfa81e9d7751ac556166",
+      "source": "release/public/SECURITY.md"
+    },
+    {
+      "byte_size": 8967,
+      "destination": "THIRD_PARTY_NOTICES.md",
+      "generator": "markdown-sections",
+      "sha256": "sha256:c7f4a16106ec72cc17fcc8b99a31f3e5163d0103780498a7360f4eea7826581e",
+      "source": "release/public/THIRD_PARTY_NOTICES.approved.md"
+    },
+    {
+      "byte_size": 4808,
+      "destination": "docs/compatibility.md",
+      "generator": "markdown-sections",
+      "sha256": "sha256:e9e206f1b21fc20308daa9bd950d4e4b803a141b70cd14ddde089caa78348bf7",
+      "source": "release/public/docs/compatibility.md"
+    },
+    {
+      "byte_size": 1747,
+      "destination": "docs/external-baselines.md",
+      "sha256": "sha256:77b258254086a36614e0399bf680ccd31745d6afcf5e0944f49a9fc07d8a10ab",
+      "source": "release/public/docs/external-baselines.md"
+    },
+    {
+      "byte_size": 3381,
+      "destination": "docs/external-fidelity-profile.md",
+      "sha256": "sha256:d598f72229168114fe39efb6f1f3be50400a60fde8e6c27cffdfd35e9aee7e43",
+      "source": "release/public/docs/external-fidelity-profile.md"
+    },
+    {
+      "byte_size": 16509,
+      "destination": "docs/method-contracts.md",
+      "generator": "markdown-sections",
+      "sha256": "sha256:6612121725f098f363b40522386c5d52998054137a5fa8b42a0a61e0b037d627",
+      "source": "release/public/docs/method-contracts.md"
+    },
+    {
+      "byte_size": 28098,
+      "destination": "docs/paper-analysis-protocol-2026-08-29.md",
+      "sha256": "sha256:411ea6e8d71fe29084b8870d6ea34a366f89c127a4371698da78aa5600af2fd7",
+      "source": "docs/protocols/paper-analysis-protocol-2026-08-29.md"
+    },
+    {
+      "byte_size": 4031,
+      "destination": "docs/paper-analysis-protocol-2026-08-31-v2.md",
+      "sha256": "sha256:c14f7b28689a985de7aaeaece2e131338386bcdfcb489dd1955a5b59aba94594",
+      "source": "docs/protocols/paper-analysis-protocol-2026-08-31-v2.md"
+    },
+    {
+      "byte_size": 1689,
+      "destination": "docs/paper-analysis-protocol-2026-08-31-v3-supersede-note-2026-09-01.md",
+      "sha256": "sha256:6802d1447fc74b1e150876ea76667c1b3f84ce1b0ceed5bf7f840f2d87d98511",
+      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v3-supersede-note-2026-09-01.md"
+    },
+    {
+      "byte_size": 8353,
+      "destination": "docs/paper-analysis-protocol-2026-08-31-v3.md",
+      "sha256": "sha256:18a9c9bd3c76455038d01458a5cb2d933059d1e72924285e26500a8aaab1baf6",
+      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v3.md"
+    },
+    {
+      "byte_size": 11410,
+      "destination": "docs/paper-analysis-protocol-2026-08-31-v4.md",
+      "sha256": "sha256:55bb91f69d6494d58eff62b96f65f7b59759de45a366dc551e4ad5586fdfc896",
+      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v4.md"
+    },
+    {
+      "byte_size": 5992,
+      "destination": "docs/paper-analysis-protocol-2026-09-02-v5.md",
+      "sha256": "sha256:68ac1fa5bf2c25f4f54f106343ffcb153ed5f89a78c8fba4b774dc3c5bdc0bbf",
+      "source": "docs/protocols/paper-analysis-protocol-2026-09-02-v5.md"
+    },
+    {
+      "byte_size": 4516,
+      "destination": "docs/paper-analysis-protocol-2026-09-02-v6.md",
+      "sha256": "sha256:42aaad46b91eeb56a75d416de1a29e93e90cb3d15eb87db33c40fc1bc4a61208",
+      "source": "docs/protocols/paper-analysis-protocol-2026-09-02-v6.md"
+    },
+    {
+      "byte_size": 3492,
+      "destination": "docs/paper-analysis-protocol-2026-09-02-v7.md",
+      "sha256": "sha256:a617a46c2d61e76ad25963e709cad2c3ff99d4be466f173b8add02f1754927ef",
+      "source": "docs/protocols/paper-analysis-protocol-2026-09-02-v7.md"
+    },
+    {
+      "byte_size": 1960,
+      "destination": "docs/release-notes-0.1.0.md",
+      "sha256": "sha256:79aa4067cf0928f125bcba1ed37683e0b43e690d0110e088659da43c2114da40",
+      "source": "release/public/docs/release-notes-0.1.0.md"
+    },
+    {
+      "byte_size": 7287,
+      "destination": "docs/release-verification.md",
+      "generator": "markdown-sections",
+      "sha256": "sha256:11ed8f3c3139c9f943cb27cfe9cd47302a56d25d483a42f39d7f7441ed2acd1b",
+      "source": "release/public/docs/release-verification.md"
+    },
+    {
+      "byte_size": 10004,
+      "destination": "docs/reporting-policy.md",
+      "generator": "markdown-sections",
+      "sha256": "sha256:8a62038ffa56ab7fe9400f6f47abfdd55b5a7013f62529c1b1f71e14f42b373a",
+      "source": "release/public/docs/reporting-policy.md"
+    },
+    {
+      "byte_size": 2134,
+      "destination": "docs/sigir-2016-acquisition.md",
+      "sha256": "sha256:6d0e9d5b182e3d7e5bdca4eea6c8f7d216f1d9a9ea26950acdbfb58874b4ffdf",
+      "source": "release/public/docs/sigir-2016-acquisition.md"
+    },
+    {
+      "byte_size": 2538,
+      "destination": "docs/trec-2021-acquisition.md",
+      "sha256": "sha256:d65cf6f4dcb0f3da0b9ac0903ac0b2f837f2eeca3004f9a473ad2149764e8e26",
+      "source": "release/public/docs/trec-2021-acquisition.md"
+    },
+    {
+      "byte_size": 1751,
+      "destination": "docs/trec-2022-acquisition.md",
+      "sha256": "sha256:fbe870a4c8e89a9a4cabe806b3e4eaab8043c0925fe93ea948254f78119843a4",
+      "source": "release/public/docs/trec-2022-acquisition.md"
+    },
+    {
+      "byte_size": 1839,
+      "destination": "docs/trec-2023-acquisition.md",
+      "sha256": "sha256:a0dcc32ad218878fda854f0cfe97766eb25d8be7d96980fcf30ed3267dc05dc3",
+      "source": "release/public/docs/trec-2023-acquisition.md"
+    },
+    {
+      "byte_size": 2856,
+      "destination": "docs/trialgpt-external-baseline.md",
+      "sha256": "sha256:efd963e5c8a90d74cf5f780f4cb72f8138633ac444552fc7a3a407320dc2bc46",
+      "source": "release/public/docs/trialgpt-external-baseline.md"
+    },
+    {
+      "byte_size": 4988,
+      "destination": "docs/trialgpt-retrieval-producer.md",
+      "sha256": "sha256:89aefe3aa0ac1f28c2051f5639c0809ff8213a80a0e8ca13571e6e0a41b51bd4",
+      "source": "docs/agents/trialgpt-retrieval-producer.md"
+    },
+    {
+      "byte_size": 2548,
+      "destination": "docs/trialmatchai-external-baseline.md",
+      "sha256": "sha256:f29a599e9c079c2ef40c18f03fc60a9367d681850aff5cc14cc15cb5e28ddecd",
+      "source": "release/public/docs/trialmatchai-external-baseline.md"
+    },
+    {
+      "byte_size": 834,
+      "destination": "external/trialgpt-lock.json",
+      "sha256": "sha256:ab91fdcb8c6bafa539ed352c496c7a9d6a741baa0be93eadb20d8d7d90cbd6df",
+      "source": "external/trialgpt-lock.json"
+    },
+    {
+      "byte_size": 1185,
+      "destination": "external/trialmatchai-lock.json",
+      "sha256": "sha256:794bafc16d132193bb7d39809256559b303b54cdd40aefd129fadb02c8f9e992",
+      "source": "external/trialmatchai-lock.json"
+    },
+    {
+      "byte_size": 1839,
+      "destination": "pyproject.toml",
+      "generator": "pyproject",
+      "sha256": "sha256:c9261b22a034797b60ba884226fe31ef6b0f9a9c0d7f902ed13ef9d09477245a",
+      "source": "release/public/pyproject.toml.approved"
+    },
+    {
+      "byte_size": 10111,
+      "destination": "scripts/freeze_trialgpt_retrieval.py",
+      "sha256": "sha256:f7769522838fd40ef32a46b2c4fca7d5099fa5c82cf50597d66fddc5fa2dfb27",
+      "source": "scripts/freeze_trialgpt_retrieval.py"
+    },
+    {
+      "byte_size": 5401,
+      "destination": "scripts/generate_trialgpt_retrieval_queries.py",
+      "sha256": "sha256:ee6576e2379439eead70feb7201dffcc288eb2cfd63edfe4a2c164fdbdc2026e",
+      "source": "scripts/generate_trialgpt_retrieval_queries.py"
+    },
+    {
+      "byte_size": 1034,
+      "destination": "src/taim/__init__.py",
+      "sha256": "sha256:a2f596aefe9d435f2fd54c010426d76d950b9e54e7ab164f392b40ae88e3eb0b",
+      "source": "src/taim/__init__.py"
+    },
+    {
+      "byte_size": 433,
+      "destination": "src/taim/adapters/__init__.py",
+      "generator": "python-sections",
+      "sha256": "sha256:f51d28381442ce4b79f78fcf04eb250d9f124bb0b66510ce4b5d355570148568",
+      "source": "release/public/adapters-init.py"
+    },
+    {
+      "byte_size": 64852,
+      "destination": "src/taim/adapters/trialgpt.py",
+      "sha256": "sha256:4256de882f2289519a2ecaa9831c7a13e456eb9a331e7e3dfba46b72cc85da34",
+      "source": "release/public/trialgpt-adapter.py"
+    },
+    {
+      "byte_size": 91198,
+      "destination": "src/taim/adapters/trialmatchai.py",
+      "sha256": "sha256:6a60406dcec08c4825d05b7893f8e4079e178d732da086b618496919cf92513d",
+      "source": "release/public/trialmatchai-adapter.py"
+    },
+    {
+      "byte_size": 48370,
+      "destination": "src/taim/artifacts.py",
+      "sha256": "sha256:0b60fdd2a52a5e83dee9e53b702e4f733927851e4f81d0bb1b2f628e54caac4a",
+      "source": "src/taim/artifacts.py"
+    },
+    {
+      "byte_size": 625,
+      "destination": "src/taim/baselines/__init__.py",
+      "sha256": "sha256:0ec10f2b4448118bb27dc09dc75b6c933c35b937467e9bca16b91a99bb08280c",
+      "source": "src/taim/baselines/__init__.py"
+    },
+    {
+      "byte_size": 20280,
+      "destination": "src/taim/baselines/bm25.py",
+      "sha256": "sha256:45817b352adadc84ed062baedf4aa730f43e45578402442e31f5301fbe685d02",
+      "source": "src/taim/baselines/bm25.py"
+    },
+    {
+      "byte_size": 104944,
+      "destination": "src/taim/baselines/dense.py",
+      "sha256": "sha256:e9cf057a922b70abf1f192f0f35c6fa1044c9c619423c8b6bfea696a48024798",
+      "source": "src/taim/baselines/dense.py"
+    },
+    {
+      "byte_size": 20486,
+      "destination": "src/taim/baselines/encoder_registry.py",
+      "sha256": "sha256:1e82fbef35f48c3717338f9b8b6f0a48687f2d008393fedc41d89e98f6ac6e01",
+      "source": "src/taim/baselines/encoder_registry.py"
+    },
+    {
+      "byte_size": 12736,
+      "destination": "src/taim/baselines/rrf.py",
+      "sha256": "sha256:bbcbe18abc9ca570c5bdda40a1c50e8cc89fa099eb6facb1befcc282542f3af7",
+      "source": "src/taim/baselines/rrf.py"
+    },
+    {
+      "byte_size": 190055,
+      "destination": "src/taim/benchmark_release.py",
+      "sha256": "sha256:24bae68321ca7ad35d19bbaba2b61f01a67642e351ab03bf57e0cca0e0f05e61",
+      "source": "src/taim/benchmark_release.py"
+    },
+    {
+      "byte_size": 54639,
+      "destination": "src/taim/constraint_facts.py",
+      "sha256": "sha256:26170f8db31078e2574e5cae16be53f0767d9f66637599a278fea420da7054ae",
+      "source": "src/taim/constraint_facts.py"
+    },
+    {
+      "byte_size": 10648,
+      "destination": "src/taim/contracts.py",
+      "sha256": "sha256:74ec6868b375c5c8b4c5730e59e2132d20f4fb33ca63f40e56fd51092004a319",
+      "source": "src/taim/contracts.py"
+    },
+    {
+      "byte_size": 581,
+      "destination": "src/taim/data/__init__.py",
+      "sha256": "sha256:3a56e9ab0c590ebe67467d84b0eb9b43e099ce17735fade39ae84bdf49c967fd",
+      "source": "src/taim/data/__init__.py"
+    },
+    {
+      "byte_size": 4966,
+      "destination": "src/taim/data/external-system-dependencies-v1.json",
+      "generator": "external-system-dependencies",
+      "sha256": "sha256:543de0baad61650aa58e4fd202e2e5d543f4b40135ca9719eb30e4a826085b1e",
+      "source": "src/taim/data/external-system-dependencies-v1.json"
+    },
+    {
+      "byte_size": 4718,
+      "destination": "src/taim/data/locks/sigir-ct-2016.json",
+      "sha256": "sha256:102c3b1e924990adbb150eb4594ff36bbd0941b3add09d236e408f34da00269a",
+      "source": "src/taim/data/locks/sigir-ct-2016.json"
+    },
+    {
+      "byte_size": 4287,
+      "destination": "src/taim/data/locks/trec-ct-2021.json",
+      "sha256": "sha256:0c433287d4a5fe68d45964d4cef6f8e38dad66d29f477b782810d345e0042b9a",
+      "source": "src/taim/data/locks/trec-ct-2021.json"
+    },
+    {
+      "byte_size": 4204,
+      "destination": "src/taim/data/locks/trec-ct-2022.json",
+      "sha256": "sha256:870f9955b3fab8f711a5f2e6123c1c873ab7c8e728efa0fa1c5b4d31570c0587",
+      "source": "src/taim/data/locks/trec-ct-2022.json"
+    },
+    {
+      "byte_size": 4816,
+      "destination": "src/taim/data/locks/trec-ct-2023.json",
+      "sha256": "sha256:f3499ab6f62e2177f15f8e048f91a35f05aecf0301a2542c385431893c563abf",
+      "source": "src/taim/data/locks/trec-ct-2023.json"
+    },
+    {
+      "byte_size": 1032,
+      "destination": "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
+      "sha256": "sha256:96be3bd12a1acf4474bcf3127a255b7346528e24e5b11b6d28702399c04c524b",
+      "source": "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json"
+    },
+    {
+      "byte_size": 1645,
+      "destination": "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
+      "sha256": "sha256:0126943d88852981f1a10edaf1625dc832b4fc37b8d0359ea1984c9fe7b85a95",
+      "source": "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json"
+    },
+    {
+      "byte_size": 48619,
+      "destination": "src/taim/data/prepared.py",
+      "sha256": "sha256:f93a08a6d2a6870886e77032082e4649937cd79f47ca9f63fb42de475d23781d",
+      "source": "src/taim/data/prepared.py"
+    },
+    {
+      "byte_size": 643,
+      "destination": "src/taim/data/profiles/confirmation-full-v1.json",
+      "sha256": "sha256:c6ebe55a036717a4a650f6b6c6f237a3070128f52330409db673aaf6d438fe5f",
+      "source": "src/taim/data/profiles/confirmation-full-v1.json"
+    },
+    {
+      "byte_size": 630,
+      "destination": "src/taim/data/profiles/description-v1.json",
+      "sha256": "sha256:9e1b0d60d4d08e0b8fce102270124087942557fa0e37c85bd84112783cb5d9ff",
+      "source": "src/taim/data/profiles/description-v1.json"
+    },
+    {
+      "byte_size": 632,
+      "destination": "src/taim/data/profiles/official-full-v1.json",
+      "sha256": "sha256:7eb5f4bef05291bfe83e78f6d83ef0bd7fe7fc1d3d13f42e1dfd5414eb2a8a92",
+      "source": "src/taim/data/profiles/official-full-v1.json"
+    },
+    {
+      "byte_size": 656,
+      "destination": "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
+      "sha256": "sha256:0fbc3afb991aefabcc29ecaabcdcf9bc67924df4ea279c93f772d5aee38e9426",
+      "source": "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json"
+    },
+    {
+      "byte_size": 652,
+      "destination": "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
+      "sha256": "sha256:ddf304462f69b8d3a2c4f6436ae2fdf5a93eb10d365794d29e2b58dda1a24d8a",
+      "source": "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json"
+    },
+    {
+      "byte_size": 622,
+      "destination": "src/taim/data/profiles/summary-v1.json",
+      "sha256": "sha256:15116b6f8035ed5a9103af1400b6f67feff68d831860000d4f7bbc94222b9e78",
+      "source": "src/taim/data/profiles/summary-v1.json"
+    },
+    {
+      "byte_size": 654,
+      "destination": "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
+      "sha256": "sha256:3e6c093443a5c7b4d3ebfe57c9bba99ec062f04c31c81e498713878bc410855a",
+      "source": "src/taim/data/profiles/synthetic-patient-to-trial-v1.json"
+    },
+    {
+      "byte_size": 675,
+      "destination": "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
+      "sha256": "sha256:eadea5bb4886da1a7d9f8600f6048c71dc0f7dac8f0bb422b5cc7d727614ab43",
+      "source": "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json"
+    },
+    {
+      "byte_size": 646,
+      "destination": "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
+      "sha256": "sha256:e369fd2d5c26526c126c4b0a856b325fd02e5f9d8f5afa8d933ff439c887e298",
+      "source": "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json"
+    },
+    {
+      "byte_size": 633,
+      "destination": "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
+      "sha256": "sha256:0a045632c93af90d55ae65693430426ae7cf5cdaf049422741f3ebb6f411578e",
+      "source": "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json"
+    },
+    {
+      "byte_size": 633,
+      "destination": "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
+      "sha256": "sha256:25386cccc8e6c250d53cddf831f77dec895e74838d1eb5cab6e8804e9bb09732",
+      "source": "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json"
+    },
+    {
+      "byte_size": 43003,
+      "destination": "src/taim/data/release-support-v0.1.json",
+      "generator": "support-catalogue",
+      "sha256": "sha256:20e211c1ee31658a383ffef7dd20729e74f12d41caf57f0a0b748293f188d04a",
+      "source": "src/taim/data/release-support-v0.1.json"
+    },
+    {
+      "byte_size": 19987,
+      "destination": "src/taim/data/sigir_ct_2016.py",
+      "sha256": "sha256:2f726f9331f86d8d8dcbe11a26ad8443976a117bc01bcb4730397d56a6cbc5b0",
+      "source": "src/taim/data/sigir_ct_2016.py"
+    },
+    {
+      "byte_size": 28383,
+      "destination": "src/taim/data/trec_ct.py",
+      "sha256": "sha256:32dc965ab0cee0984ef4dc278b6990286a0267a29138a86a4cc163b499dffbb7",
+      "source": "src/taim/data/trec_ct.py"
+    },
+    {
+      "byte_size": 66267,
+      "destination": "src/taim/data/trec_ct_2021.py",
+      "sha256": "sha256:8e67831075f46da047d5c5a8c21009db2f0070e500db8e1bace7dc18a6ee8411",
+      "source": "src/taim/data/trec_ct_2021.py"
+    },
+    {
+      "byte_size": 81018,
+      "destination": "src/taim/eligibility.py",
+      "sha256": "sha256:70083e9a899acda3d65254b058ee62bb1e416c333bf6792ccc58417b7893ef6c",
+      "source": "src/taim/eligibility.py"
+    },
+    {
+      "byte_size": 35240,
+      "destination": "src/taim/entity_versions.py",
+      "sha256": "sha256:c564d39e32e2ef450a2fb950f0d774f092f664a44af13c9615ee43bd1a381514",
+      "source": "src/taim/entity_versions.py"
+    },
+    {
+      "byte_size": 37373,
+      "destination": "src/taim/evaluation.py",
+      "sha256": "sha256:4e71145a0ebeb19c1c79dd77546ad0e49d2dba42cd7f04a7bac39eb24d07e9a1",
+      "source": "src/taim/evaluation.py"
+    },
+    {
+      "byte_size": 9123,
+      "destination": "src/taim/evaluation_package.py",
+      "sha256": "sha256:f194f74d192c733aee5e250b43151628485ff56e266afde50601d63e1f9259f2",
+      "source": "src/taim/evaluation_package.py"
+    },
+    {
+      "byte_size": 1040,
+      "destination": "src/taim/executables.py",
+      "sha256": "sha256:59a09cd09b55e27dedfdbf5e06fd7d9bb1bac51a164d74b7b73513af05075535",
+      "source": "src/taim/executables.py"
+    },
+    {
+      "byte_size": 475,
+      "destination": "src/taim/file_hash.py",
+      "sha256": "sha256:258f31d6739623f72fe5c7e8a835f630c10265f9c315bd517d133253bdaa6e23",
+      "source": "src/taim/file_hash.py"
+    },
+    {
+      "byte_size": 8840,
+      "destination": "src/taim/fixtures/__init__.py",
+      "sha256": "sha256:e87a3df6fde80c2a139d15a4b40638b330cdf7166ef17f4413ba669251d1f6dc",
+      "source": "src/taim/fixtures/__init__.py"
+    },
+    {
+      "byte_size": 473,
+      "destination": "src/taim/fixtures/trec-mini/README.md",
+      "sha256": "sha256:bdff06632b9c6fca5e3f0ee60d3c8ee5984c2c061543d0fb5f21346bff6d73c7",
+      "source": "src/taim/fixtures/trec-mini/README.md"
+    },
+    {
+      "byte_size": 1006,
+      "destination": "src/taim/fixtures/trec-mini/qrels.jsonl",
+      "sha256": "sha256:9919b6c924dd62043e7d1aff2a0e228aa34d938256c70cb1c65bdaf1ceb1a3f4",
+      "source": "src/taim/fixtures/trec-mini/qrels.jsonl"
+    },
+    {
+      "byte_size": 853,
+      "destination": "src/taim/fixtures/trec-mini/topics.jsonl",
+      "sha256": "sha256:7d6fdb22f0ccbe911b59bbf0acb8a4cb3ee9a277c75d398462d0c0628c5f1963",
+      "source": "src/taim/fixtures/trec-mini/topics.jsonl"
+    },
+    {
+      "byte_size": 2377,
+      "destination": "src/taim/fixtures/trec-mini/trials.jsonl",
+      "sha256": "sha256:086381f8c8ca722b9db3ab4dbf611a0acc267e31ec5fc0629643e13667e3996b",
+      "source": "src/taim/fixtures/trec-mini/trials.jsonl"
+    },
+    {
+      "byte_size": 6780,
+      "destination": "src/taim/folded_query_bundle.py",
+      "sha256": "sha256:ecede2a725e433b92f84b7b55706ba4bef26b430426a52fa26242434bca40607",
+      "source": "src/taim/folded_query_bundle.py"
+    },
+    {
+      "byte_size": 7744,
+      "destination": "src/taim/judgments.py",
+      "sha256": "sha256:46f0cac78c6f8fbb2c92482d40c9d91514f1b230472cafaf96d689eac07fa592",
+      "source": "src/taim/judgments.py"
+    },
+    {
+      "byte_size": 68972,
+      "destination": "src/taim/pair_assessment.py",
+      "sha256": "sha256:79080fe9f8173f62285cbc3c9e93e5f3b6430a88e7ac47a1c44b62fd7f7981be",
+      "source": "src/taim/pair_assessment.py"
+    },
+    {
+      "byte_size": 1562,
+      "destination": "src/taim/pair_evidence.py",
+      "sha256": "sha256:5540c9a646b1c2411edb47ad4b95acfea43cdb5eb8447abd746aeff0bab4a614",
+      "source": "src/taim/pair_evidence.py"
+    },
+    {
+      "byte_size": 6927,
+      "destination": "src/taim/pipeline_extensions/__init__.py",
+      "sha256": "sha256:276843b98386ef4946b86f7a82e2dd599ef51cc78726b8655638cbf293725820",
+      "source": "src/taim/pipeline_extensions/__init__.py"
+    },
+    {
+      "byte_size": 17909,
+      "destination": "src/taim/pipeline_extensions/staged.py",
+      "sha256": "sha256:0c06bc1855b6f4e09cb1f6d6a253ab7422f37000e6f44dc0f814080327b1fa45",
+      "source": "src/taim/pipeline_extensions/staged.py"
+    },
+    {
+      "byte_size": 17039,
+      "destination": "src/taim/pipeline_extensions/trialgpt.py",
+      "sha256": "sha256:52b336e5b1aa5ff07d4e0a425d4c138d3bc86bc44bdc36cd78aa0d370d465c9c",
+      "source": "src/taim/pipeline_extensions/trialgpt.py"
+    },
+    {
+      "byte_size": 22824,
+      "destination": "src/taim/pipeline_extensions/trialmatchai.py",
+      "sha256": "sha256:538aff9d3722a577c7266f5e584c6af8aba29ade8a6f538392aec0443bc19a64",
+      "source": "src/taim/pipeline_extensions/trialmatchai.py"
+    },
+    {
+      "byte_size": 24049,
+      "destination": "src/taim/profiles.py",
+      "sha256": "sha256:ca6a7b18fbae6794a083621b3f7d37149a5354324f1d5e71ac334a0e1d9610ad",
+      "source": "src/taim/profiles.py"
+    },
+    {
+      "byte_size": 21610,
+      "destination": "src/taim/public_patient_to_trial.py",
+      "sha256": "sha256:f497e8168042219f8c556963a162e72577fd603dc06581af921a5861bbe7b291",
+      "source": "src/taim/public_patient_to_trial.py"
+    },
+    {
+      "byte_size": 1,
+      "destination": "src/taim/py.typed",
+      "sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "source": "src/taim/py.typed"
+    },
+    {
+      "byte_size": 27982,
+      "destination": "src/taim/query_folding.py",
+      "sha256": "sha256:406f7ffe6b9be2c4147565da416be14cded229e4cf8d6dd3107bb00c533777c9",
+      "source": "src/taim/query_folding.py"
+    },
+    {
+      "byte_size": 60946,
+      "destination": "src/taim/release_cli.py",
+      "sha256": "sha256:575ec40584f8dc28c0e46d059408888d7673e71eb2ce6354fd3014bcc2c7c00a",
+      "source": "src/taim/release_cli.py"
+    },
+    {
+      "byte_size": 5059,
+      "destination": "src/taim/release_fixture.py",
+      "sha256": "sha256:edac38da33fda5c60654efc4c1d4b93abbc537f415c6dfc11740eea30e7b151a",
+      "source": "src/taim/release_fixture.py"
+    },
+    {
+      "byte_size": 26247,
+      "destination": "src/taim/release_profiles.py",
+      "sha256": "sha256:f71f53ea8b1fa439907964ce8d29e4099979190f704504872ed4eb2ad1c6535e",
+      "source": "src/taim/release_profiles.py"
+    },
+    {
+      "byte_size": 12034,
+      "destination": "src/taim/release_reference_systems.py",
+      "sha256": "sha256:8712d3b998861e4071158c63159332f84d8c6473934c555715c7efad4f6d11cf",
+      "source": "src/taim/release_reference_systems.py"
+    },
+    {
+      "byte_size": 76309,
+      "destination": "src/taim/release_result_bundle.py",
+      "sha256": "sha256:f9f75530ca42ccd885a433ace7f7cc77d2f12b9c5de583ad98983c33418b4dac",
+      "source": "src/taim/release_result_bundle.py"
+    },
+    {
+      "byte_size": 39171,
+      "destination": "src/taim/release_staged_pipeline.py",
+      "sha256": "sha256:8eaff24bd194bfa0d990bedc05f4fb48bab2e37796f8bd87879944bcb8f10f00",
+      "source": "src/taim/release_staged_pipeline.py"
+    },
+    {
+      "byte_size": 29285,
+      "destination": "src/taim/release_support.py",
+      "sha256": "sha256:9783ee776904b621a13db26a2cfa836fdec17a655335806ddb227139e9b41f08",
+      "source": "src/taim/release_support.py"
+    },
+    {
+      "byte_size": 1437,
+      "destination": "src/taim/reverse_fixture.py",
+      "sha256": "sha256:f66a51848bfb932084b857a64becda9728cf0a1aec1d8805e5eafef6f9b17db8",
+      "source": "src/taim/reverse_fixture.py"
+    },
+    {
+      "byte_size": 8484,
+      "destination": "src/taim/reverse_viability.py",
+      "sha256": "sha256:75a43e9e86157a1baf7528c1c452fd67ce46493ce40ff440006cacf70638a382",
+      "source": "src/taim/reverse_viability.py"
+    },
+    {
+      "byte_size": 2824,
+      "destination": "src/taim/safe_xml.py",
+      "sha256": "sha256:46fd0a45a76449f2fd63dbe101d227da69a3eb48d73b953e1e4f61f836425f2f",
+      "source": "src/taim/safe_xml.py"
+    },
+    {
+      "byte_size": 50487,
+      "destination": "src/taim/schemas.py",
+      "sha256": "sha256:7dc8dbf03a32f1866f0f881bd5f712dfeab92c7d08cbc8eda670ee088d04a2c7",
+      "source": "src/taim/schemas.py"
+    },
+    {
+      "byte_size": 84808,
+      "destination": "src/taim/scorecards.py",
+      "sha256": "sha256:f29983bfad6cad60d26e51ff4ebbc70a1db68f769d1957d05db05b8959533f57",
+      "source": "src/taim/scorecards.py"
+    },
+    {
+      "byte_size": 83512,
+      "destination": "src/taim/snapshot.py",
+      "sha256": "sha256:b9b5e88b182c5b3d98d4b4521d04868a369bab52ac7b0a8a4d78d50138b76442",
+      "source": "src/taim/snapshot.py"
+    },
+    {
+      "byte_size": 6938,
+      "destination": "src/taim/source.py",
+      "sha256": "sha256:f266e4881ee372beaad6383e9912563e29e1bcd9e4d5287efc2676367ce5f435",
+      "source": "src/taim/source.py"
+    },
+    {
+      "byte_size": 23110,
+      "destination": "src/taim/system_contracts.py",
+      "sha256": "sha256:e6f9767242371d8cd14e7ba2824e8913225407cb03bbcfc491a78962c72411e6",
+      "source": "src/taim/system_contracts.py"
+    },
+    {
+      "byte_size": 98434,
+      "destination": "src/taim/trial_to_patient.py",
+      "sha256": "sha256:73edf6bc29bc1b0599119c5f7384d4eedb533066d5da4a34d716c4ac4f3c5b43",
+      "source": "src/taim/trial_to_patient.py"
+    },
+    {
+      "byte_size": 20188,
+      "destination": "src/taim/trialgpt_codex.py",
+      "sha256": "sha256:9b5d461b7c68238d636a7c59bdf111cc3911326b2c5a433977b1c45ad73d3669",
+      "source": "src/taim/trialgpt_codex.py"
+    },
+    {
+      "byte_size": 18330,
+      "destination": "src/taim/trialgpt_evaluation.py",
+      "sha256": "sha256:4473a9a7790194406702b21e769fb9a1e3b1c3a7ec327558a0169f10d19aa087",
+      "source": "src/taim/trialgpt_evaluation.py"
+    },
+    {
+      "byte_size": 27029,
+      "destination": "src/taim/trialgpt_generation.py",
+      "sha256": "sha256:c52ad5fb1f9d7d6c288e4879492cfd9cb2618ee0ba899e94f5f6ffbdaf3b58b4",
+      "source": "src/taim/trialgpt_generation.py"
+    },
+    {
+      "byte_size": 26367,
+      "destination": "src/taim/trialgpt_paper.py",
+      "sha256": "sha256:946a19ccbd13eccb4235925409922d9255ed56826f56ca9b88c4f215c2feb882",
+      "source": "release/public/trialgpt-method.py"
+    },
+    {
+      "byte_size": 28916,
+      "destination": "src/taim/trialgpt_publication.py",
+      "sha256": "sha256:acc17726c2843589a3afde9e1ac5986e22ca94671d1588cc56fa69c9fc0effb3",
+      "source": "src/taim/trialgpt_publication.py"
+    },
+    {
+      "byte_size": 10645,
+      "destination": "src/taim/trialgpt_retrieval_backends.py",
+      "sha256": "sha256:dbc0e7f7cdbecf2ab13f25be3ff6136d85fe9e49e65074ba1789c50957d95f84",
+      "source": "src/taim/trialgpt_retrieval_backends.py"
+    },
+    {
+      "byte_size": 63916,
+      "destination": "src/taim/trialgpt_retrieval_producer.py",
+      "sha256": "sha256:1db22634dd4d78e66cb3536dd0bb867ee2caa327052c6475f0274f2652338bb0",
+      "source": "src/taim/trialgpt_retrieval_producer.py"
+    },
+    {
+      "byte_size": 40154,
+      "destination": "tests/test_bundle_roundtrip.py",
+      "sha256": "sha256:8605c5b102ad3b08856a8f80a169af80c08dcdf0cfffdfb3463a8baf0cb7a18b",
+      "source": "release/public/tests/test_bundle_roundtrip.py"
+    },
+    {
+      "byte_size": 8843,
+      "destination": "tests/test_connectors.py",
+      "sha256": "sha256:3af3ac038ba71849acb8485fdc9b3650a1aebbeb82a08022e57901b2a99ee63b",
+      "source": "release/public/tests/test_connectors.py"
+    },
+    {
+      "byte_size": 849,
+      "destination": "tests/test_external_baselines.py",
+      "sha256": "sha256:1273c319a16e2937d15b431452a3a7755b90a5e8a14014c238768ac53bf02438",
+      "source": "release/public/tests/test_external_baselines.py"
+    },
+    {
+      "byte_size": 13873,
+      "destination": "tests/test_external_fidelity_profile.py",
+      "sha256": "sha256:2a027c1867aa51e65234109f1640d577c7c8a6608a0a2a1e31b66d66f9ea7c87",
+      "source": "release/public/tests/test_external_fidelity_profile.py"
+    },
+    {
+      "byte_size": 13173,
+      "destination": "tests/test_quick_start.py",
+      "sha256": "sha256:32ed5c867eaa2d83b9951cd290ff419878720f2b37dec48304b0e6667206eb0c",
+      "source": "release/public/tests/test_quick_start.py"
+    },
+    {
+      "byte_size": 10074,
+      "destination": "tests/test_release_tracks.py",
+      "sha256": "sha256:1454377ce94a972833ef1ed3446d40dfd9ee7f24cb12e1d643bc5e7f55f9fb0a",
+      "source": "release/public/tests/test_release_tracks.py"
+    },
+    {
+      "byte_size": 2942,
+      "destination": "tests/test_staged_pipeline.py",
+      "sha256": "sha256:dd46577f90d92c0a89922361f2c3dc6785ddc43c2bf192c94cb5cede55e4e5c1",
+      "source": "release/public/tests/test_staged_pipeline.py"
+    },
+    {
+      "byte_size": 6007,
+      "destination": "tests/test_trialgpt_external_baseline.py",
+      "sha256": "sha256:8bee1fbe90c973fc340997049829356889bf9639f1bddb6a6f15dcda4dec25a6",
+      "source": "release/public/tests/test_trialgpt_external_baseline.py"
+    },
+    {
+      "byte_size": 20863,
+      "destination": "tests/test_trialgpt_retrieval_producer.py",
+      "sha256": "sha256:0c4c93cdb359bf04079f9d2373bcbc31927b580b22aa5fbca40c7187a7a8d22d",
+      "source": "tests/test_trialgpt_retrieval_producer.py"
+    },
+    {
+      "byte_size": 5105,
+      "destination": "tests/test_trialmatchai_external_baselines.py",
+      "sha256": "sha256:f8cb0ce8def636106e9e38fcb4e290a9c7bd60377a6bc6ee8e5d05345f6088b5",
+      "source": "release/public/tests/test_trialmatchai_external_baselines.py"
+    },
+    {
+      "byte_size": 516864,
+      "destination": "uv.lock",
+      "sha256": "sha256:15a8bed11d48b2f5ab7d8357fd2bd7b0d6cd95aecaeca982919fcf3b4225d5a6",
+      "source": "release/public/uv.lock.approved"
+    }
+  ],
+  "taim_source_commit": "3a24c522fc5f5df5fb8c9a09756c80b2c7b33333"
+}

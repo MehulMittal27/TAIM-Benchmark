@@ -100,9 +100,9 @@ def test_trialmatchai_track_adaptations_have_distinct_system_identities() -> Non
         TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID,
         TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID,
     } == {
-        "trialmatchai-current-cuda-l4-trec21-development-v3",
-        "trialmatchai-current-cuda-l4-trec22-development-v3",
-        "trialmatchai-current-cuda-l4-trec23-development-v3",
+        "trialmatchai-current-cuda-l4-trec21-development-v4",
+        "trialmatchai-current-cuda-l4-trec22-development-v4",
+        "trialmatchai-current-cuda-l4-trec23-development-v4",
     }
 
 

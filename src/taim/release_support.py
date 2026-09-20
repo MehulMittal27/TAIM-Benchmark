@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from taim.trial_to_patient import TrialToPatientRunManifest
 
 RELEASE_SUPPORT_SCHEMA_VERSION = "1.0"
-RELEASE_VERSION = "0.1.0"
+RELEASE_VERSION = "0.1.1"
 RELEASE_SUPPORT_RESOURCE = "release-support-v0.1.json"
 FROZEN_PAPER_PROTOCOL_SHA256 = (
     "sha256:18a9c9bd3c76455038d01458a5cb2d933059d1e72924285e26500a8aaab1baf6"

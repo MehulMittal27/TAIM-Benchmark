@@ -498,9 +498,9 @@ def _adopt_corpus(args: argparse.Namespace) -> int:
 
 EXTENSION = PipelineExtension(
     system_tasks={
-        "trialmatchai-current-cuda-l4-trec21-development-v3": "patient_to_trial",
-        "trialmatchai-current-cuda-l4-trec22-development-v3": "patient_to_trial",
-        "trialmatchai-current-cuda-l4-trec23-development-v3": "patient_to_trial",
+        "trialmatchai-current-cuda-l4-trec21-development-v4": "patient_to_trial",
+        "trialmatchai-current-cuda-l4-trec22-development-v4": "patient_to_trial",
+        "trialmatchai-current-cuda-l4-trec23-development-v4": "patient_to_trial",
     },
     pipeline_depth="post_eligibility",
     external_baseline=True,

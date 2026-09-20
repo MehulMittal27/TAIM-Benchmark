@@ -36,11 +36,11 @@ TRIALMATCHAI_REQUIRED_CAPABILITIES = frozenset({CAPABILITY_CANONICAL_PATIENT_TEX
 TRIALMATCHAI_OPTIONAL_CAPABILITIES = frozenset({CAPABILITY_TYPED_PATIENT_CORE})
 TRIALMATCHAI_CONCEPT_STORE_MANIFEST_FILENAME = "concept-store-manifest.json"
 TRIALMATCHAI_CONCEPT_STORE_MANIFEST_VERSION = "2"
-TRIALMATCHAI_L4_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec21-development-v3"
-TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec22-development-v3"
-TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec23-development-v3"
+TRIALMATCHAI_L4_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec21-development-v4"
+TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec22-development-v4"
+TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec23-development-v4"
 TRIALMATCHAI_L4_REPOSITORY = "https://github.com/MehulMittal27/TrialMatchAI.git"
-TRIALMATCHAI_L4_COMMIT = "7eba8f399336fcd988b00ce98f2e025e5ec04119"
+TRIALMATCHAI_L4_COMMIT = "99aa499e7296ebde836a0ebf00a5ed4948892a83"
 TRIALMATCHAI_L4_CONFIG_RELATIVE_PATH = "src/trialmatchai/config/taim_l4_cuda.json"
 TRIALMATCHAI_L4_CONFIG_SHA256 = (
     "sha256:a6359cadb1e1db3a69ce9476b0ca5ca40169e986792d36d006b2309c3818dfd5"

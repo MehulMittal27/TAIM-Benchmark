@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "taim-benchmark"
-version = "0.1.0"
+version = "0.1.1"
 description = "Auditable, executable multi-track benchmark for clinical trial matching"
 authors = [
   { name = "Hannes Ill", email = "hannes.ill@tum.de" },

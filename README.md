@@ -5,7 +5,7 @@ and the release manifest.
 
 TAIM is an executable benchmark for clinical trial matching. It fixes data and method identities,
 the public execution path, evaluation rules, validation, and result bundles. Matching pipelines are
-replaceable Systems evaluated through that contract; TAIM does not prescribe one pipeline.
+Systems; TAIM does not prescribe one, but the public CLI scores only the Systems its catalog lists.
 
 The benchmark is multi-track and bidirectional. Its public capability catalog covers TREC
 Clinical Trials 2021, 2022, and 2023 and SIGIR Clinical Trials 2016. The `patient_to_trial` and
@@ -112,7 +112,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25 \
   --run-id bm25-trec-2021-judgment-union \
@@ -147,11 +147,15 @@ trial-benchmark data pool inspect \
 
 This release makes `bm25`, `dense-bge-m3`, `dense-qwen3-embedding-0.6b`, and `rrf` executable on both
 the complete-corpus and judgment-union Profile declared for each real forward Track/query view.
-The complete Profiles remain public capabilities. The frozen
-[paper protocol](docs/paper-analysis-protocol-2026-08-31-v4.md) selects the five judgment-union strata for the
-paper: TREC 2021, TREC 2022, TREC 2023, SIGIR description, and SIGIR summary. Each Track × Task ×
-Profile × System row remains separate, and raw metrics are not pooled across Tracks. TREC 2022 and
-2023 remain inaccessible to an execution worker until the protocol digest is supplied.
+The complete Profiles remain public capabilities. The release freezes two protocols. The
+[v3 paper protocol](docs/paper-analysis-protocol-2026-08-31-v3.md) selects the five judgment-union
+strata for the paper: TREC 2021, TREC 2022, TREC 2023, SIGIR description, and SIGIR summary. The
+judgment-union commands in this README pass its digest as `PROTOCOL_ID`. The
+[v4 external-baseline amendment](docs/paper-analysis-protocol-2026-08-31-v4.md) retains that
+matrix and governs the TREC 2021 external-fidelity Profile and the external baseline Systems; their
+commands pass the v4 digest instead. Each Track × Task × Profile × System row remains separate, and
+raw metrics are not pooled across Tracks. Where v4 and the v3 note say v4 supersedes v3, they mean
+the paper's row allocation, not the digest: TREC 2022 and 2023 preparation and runs take v3 too.
 
 The benchmark also contains one TREC 2021-only staged System for the paper. It is declared for the
 TREC 2021 complete, judgment-union, and separate external-fidelity Profiles, but the primary paper
@@ -180,7 +184,7 @@ trial-benchmark patient-to-trial queries prepare \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --snomed-release /path/to/licensed/SnomedCT_InternationalRF2 \
   --output derived/trec-2021-folded-queries.json
@@ -197,7 +201,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25-folded --top-k 5000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -215,7 +219,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system dense-qwen3-embedding-0.6b-no-template --top-k 5000 \
   --index-dir indexes/qwen3-no-template \
@@ -234,7 +238,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system staged-bm25-qwen3-rrf-rerank --top-k 1000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -265,11 +269,10 @@ A stage scorecard is marked `stage_diagnostic`; it does not replace the declared
 Judgment-union commands require the receipt's `--pool-count`, `--pool-ids-sha256`, and
 `--pool-receipt-id` plus `--release-manifest`, `--package-artifact`, and `--dependency-lock` before
 they can produce queries or scores. The component and fusion producers must resolve to the same
-immutable release and lock identity. The mutable paper plan and its approval state remain in the
-project tracker. The dated paper protocol ships in this repository. The CLI accepts only the
-SHA-256 of those exact protocol bytes. Its Track and method choices are frozen, but each locally
-derived pool receipt and the eventual immutable release identities must still be recorded before
-paper execution.
+immutable release and lock identity. The dated paper protocols ship in this repository. The CLI
+accepts only the SHA-256 of those exact protocol bytes. Their Track and method choices are frozen,
+but each locally derived pool receipt and the eventual immutable release identities must still be
+recorded before paper execution.
 
 ## External baseline strata
 
@@ -299,9 +302,11 @@ retrieval and System artifacts to this release while retaining the exact complet
 The frozen v5 through v7 producer protocols are additive to v4; they do not add a TREC 2023
 TrialGPT row.
 
-The repository owner froze the v4 amendment before outcome inspection. Its exact digest is bound by
-the runtime and an older protocol digest fails closed. Execution still requires the immutable
-release, approved dependency notices, and - where applicable - the protected-Track access gate.
+The repository owner froze the v4 amendment before outcome inspection. The runtime binds its exact
+digest to the external-fidelity Profile and the external baseline Systems, and refuses any other
+digest there; the judgment-union rows of the other Systems take the v3 digest. Execution still
+requires the immutable release, approved dependency notices, and - where applicable - the
+protected-Track access gate.
 TrialGPT additionally requires separately authorized provider inputs.
 Release-selected external Systems additionally require separately authorized model inputs.
 
@@ -320,9 +325,9 @@ The other Tracks expose only the reverse contract and synthetic fixture until a 
 freezes an exhaustive denominator.
 
 For TREC 2022 or 2023, both preparation and the real benchmark command require
-`--protocol-approval-id sha256:<digest>`. The digest identifies the separately approved frozen
-analysis protocol; the CLI stores it in every confirmation run and later Result Bundle. Synthetic
-fixtures never accept a protocol approval identity.
+`--protocol-approval-id sha256:<digest>`. The digest is the v3 protocol's, the `PROTOCOL_ID` above,
+and the CLI accepts no other there; it stores it in every confirmation run and later Result Bundle.
+Synthetic fixtures never accept a protocol approval identity.
 
 Acquisition guides: [TREC 2021](docs/trec-2021-acquisition.md),
 [TREC 2022](docs/trec-2022-acquisition.md), [TREC 2023](docs/trec-2023-acquisition.md), and
@@ -333,7 +338,8 @@ External-fidelity acquisition is in
 ## Scope
 
 The executable catalog, not a Cartesian-product assumption, decides which Track, Task, Profile,
-and System combinations are supported. Dense Systems require the `dense` extra and a local index.
+and System combinations are supported. Dense Systems require the `dense` extra; the run builds its
+own index under `--index-dir`.
 RRF consumes same-direction BM25 and BGE-M3 component runs with identical benchmark identities.
 Bundle-eligible RRF also requires both components to come from clean producers of the same frozen
 release; their lock-bound dependency-environment identities are retained by the fusion run.
@@ -350,8 +356,9 @@ do not establish clinical validity, deployment readiness, or equivalence to anot
 
 To make any run eligible for later Result Bundle admission, pass all three producer inputs:
 `--release-manifest`, `--package-artifact`, and `--dependency-lock`. The dependency lock must be the
-exact `uv.lock` recorded by the manifest. Local runs may omit all three, but cannot be admitted to a
-Published Result Bundle.
+exact `uv.lock` recorded by the manifest. Synthetic and full-corpus runs may omit all three, but
+cannot be admitted to a Published Result Bundle. Judgment-union and external-fidelity runs, and
+their staged query preparation, never permit that omission.
 
 A Result Bundle refuses any published string that is itself an absolute filesystem path, and names
 each file and JSON location where it found one.

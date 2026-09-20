@@ -790,9 +790,9 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
                 "the public TrialGPT System requires a preflight-validated frozen "
                 "retrieval artifact"
             )
-        if depth != 2_000 or request.top_k != 10:
+        if depth != 2_000 or request.top_k != 20:
             raise TrialGPTAdapterError(
-                "TrialGPT publication requires retrieval_depth 2000 and final top_k 10"
+                "TrialGPT publication requires retrieval_depth 2000 and final top_k 20"
             )
         cache = GenerationCache(
             run_workspace / "trialgpt-generation-cache.sqlite3",

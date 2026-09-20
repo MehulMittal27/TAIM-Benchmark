@@ -14,7 +14,7 @@ CLI always uses this packaged lock and does not expose a source-lock override.
 ```console
 trial-benchmark data prepare \
   --track trec-ct-2023 \
-  --protocol-approval-id sha256:<approved-protocol-digest> \
+  --protocol-approval-id sha256:<protocol-v3-digest> \
   --source /path/to/trec-2023-files \
   --output-dir prepared/trec-ct-2023
 ```

@@ -27,7 +27,7 @@
       ]
     },
     {
-      "system_id": "trialmatchai-current-cuda-l4-trec21-development-v3",
+      "system_id": "trialmatchai-current-cuda-l4-trec21-development-v4",
       "models": [
         {
           "model_id": "BAAI/bge-m3",
@@ -56,7 +56,7 @@
       ],
       "runtime_inputs": [
         {
-          "input_id": "TrialMatchAI-upstream-code@7eba8f399336fcd988b00ce98f2e025e5ec04119",
+          "input_id": "TrialMatchAI-upstream-code@99aa499e7296ebde836a0ebf00a5ed4948892a83",
           "acquisition": "user-supplied",
           "redistribution": "not-included"
         },
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "system_id": "trialmatchai-current-cuda-l4-trec22-development-v3",
+      "system_id": "trialmatchai-current-cuda-l4-trec22-development-v4",
       "models": [
         {
           "model_id": "BAAI/bge-m3",
@@ -97,7 +97,7 @@
       ],
       "runtime_inputs": [
         {
-          "input_id": "TrialMatchAI-upstream-code@7eba8f399336fcd988b00ce98f2e025e5ec04119",
+          "input_id": "TrialMatchAI-upstream-code@99aa499e7296ebde836a0ebf00a5ed4948892a83",
           "acquisition": "user-supplied",
           "redistribution": "not-included"
         },
@@ -109,7 +109,7 @@
       ]
     },
     {
-      "system_id": "trialmatchai-current-cuda-l4-trec23-development-v3",
+      "system_id": "trialmatchai-current-cuda-l4-trec23-development-v4",
       "models": [
         {
           "model_id": "BAAI/bge-m3",
@@ -138,7 +138,7 @@
       ],
       "runtime_inputs": [
         {
-          "input_id": "TrialMatchAI-upstream-code@7eba8f399336fcd988b00ce98f2e025e5ec04119",
+          "input_id": "TrialMatchAI-upstream-code@99aa499e7296ebde836a0ebf00a5ed4948892a83",
           "acquisition": "user-supplied",
           "redistribution": "not-included"
         },

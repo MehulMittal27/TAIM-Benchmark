@@ -10,3 +10,5 @@ dist/
 dense-indexes/
 prepared/
 runs/
+/derived/
+/indexes/

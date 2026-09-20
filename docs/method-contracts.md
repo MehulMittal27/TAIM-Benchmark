@@ -1,8 +1,9 @@
 # Reference method contracts
 
-TAIM fixes the executable comparison contract. Systems remain replaceable and choose their own
-query representation, retrieval, fusion, reranking, eligibility logic, and other matching methods.
+TAIM fixes the executable comparison contract. Each System chooses its own query representation,
+retrieval, fusion, reranking, eligibility logic, and other matching methods.
 The support catalog lists only Systems that this release can execute through the public interface.
+The public CLI's run validation, run evaluation, and Result Bundle validation refuse any other System.
 
 The Systems listed in the release catalogue produce Primary Rankings on the Profiles the catalogue
 declares for each.
@@ -196,19 +197,18 @@ and every selected topic before a provider call. Paper execution uses exactly 48
 workers. The public contract supports TREC 2021, TREC 2022, and the two explicit SIGIR query
 Profiles, but not TREC 2023. It is a TAIM adaptation, not the upstream paper's GPT-4 System.
 
-Release 0.1.0 freezes the retrieval producer as `trialgpt-three-luna-consensus-v2`. Three
+Release 0.1 freezes the retrieval producer as `trialgpt-three-luna-consensus-v2`. Three
 `gpt-5.6-luna` query plans feed `taim-controlled-bm25-v2` and pinned MedCPT channels at depth
 2,000; fixed condition-weighted RRF and a fixed cross-arm consensus produce the final ranking.
 BM25 v2 counts document frequency once per document and is not interchangeable with the older v1
 implementation. The producer guide records the exact revisions, call budget, cluster command, and
 retained evidence.
 
-Protocol v7
-binds fresh retrieval and System artifacts to the 0.1.0 release while retaining the exact completed
-query plans by their unchanged provider-call identities.
+Protocol v7 requires fresh retrieval and System artifacts while retaining the exact completed query
+plans by their unchanged provider-call identities.
 
 Release-selected TrialMatchAI Systems invoke a clean external checkout at commit
-`7eba8f399336fcd988b00ce98f2e025e5ec04119`.
+`99aa499e7296ebde836a0ebf00a5ed4948892a83`.
 The adapter verifies the config digest, model and LoRA
 identities, adapter weight hashes, concept-store manifest, search database, all effective
 environment overrides, and output membership before normalizing the ranking. Its entity linking

@@ -16,11 +16,11 @@
   "current": {
     "directory": "external/trialmatchai-current",
     "repository": "https://github.com/MehulMittal27/TrialMatchAI.git",
-    "commit": "7eba8f399336fcd988b00ce98f2e025e5ec04119",
-    "git_tree": "3364185b56dd6dfe5420292405ef5aea6db24d16",
-    "source_manifest_sha256": "sha256:db2db9f156b26a51bebcf19aa8c83d4c0279f2f18b494a1d986ad87dda076e7f",
+    "commit": "99aa499e7296ebde836a0ebf00a5ed4948892a83",
+    "git_tree": "5948a176ce881cd2a25431e26b5a253a85213326",
+    "source_manifest_sha256": "sha256:9dd6d58c2dbc860f8c136565984e7aa0639d93475264964088dd04b01e9d1749",
     "verify_remote": true,
-    "release": "taim-l4-cuda-development-v3",
+    "release": "taim-l4-cuda-development-v4",
     "license": {
       "expression": "MIT",
       "path": "LICENSE",

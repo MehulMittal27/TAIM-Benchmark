@@ -1,6 +1,6 @@
 {
   "artifact_type": "taim-benchmark-release-provenance",
-  "release_version": "0.1.0",
+  "release_version": "0.1.1",
   "schema_version": "2.0",
   "source_files": [
     {
@@ -11,15 +11,15 @@
       "source": "release/public/.github/workflows/ci.approved.yml"
     },
     {
-      "byte_size": 126,
+      "byte_size": 146,
       "destination": ".gitignore",
-      "sha256": "sha256:dbed2757624abebe215f5e85b1243e22d8835da994ce925c47550be525ce13f7",
+      "sha256": "sha256:106192d933c5702163cd21921b24b6545739cb19798c319232c815bf634be0f2",
       "source": "release/public/.gitignore"
     },
     {
       "byte_size": 405,
       "destination": "CITATION.cff",
-      "sha256": "sha256:1cd096af905342ed7c6d02dc644a176a9b1c2bef8f88b09d52a7beaad568f654",
+      "sha256": "sha256:e7d0e806041a9e699ad514935abfc026e6470cf8bd80dfbc730aff403edaf172",
       "source": "release/public/CITATION.cff.approved"
     },
     {
@@ -35,10 +35,10 @@
       "source": "release/public/LICENSE.approved"
     },
     {
-      "byte_size": 18250,
+      "byte_size": 18875,
       "destination": "README.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:1c7173e5106eff61b835b813baded4fe94ca1e0f8f4b8d5d7884f00ccb51b2ee",
+      "sha256": "sha256:7577d418f82ed53be55745dbe348f3d0eacc110fb9f31725ec7696e8dcb710be",
       "source": "release/public/README.md"
     },
     {
@@ -51,7 +51,7 @@
       "byte_size": 8967,
       "destination": "THIRD_PARTY_NOTICES.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:c7f4a16106ec72cc17fcc8b99a31f3e5163d0103780498a7360f4eea7826581e",
+      "sha256": "sha256:46b3cfa5d426b29a01179b995670d10f008349d571689dd8d77e8909081049a1",
       "source": "release/public/THIRD_PARTY_NOTICES.approved.md"
     },
     {
@@ -70,14 +70,14 @@
     {
       "byte_size": 3381,
       "destination": "docs/external-fidelity-profile.md",
-      "sha256": "sha256:d598f72229168114fe39efb6f1f3be50400a60fde8e6c27cffdfd35e9aee7e43",
+      "sha256": "sha256:809a6bdbd39d431af5ac020e81a8d4021de6dd38f19c8474e314b67e1fd12203",
       "source": "release/public/docs/external-fidelity-profile.md"
     },
     {
-      "byte_size": 16509,
+      "byte_size": 16572,
       "destination": "docs/method-contracts.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:6612121725f098f363b40522386c5d52998054137a5fa8b42a0a61e0b037d627",
+      "sha256": "sha256:621efa4e808ae3d6351eb438a5659cbaa79fe47519a1295c39a51468312b93b6",
       "source": "release/public/docs/method-contracts.md"
     },
     {
@@ -105,10 +105,22 @@
       "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v3.md"
     },
     {
+      "byte_size": 474,
+      "destination": "docs/paper-analysis-protocol-2026-08-31-v4-supersede-note-2026-09-18.md",
+      "sha256": "sha256:f02c332cb1278e1cb4ed9c62071548e4e96d637aa4476c4e193c6cfd9309cde9",
+      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v4-supersede-note-2026-09-18.md"
+    },
+    {
       "byte_size": 11410,
       "destination": "docs/paper-analysis-protocol-2026-08-31-v4.md",
       "sha256": "sha256:55bb91f69d6494d58eff62b96f65f7b59759de45a366dc551e4ad5586fdfc896",
       "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v4.md"
+    },
+    {
+      "byte_size": 460,
+      "destination": "docs/paper-analysis-protocol-2026-09-02-v5-v7-supersede-note-2026-09-19.md",
+      "sha256": "sha256:0123b6f7258d4aaf2afc1411addb500f94af0b117bcd76ab206463ffe7b61a48",
+      "source": "release/public/docs/paper-analysis-protocol-2026-09-02-v5-v7-supersede-note-2026-09-19.md"
     },
     {
       "byte_size": 5992,
@@ -129,10 +141,10 @@
       "source": "docs/protocols/paper-analysis-protocol-2026-09-02-v7.md"
     },
     {
-      "byte_size": 1960,
-      "destination": "docs/release-notes-0.1.0.md",
-      "sha256": "sha256:79aa4067cf0928f125bcba1ed37683e0b43e690d0110e088659da43c2114da40",
-      "source": "release/public/docs/release-notes-0.1.0.md"
+      "byte_size": 2277,
+      "destination": "docs/release-notes-0.1.1.md",
+      "sha256": "sha256:da69bed229a563ee02d5ff6ab8a6afea9ca34f8216af39a5ce3e24dade486d9a",
+      "source": "release/public/docs/release-notes-0.1.1.md"
     },
     {
       "byte_size": 7287,
@@ -161,33 +173,33 @@
       "source": "release/public/docs/trec-2021-acquisition.md"
     },
     {
-      "byte_size": 1751,
+      "byte_size": 1745,
       "destination": "docs/trec-2022-acquisition.md",
-      "sha256": "sha256:fbe870a4c8e89a9a4cabe806b3e4eaab8043c0925fe93ea948254f78119843a4",
+      "sha256": "sha256:c09da60a48a8f36ac1da1f66483ef32b1b9b2bc51203dd0f81bcac4fdbf03f31",
       "source": "release/public/docs/trec-2022-acquisition.md"
     },
     {
-      "byte_size": 1839,
+      "byte_size": 1833,
       "destination": "docs/trec-2023-acquisition.md",
-      "sha256": "sha256:a0dcc32ad218878fda854f0cfe97766eb25d8be7d96980fcf30ed3267dc05dc3",
+      "sha256": "sha256:eb0018dcbda45931ef71cd9b67544099224ab2c3851b945209aeca44498847aa",
       "source": "release/public/docs/trec-2023-acquisition.md"
     },
     {
       "byte_size": 2856,
       "destination": "docs/trialgpt-external-baseline.md",
-      "sha256": "sha256:efd963e5c8a90d74cf5f780f4cb72f8138633ac444552fc7a3a407320dc2bc46",
+      "sha256": "sha256:aa3f47d72543f4d7dce709c37724f1b3100c306c054108abbc95ce4bcd9cdb3e",
       "source": "release/public/docs/trialgpt-external-baseline.md"
     },
     {
       "byte_size": 4988,
       "destination": "docs/trialgpt-retrieval-producer.md",
-      "sha256": "sha256:89aefe3aa0ac1f28c2051f5639c0809ff8213a80a0e8ca13571e6e0a41b51bd4",
+      "sha256": "sha256:07c9bf3a63136968db169c83028b9c69fc794bac0bf8e5dc9aabb84b6252c997",
       "source": "docs/agents/trialgpt-retrieval-producer.md"
     },
     {
-      "byte_size": 2548,
+      "byte_size": 2563,
       "destination": "docs/trialmatchai-external-baseline.md",
-      "sha256": "sha256:f29a599e9c079c2ef40c18f03fc60a9367d681850aff5cc14cc15cb5e28ddecd",
+      "sha256": "sha256:f83f0220fb9f79759eb77f88defe573de95d7b7baec62598d622ee7c08157927",
       "source": "release/public/docs/trialmatchai-external-baseline.md"
     },
     {
@@ -199,14 +211,14 @@
     {
       "byte_size": 1185,
       "destination": "external/trialmatchai-lock.json",
-      "sha256": "sha256:794bafc16d132193bb7d39809256559b303b54cdd40aefd129fadb02c8f9e992",
+      "sha256": "sha256:e4e12086214468e77fb960732f97b2be5658ebeb73052b78e30779da90923feb",
       "source": "external/trialmatchai-lock.json"
     },
     {
       "byte_size": 1839,
       "destination": "pyproject.toml",
       "generator": "pyproject",
-      "sha256": "sha256:c9261b22a034797b60ba884226fe31ef6b0f9a9c0d7f902ed13ef9d09477245a",
+      "sha256": "sha256:ad654e874b96c70984fa5304e82febf79586d1874f68d14f579df5e8d8c1eaf9",
       "source": "release/public/pyproject.toml.approved"
     },
     {
@@ -224,7 +236,7 @@
     {
       "byte_size": 1034,
       "destination": "src/taim/__init__.py",
-      "sha256": "sha256:a2f596aefe9d435f2fd54c010426d76d950b9e54e7ab164f392b40ae88e3eb0b",
+      "sha256": "sha256:8aee72cd2b5ac6b0699e41a770d4abf49f7bd2732a972dc71d4c3a8446e28f88",
       "source": "src/taim/__init__.py"
     },
     {
@@ -237,13 +249,13 @@
     {
       "byte_size": 64852,
       "destination": "src/taim/adapters/trialgpt.py",
-      "sha256": "sha256:4256de882f2289519a2ecaa9831c7a13e456eb9a331e7e3dfba46b72cc85da34",
+      "sha256": "sha256:a2170927c82db7016bf8ea69bcb2d22bb726410cf5cde70b68558336d5cf3680",
       "source": "release/public/trialgpt-adapter.py"
     },
     {
       "byte_size": 91198,
       "destination": "src/taim/adapters/trialmatchai.py",
-      "sha256": "sha256:6a60406dcec08c4825d05b7893f8e4079e178d732da086b618496919cf92513d",
+      "sha256": "sha256:387ecde97445a997d9d61d8c751e28d99e5887b73c747d3d8c7c191f1a9b320e",
       "source": "release/public/trialmatchai-adapter.py"
     },
     {
@@ -310,7 +322,7 @@
       "byte_size": 4966,
       "destination": "src/taim/data/external-system-dependencies-v1.json",
       "generator": "external-system-dependencies",
-      "sha256": "sha256:543de0baad61650aa58e4fd202e2e5d543f4b40135ca9719eb30e4a826085b1e",
+      "sha256": "sha256:514d14072dfe022b08ed38da849c54cdd7075385c19058f3b481b5fe57d1d1db",
       "source": "src/taim/data/external-system-dependencies-v1.json"
     },
     {
@@ -425,7 +437,7 @@
       "byte_size": 43003,
       "destination": "src/taim/data/release-support-v0.1.json",
       "generator": "support-catalogue",
-      "sha256": "sha256:20e211c1ee31658a383ffef7dd20729e74f12d41caf57f0a0b748293f188d04a",
+      "sha256": "sha256:ded751002dfa31eaa1680b3d2b81deb09516ff5306173bfe823c8d4cf0bcd549",
       "source": "src/taim/data/release-support-v0.1.json"
     },
     {
@@ -557,7 +569,7 @@
     {
       "byte_size": 22824,
       "destination": "src/taim/pipeline_extensions/trialmatchai.py",
-      "sha256": "sha256:538aff9d3722a577c7266f5e584c6af8aba29ade8a6f538392aec0443bc19a64",
+      "sha256": "sha256:c022e1cbf165e2ca6470eb96c920ac5c9df80194f1f8ca105bf6fa99be3476d2",
       "source": "src/taim/pipeline_extensions/trialmatchai.py"
     },
     {
@@ -623,7 +635,7 @@
     {
       "byte_size": 29285,
       "destination": "src/taim/release_support.py",
-      "sha256": "sha256:9783ee776904b621a13db26a2cfa836fdec17a655335806ddb227139e9b41f08",
+      "sha256": "sha256:7b58dec8755f0dacc9060bfddcd936901df5ca0a6f64a69311689ff1b26ec104",
       "source": "src/taim/release_support.py"
     },
     {
@@ -779,15 +791,15 @@
     {
       "byte_size": 5105,
       "destination": "tests/test_trialmatchai_external_baselines.py",
-      "sha256": "sha256:f8cb0ce8def636106e9e38fcb4e290a9c7bd60377a6bc6ee8e5d05345f6088b5",
+      "sha256": "sha256:7f5cbfbdf3bc9813b1ada3507ca2977a7e0e9ac430181dd414aca95370d3c958",
       "source": "release/public/tests/test_trialmatchai_external_baselines.py"
     },
     {
       "byte_size": 516864,
       "destination": "uv.lock",
-      "sha256": "sha256:15a8bed11d48b2f5ab7d8357fd2bd7b0d6cd95aecaeca982919fcf3b4225d5a6",
+      "sha256": "sha256:8e67affd21562ee1fdba9a238d0eeb11c371142efa18ee584874e522a5c7f995",
       "source": "release/public/uv.lock.approved"
     }
   ],
-  "taim_source_commit": "3a24c522fc5f5df5fb8c9a09756c80b2c7b33333"
+  "taim_source_commit": "0ee494ba1771bf20ac7728ee050226c8ce1b859d"
 }

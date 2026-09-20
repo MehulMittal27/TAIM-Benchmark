@@ -1,7 +1,7 @@
 # TrialMatchAI external baseline
 
 The selected System is the current pinned TrialMatchAI fork at commit
-`7eba8f399336fcd988b00ce98f2e025e5ec04119`, not the original paper implementation. The TAIM
+`99aa499e7296ebde836a0ebf00a5ed4948892a83`, not the original paper implementation. The TAIM
 adapter verifies the clean checkout, origin, commit, config digest, model and adapter-weight
 identities, concept-store manifest, index inputs, environment overrides, and normalized ranking.
 
@@ -9,11 +9,12 @@ Provision the upstream checkout, its own locked runtime, licensed model snapshot
 concept store, and a prepared TrialMatchAI corpus outside this repository. Then add:
 
 ```console
-  --system trialmatchai-current-cuda-l4-trec21-development-v3 \
+  --system trialmatchai-current-cuda-l4-trec21-development-v4 \
   --trialmatchai-cwd /path/to/pinned/TrialMatchAI \
   --trialmatchai-corpus-dir /path/to/trialmatchai-corpus \
   --trialmatchai-search-db-path /path/to/trialmatchai-corpus/search \
-  --trialmatchai-workspace /path/to/empty-workspace
+  --trialmatchai-workspace /path/to/empty-workspace \
+  --top-k 20
 ```
 
 A run refuses a prepared corpus without a preparation receipt. Write the receipt once for each

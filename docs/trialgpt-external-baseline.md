@@ -24,7 +24,7 @@ configuration would be a separately named ablation.
   --trialgpt-publication-contract /path/to/all75-contract.json \
   --trialgpt-workspace /path/to/empty-or-in-place-resume-workspace \
   --trialgpt-generation-workers 48 \
-  --top-k 10
+  --top-k 20
 ```
 
 Provider calls require separate explicit authorization. A timeout, provider failure, or missing
@@ -52,7 +52,7 @@ trial-benchmark patient-to-trial trialgpt preflight \
   --frozen-retrieval-lock /path/to/track-specific-retrieval-lock.json \
   --generation-workers 48 \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --output /path/to/trialgpt-contract.json
 ```

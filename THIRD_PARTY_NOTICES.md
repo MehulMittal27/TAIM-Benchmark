@@ -82,7 +82,7 @@ redistribution. The TREC 2022 and SIGIR adaptations use their release-defined ju
 Inputs rather than copying TrialGPT's published cohort sizes.
 
 The selected TrialMatchAI checkout pins `MehulMittal27/TrialMatchAI` commit
-`7eba8f399336fcd988b00ce98f2e025e5ec04119`, whose exact LICENSE is MIT. The original paper
+`99aa499e7296ebde836a0ebf00a5ed4948892a83`, whose exact LICENSE is MIT. The original paper
 repository also contains an MIT LICENSE, while its Zenodo record declares CC BY 4.0 at the record
 level. TAIM does not resolve that metadata discrepancy by copying either repository; it records both
 facts for human review and invokes only the separately acquired current checkout.

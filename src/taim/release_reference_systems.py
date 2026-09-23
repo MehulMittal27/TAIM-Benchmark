@@ -1,16 +1,13 @@
-"""Public Release 0.1 BM25 and dense reference Systems."""
+"""Shared dense execution and request normalization for selected release units."""
 
 from __future__ import annotations
 
 import json
 import time
-from collections.abc import Mapping
-from dataclasses import replace
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
-from taim.baselines.bm25 import BM25Retriever, bm25_ranking_configuration
-from taim.baselines.encoder_registry import DENSE_ENCODER_REGISTRY
+from taim.baselines.encoder_registry import DENSE_ENCODER_REGISTRY, EncoderRegistry
 from taim.pipeline_extensions import extension_for
 from taim.schemas import PIPELINE_DEPTH_RETRIEVAL, PRIMARY_RANKING_CANDIDATES, JsonValue
 from taim.snapshot import CAPABILITY_CANONICAL_PATIENT_TEXT, CAPABILITY_CANONICAL_TRIAL_TEXT
@@ -30,123 +27,6 @@ def _option(request: SystemRunRequest, name: str) -> object:
         raise ValueError(f"{request.run_id} is missing System option {name!r}") from exc
 
 
-class ReleaseBM25System(StrictSystemOptions):
-    system_id = "bm25"
-    option_names = frozenset({"b", "k1"})
-    required_capabilities = frozenset(
-        {CAPABILITY_CANONICAL_PATIENT_TEXT, CAPABILITY_CANONICAL_TRIAL_TEXT}
-    )
-    optional_capabilities: frozenset[str] = frozenset()
-
-    def run(self, request: SystemRunRequest) -> SystemRunResult:
-        started_at = time.perf_counter()
-        retriever = BM25Retriever(
-            request.snapshot.trials,
-            k1=_option(request, "k1"),  # type: ignore[arg-type]
-            b=_option(request, "b"),  # type: ignore[arg-type]
-        )
-        candidates = retriever.retrieve_many(
-            request.snapshot.topics,
-            run_id=request.run_id,
-            system_id=self.system_id,
-            top_k=request.top_k,
-        )
-        runtime_seconds = time.perf_counter() - started_at
-        ranking = bm25_ranking_configuration(
-            k1=retriever.k1,
-            b=retriever.b,
-            requested_top_k=request.top_k,
-            document_count=len(retriever.documents),
-        )
-        configuration: dict[str, Any] = {
-            **ranking,
-            "model_identity": {"kind": "none", "reason": "deterministic_bm25"},
-            "index_identity": {
-                "implementation": "taim-okapi-bm25-v1",
-                "persistent": False,
-                "corpus_statistics": retriever.corpus_statistics,
-            },
-            "metric_cutoff": request.metric_cutoff,
-            "corpus_statistics": retriever.corpus_statistics,
-            "runtime_seconds": runtime_seconds,
-        }
-        return SystemRunResult(
-            candidates=tuple(candidates),
-            configuration=configuration,
-            runtime_seconds=runtime_seconds,
-            primary_ranking=PRIMARY_RANKING_CANDIDATES,
-            pipeline_depth=PIPELINE_DEPTH_RETRIEVAL,
-        )
-
-
-class ReleaseFoldedBM25System(StrictSystemOptions):
-    """BM25 over a checksum-bound, locally derived folded-query bundle."""
-
-    system_id = "bm25-folded"
-    option_names = frozenset({"b", "folded_query_bundle", "k1"})
-    required_capabilities = ReleaseBM25System.required_capabilities
-    optional_capabilities: frozenset[str] = frozenset()
-
-    def run(self, request: SystemRunRequest) -> SystemRunResult:
-        from taim.folded_query_bundle import validate_folded_query_bundle
-
-        raw_bundle = _option(request, "folded_query_bundle")
-        if not isinstance(raw_bundle, Mapping):
-            raise ValueError("bm25-folded requires a folded query bundle object")
-        queries, bundle_id = validate_folded_query_bundle(
-            raw_bundle,
-            expected_task_input_id=request.snapshot.task_input_id,
-            expected_topic_ids=tuple(topic.topic_id for topic in request.snapshot.topics),
-        )
-        topics = tuple(
-            replace(topic, canonical_text=query.canonical_text)
-            for topic, query in zip(request.snapshot.topics, queries, strict=True)
-        )
-        started_at = time.perf_counter()
-        retriever = BM25Retriever(
-            request.snapshot.trials,
-            k1=_option(request, "k1"),  # type: ignore[arg-type]
-            b=_option(request, "b"),  # type: ignore[arg-type]
-        )
-        candidates = retriever.retrieve_many(
-            topics,
-            run_id=request.run_id,
-            system_id=self.system_id,
-            top_k=request.top_k,
-        )
-        runtime_seconds = time.perf_counter() - started_at
-        ranking = bm25_ranking_configuration(
-            k1=retriever.k1,
-            b=retriever.b,
-            requested_top_k=request.top_k,
-            document_count=len(retriever.documents),
-        )
-        return SystemRunResult(
-            candidates=tuple(candidates),
-            configuration={
-                **ranking,
-                "model_identity": {"kind": "none", "reason": "deterministic_bm25"},
-                "index_identity": {
-                    "implementation": "taim-okapi-bm25-v1",
-                    "persistent": False,
-                    "corpus_statistics": retriever.corpus_statistics,
-                },
-                "query_transformation": {
-                    "bundle_id": bundle_id,
-                    "policy": raw_bundle["policy"],
-                    "provenance": raw_bundle["provenance"],
-                    "topic_count": len(queries),
-                },
-                "metric_cutoff": request.metric_cutoff,
-                "corpus_statistics": retriever.corpus_statistics,
-                "runtime_seconds": runtime_seconds,
-            },
-            runtime_seconds=runtime_seconds,
-            primary_ranking=PRIMARY_RANKING_CANDIDATES,
-            pipeline_depth=PIPELINE_DEPTH_RETRIEVAL,
-        )
-
-
 class ReleaseDenseSystem(StrictSystemOptions):
     option_names = frozenset(
         {
@@ -163,9 +43,12 @@ class ReleaseDenseSystem(StrictSystemOptions):
     )
     optional_capabilities: frozenset[str] = frozenset()
 
-    def __init__(self, system_id: str) -> None:
-        DENSE_ENCODER_REGISTRY.binding_for_system(system_id)
+    def __init__(
+        self, system_id: str, *, encoder_registry: EncoderRegistry = DENSE_ENCODER_REGISTRY
+    ) -> None:
+        encoder_registry.binding_for_system(system_id)
         self.system_id = system_id
+        self.encoder_registry = encoder_registry
 
     def run(self, request: SystemRunRequest) -> SystemRunResult:
         from taim.baselines.dense import (
@@ -202,7 +85,7 @@ class ReleaseDenseSystem(StrictSystemOptions):
             index_action = "built"
         encoder = cast(
             TextEncoder,
-            DENSE_ENCODER_REGISTRY.create_encoder(
+            self.encoder_registry.create_encoder(
                 self.system_id,
                 device=_option(request, "device"),  # type: ignore[arg-type]
             ),
@@ -231,7 +114,7 @@ class ReleaseDenseSystem(StrictSystemOptions):
         retrieval_seconds = time.perf_counter() - retrieval_started_at
         runtime_seconds = time.perf_counter() - started_at
         configuration = retriever.configuration(top_k=request.top_k)
-        policy = DENSE_ENCODER_REGISTRY.policy_for_system(self.system_id)
+        policy = self.encoder_registry.policy_for_system(self.system_id)
         configuration.update(
             {
                 "system_identity": {
@@ -274,19 +157,7 @@ def run_release_reference_system(
     extension = extension_for(system_id)
     if extension is not None:
         return extension.run(system_id, request)
-    if system_id == "bm25":
-        system: System = ReleaseBM25System()
-    elif system_id == "bm25-folded":
-        system = ReleaseFoldedBM25System()
-    elif system_id in {
-        "dense-bge-m3",
-        "dense-qwen3-embedding-0.6b",
-        "dense-qwen3-embedding-0.6b-no-template",
-    }:
-        system = ReleaseDenseSystem(system_id)
-    else:
-        raise ValueError(f"System {system_id!r} is not an exported direct reference System")
-    return run_normalized_system(system, request)
+    raise ValueError(f"System {system_id!r} is not an exported direct reference System")
 
 
 def run_normalized_system(system: System, request: SystemRunRequest) -> SystemRunResult:
@@ -305,8 +176,34 @@ def run_normalized_system(system: System, request: SystemRunRequest) -> SystemRu
 
 
 __all__ = [
-    "ReleaseBM25System",
     "ReleaseDenseSystem",
-    "ReleaseFoldedBM25System",
     "run_release_reference_system",
 ]
+
+
+def add_dense_options(parser) -> None:
+    from taim.pipeline_extensions import add_argument_once
+    from taim.release_cli import _positive_integer
+
+    add_argument_once(parser, "--index-dir", type=Path)
+    add_argument_once(parser, "--device", default="cpu")
+    add_argument_once(parser, "--document-batch-size", type=_positive_integer, default=8)
+    add_argument_once(parser, "--query-batch-size", type=_positive_integer, default=8)
+    add_argument_once(parser, "--rebuild-index", action="store_true")
+
+
+def dense_options(args, benchmark, task_input_id):
+    if args.index_dir is None:
+        raise ValueError("dense Systems require --index-dir")
+    return {
+        "corpus_hash": benchmark.corpus_hash,
+        "device": args.device,
+        "document_batch_size": args.document_batch_size,
+        "index_dir": args.index_dir,
+        "query_batch_size": args.query_batch_size,
+        "rebuild_index": args.rebuild_index,
+    }
+
+
+def run_dense_system(system_id, request):
+    return run_normalized_system(ReleaseDenseSystem(system_id), request)

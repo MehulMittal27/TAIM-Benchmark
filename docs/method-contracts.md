@@ -4,6 +4,9 @@ TAIM fixes the executable comparison contract. Each System chooses its own query
 retrieval, fusion, reranking, eligibility logic, and other matching methods.
 The support catalog lists only Systems that this release can execute through the public interface.
 The public CLI's run validation, run evaluation, and Result Bundle validation refuse any other System.
+A pipeline outside the catalog is scored through the separate `submission` commands in
+[Score your own pipeline](external-pipelines.md). Its ranking is checked against the same Task
+Input and scored by the same evaluation rules, and it stays a submission, never a catalog System.
 
 The Systems listed in the release catalogue produce Primary Rankings on the Profiles the catalogue
 declares for each.

@@ -1,17 +1,17 @@
 # TAIM benchmark
 
-This tree is an immutable benchmark release. Its identity is recorded in `RELEASE-PROVENANCE.json`
-and the release manifest.
+An immutable benchmark release records its identity in `RELEASE-PROVENANCE.json` and the release
+manifest.
 
 TAIM is an executable benchmark for clinical trial matching. It fixes data and method identities,
 the public execution path, evaluation rules, validation, and result bundles. Matching pipelines are
-Systems; TAIM does not prescribe one, but the public CLI scores only the Systems its catalog lists.
+Systems; TAIM prescribes none. The CLI runs its catalog's Systems and scores any other's rankings.
 
-The benchmark is multi-track and bidirectional. Its public capability catalog covers TREC
-Clinical Trials 2021, 2022, and 2023 and SIGIR Clinical Trials 2016. The `patient_to_trial` and
-`trial_to_patient` Tasks have separate inputs, runs, evaluators, and claim limits. TAIM reuses these
-existing test collections; it does not introduce a new dataset or redistribute benchmark source
-files.
+TAIM defines the `patient_to_trial` and `trial_to_patient` Tasks with separate inputs, runs,
+evaluators, and claim limits. Its Track definitions cover TREC Clinical Trials 2021, 2022, and 2023
+and SIGIR Clinical Trials 2016. The installed capability catalog lists the combinations this
+package can execute. TAIM reuses these existing test collections; it does not introduce a new
+dataset or redistribute benchmark source files.
 
 ## Quick start
 
@@ -51,10 +51,10 @@ trial-benchmark trial-to-patient run evaluate \
   --run-dir runs/quick-start-trial-to-patient
 ```
 
-Both direction-specific validate and evaluate commands print the exact release, Track, Task,
+The direction-specific validate and evaluate commands print the exact release, Track, Task,
 Profile, System, Prepared Snapshot ID, Task Input ID, System Input ID, and Evaluation Package ID.
 
-Both fixtures contain invented records. They cover eligible, excluded, irrelevant, unknown, and
+The packaged fixture records are invented. They cover eligible, excluded, irrelevant, unknown, and
 mixed-direction failure behavior. Their scores are conformance evidence, not effectiveness results.
 
 ## Real tracks
@@ -74,6 +74,11 @@ uv run trial-benchmark data prepare \
   --track trec-ct-2021 \
   --source /path/to/official-files \
   --output-dir prepared/trec-ct-2021
+```
+
+Run BM25 over the prepared complete corpus:
+
+```console
 uv run trial-benchmark patient-to-trial benchmark run \
   --track trec-ct-2021 \
   --profile official-full \
@@ -84,9 +89,9 @@ uv run trial-benchmark patient-to-trial benchmark run \
   --output-dir runs
 ```
 
-The `official-full` command above is the complete 375,580-trial capability. The paper's separately
-named TREC 2021 Profile ranks the score-blind union of all trial IDs present in the Evaluation
-Package. Inspect and freeze its identity before producing any System score:
+The complete prepared corpus contains 375,580 trials. The paper's separately named TREC 2021
+Profile ranks the score-blind union of all trial IDs present in the Evaluation Package. Inspect
+and freeze its identity before producing any System score:
 
 ```console
 PROTOCOL_ID="sha256:$(shasum -a 256 docs/paper-analysis-protocol-2026-08-31-v3.md | awk '{print $1}')"
@@ -99,7 +104,9 @@ trial-benchmark data pool inspect \
 ```
 
 Review and freeze that receipt before running. It must report 26,162 trials. Pass its exact
-`pool_count`, `pool_ids_sha256`, and `pool_receipt_id` values to every command in the stratum:
+`pool_count`, `pool_ids_sha256`, and `pool_receipt_id` values to every command in the stratum.
+
+Run BM25 with the frozen receipt ([its TREC 2021 reference scores](docs/reference-scores.json)):
 
 ```console
 trial-benchmark patient-to-trial benchmark run \
@@ -112,7 +119,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25 \
   --run-id bm25-trec-2021-judgment-union \
@@ -145,8 +152,8 @@ trial-benchmark data pool inspect \
 
 ## Paper-ready release capabilities
 
-This release makes `bm25`, `dense-bge-m3`, `dense-qwen3-embedding-0.6b`, and `rrf` executable on both
-the complete-corpus and judgment-union Profile declared for each real forward Track/query view.
+The installed support catalogue declares which Systems run on each complete-corpus or
+judgment-union Profile. Use `trial-benchmark support list` to inspect this selection.
 The complete Profiles remain public capabilities. The release freezes two protocols. The
 [v3 paper protocol](docs/paper-analysis-protocol-2026-08-31-v3.md) selects the five judgment-union
 strata for the paper: TREC 2021, TREC 2022, TREC 2023, SIGIR description, and SIGIR summary. The
@@ -184,7 +191,7 @@ trial-benchmark patient-to-trial queries prepare \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
   --dependency-lock uv.lock \
   --snomed-release /path/to/licensed/SnomedCT_InternationalRF2 \
   --output derived/trec-2021-folded-queries.json
@@ -201,7 +208,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25-folded --top-k 5000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -219,7 +226,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system dense-qwen3-embedding-0.6b-no-template --top-k 5000 \
   --index-dir indexes/qwen3-no-template \
@@ -238,7 +245,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system staged-bm25-qwen3-rrf-rerank --top-k 1000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -335,10 +342,22 @@ Acquisition guides: [TREC 2021](docs/trec-2021-acquisition.md),
 External-fidelity acquisition is in
 [the external-fidelity Profile guide](docs/external-fidelity-profile.md).
 
+## Plug in your pipeline
+
+A pipeline this release does not ship needs no change to the repository and never imports TAIM.
+`trial-benchmark <direction> submission export` writes the exact Task Input the catalog's Systems
+receive. Your pipeline ranks it on its own machine, and `submission import` scores that ranking
+against judgments the pipeline never sees. [Score your own pipeline](docs/external-pipelines.md)
+walks through it on the synthetic fixture and shows how to compare the result with a reference
+System on the same Task Input.
+The [reference scores](docs/reference-scores.json) cover `bm25` on the TREC 2021 and both SIGIR 2016
+judgment-union Profiles.
+
 ## Scope
 
 The executable catalog, not a Cartesian-product assumption, decides which Track, Task, Profile,
-and System combinations are supported. Dense Systems require the `dense` extra; the run builds its
+and System combinations are supported.
+Dense Systems require the `dense` extra; the run builds its
 own index under `--index-dir`.
 RRF consumes same-direction BM25 and BGE-M3 component runs with identical benchmark identities.
 Bundle-eligible RRF also requires both components to come from clean producers of the same frozen

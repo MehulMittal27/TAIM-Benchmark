@@ -9,7 +9,6 @@ import re
 import shutil
 import subprocess
 import sys
-import time
 import tomllib
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
@@ -19,7 +18,6 @@ from pathlib import Path
 from typing import cast
 
 from taim import __version__
-from taim.baselines.rrf import fuse_rrf, rrf_configuration
 from taim.benchmark_release import (
     load_benchmark_release_manifest,
     validate_release_package_artifact,
@@ -28,7 +26,6 @@ from taim.contracts import content_sha256, require_sha256
 from taim.data import PreparedBenchmark, load_prepared_benchmark
 from taim.entity_versions import parse_clinical_as_of, source_grounded_patient_evidence_profile
 from taim.file_hash import sha256_file
-from taim.folded_query_bundle import build_folded_query_bundle, validate_folded_query_bundle
 from taim.pipeline_extensions import ComponentRun, extension_for, pipeline_extensions
 from taim.public_patient_to_trial import (
     evaluate_public_patient_to_trial_run,
@@ -65,15 +62,13 @@ from taim.release_support import (
 from taim.reverse_fixture import load_reverse_fixture
 from taim.reverse_viability import qualify_reverse_viability_profile
 from taim.schemas import (
-    PIPELINE_DEPTH_RETRIEVAL,
-    PRIMARY_RANKING_CANDIDATES,
     JsonValue,
     RunManifest,
     StageRanking,
 )
+from taim.submission_cli import add_submission_commands
 from taim.system_contracts import SystemRunRequest
 from taim.trial_to_patient import (
-    TRIAL_TO_PATIENT_BM25_SYSTEM_ID,
     StoredTrialToPatientRun,
     TrialToPatientEvaluationPackage,
     TrialToPatientExecutionProvenance,
@@ -191,10 +186,6 @@ def _verified_dependency_environment(
                 f"installed Python distribution {name}=={version} is not resolved by uv.lock"
             )
     required: set[str] = set()
-    if system_id.startswith("dense-"):
-        required.update(
-            {"huggingface-hub", "numpy", "sentence-transformers", "torch", "transformers"}
-        )
     extension = extension_for(system_id)
     if extension is not None:
         required.update(extension.required_distributions)
@@ -400,29 +391,6 @@ def _forward_options(
     *,
     task_input_id: str,
 ) -> dict[str, object]:
-    if args.system == "bm25":
-        return {"b": args.b, "k1": args.k1}
-    if args.system == "bm25-folded":
-        if args.folded_query_bundle is None:
-            raise ValueError("bm25-folded requires --folded-query-bundle")
-        bundle = _read_json_object(args.folded_query_bundle, "folded query bundle")
-        validate_folded_query_bundle(
-            bundle,
-            expected_task_input_id=task_input_id,
-            expected_topic_ids=tuple(topic.topic_id for topic in benchmark.topics),
-        )
-        return {"b": args.b, "folded_query_bundle": bundle, "k1": args.k1}
-    if args.system.startswith("dense-"):
-        if args.index_dir is None:
-            raise ValueError("dense Systems require --index-dir")
-        return {
-            "corpus_hash": benchmark.corpus_hash,
-            "device": args.device,
-            "document_batch_size": args.document_batch_size,
-            "index_dir": args.index_dir,
-            "query_batch_size": args.query_batch_size,
-            "rebuild_index": args.rebuild_index,
-        }
     extension = extension_for(args.system)
     if extension is not None:
         return extension.run_options(args, benchmark, task_input_id)
@@ -477,75 +445,6 @@ def _rrf_component_producer_identity(
         "release_identity": cast(JsonValue, dict(expected_release_identity)),
         "dependency_environment": dependency_environment,
     }
-
-
-def _validate_rrf_components(
-    args: argparse.Namespace,
-    *,
-    request: SystemRunRequest,
-    benchmark_profile: Mapping[str, object],
-    evaluation_package_id: str,
-    producer_release_identity: Mapping[str, str] | None,
-    producer_dependency_environment: Mapping[str, JsonValue] | None,
-):
-    if args.bm25_run is None or args.dense_run is None:
-        raise ValueError("RRF requires --bm25-run and --dense-run")
-    bm25 = load_public_patient_to_trial_run(args.bm25_run)
-    dense = load_public_patient_to_trial_run(args.dense_run)
-    if bm25.manifest.system_id != "bm25" or dense.manifest.system_id != "dense-bge-m3":
-        raise ValueError("RRF component Systems must be bm25 and dense-bge-m3")
-    expected_patients = {item.patient_id for item in request.snapshot.patient_versions}
-    expected_trials = {item.trial_id for item in request.snapshot.trial_versions}
-    expected_ranks = set(range(1, min(DEFAULT_RETRIEVAL_DEPTH, len(expected_trials)) + 1))
-    component_producers: dict[str, JsonValue] = {}
-    for component in (bm25, dense):
-        manifest = component.manifest
-        if (
-            manifest.benchmark_lineage != request.snapshot.benchmark_lineage
-            or manifest.prepared_snapshot_id != request.snapshot.prepared_snapshot_id
-            or manifest.task_input_id != request.snapshot.task_input_id
-            or manifest.evaluation_package_id != evaluation_package_id
-            or manifest.benchmark_profile != benchmark_profile
-            or manifest.query_patient_versions
-            != tuple(
-                (item.patient_id, item.patient_version_id)
-                for item in request.snapshot.patient_versions
-            )
-            or manifest.trial_corpus_versions
-            != tuple(
-                (item.trial_id, item.trial_version_id) for item in request.snapshot.trial_versions
-            )
-        ):
-            raise ValueError("RRF component direction or benchmark identity does not match")
-        if manifest.budget_k != DEFAULT_RETRIEVAL_DEPTH:
-            raise ValueError(f"RRF component {manifest.system_id} must request top-1000")
-        ranks_by_patient: dict[str, set[int]] = {
-            patient_id: set() for patient_id in expected_patients
-        }
-        for row in component.candidates:
-            if row.topic_id not in expected_patients or row.trial_id not in expected_trials:
-                raise ValueError("RRF component contains an entity outside the Task Input")
-            ranks_by_patient[row.topic_id].add(row.rank)
-        incomplete = sorted(
-            patient_id for patient_id, ranks in ranks_by_patient.items() if ranks != expected_ranks
-        )
-        if incomplete:
-            raise ValueError(
-                f"RRF component {manifest.system_id} lacks complete top-{len(expected_ranks)} "
-                "rankings for: " + ", ".join(incomplete)
-            )
-        if producer_release_identity is not None:
-            if producer_dependency_environment is None:
-                raise ValueError("RRF fusion producer lacks its dependency environment")
-            component_producers[manifest.system_id] = _rrf_component_producer_identity(
-                component,
-                expected_release_identity=producer_release_identity,
-                expected_lock_sha256=cast(
-                    str,
-                    producer_dependency_environment["dependency_lock_sha256"],
-                ),
-            )
-    return bm25, dense, component_producers
 
 
 def _store_forward(
@@ -637,50 +536,6 @@ def _store_forward(
         primary_ranking = result.primary_ranking
         pipeline_depth = result.pipeline_depth
         stage_rankings = result.stage_rankings
-    elif args.system == "rrf":
-        bm25, dense, component_producers = _validate_rrf_components(
-            args,
-            request=request,
-            benchmark_profile=benchmark.manifest_configuration(),
-            evaluation_package_id=evaluation_package.evaluation_package_id,
-            producer_release_identity=producer_release_identity,
-            producer_dependency_environment=producer_dependency_environment,
-        )
-        request = SystemRunRequest(
-            snapshot=request.snapshot,
-            run_id=run_id,
-            top_k=args.top_k,
-            metric_cutoff=args.metric_cutoff,
-            options={
-                "bm25_candidates_sha256": bm25.candidates_hash,
-                "dense_candidates_sha256": dense.candidates_hash,
-            },
-            identity_version="2.0",
-        )
-        started_at = time.perf_counter()
-        candidates = tuple(
-            fuse_rrf(bm25.candidates, dense.candidates, run_id=run_id, top_k=args.top_k)
-        )
-        runtime_seconds = time.perf_counter() - started_at
-        configuration = {
-            **rrf_configuration(bm25.candidates, dense.candidates, top_k=args.top_k),
-            "runtime_seconds": runtime_seconds,
-            "runtime_scope": "RRF fusion over validated top-1000 component rankings",
-            "system_input": request.system_input_dict(),
-            "model_identity": {"kind": "none", "reason": "deterministic_rrf"},
-            "index_identity": {
-                "bm25_candidates_sha256": bm25.candidates_hash,
-                "dense_candidates_sha256": dense.candidates_hash,
-                **(
-                    {"component_producer_identities": component_producers}
-                    if component_producers
-                    else {}
-                ),
-                "persistent": False,
-            },
-        }
-        primary_ranking = PRIMARY_RANKING_CANDIDATES
-        pipeline_depth = PIPELINE_DEPTH_RETRIEVAL
     else:
         request = replace(
             request,
@@ -920,9 +775,10 @@ def _reverse_provenance(
 
 
 def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: str) -> Path:
+    system_id = SUBCOMMAND_SYSTEMS[("trial-to-patient", "fixture")]
     producer_release_identity = _verified_release_identity(args)
     producer_dependency_environment = (
-        _verified_dependency_environment(args, system_id=TRIAL_TO_PATIENT_BM25_SYSTEM_ID)
+        _verified_dependency_environment(args, system_id=system_id)
         if producer_release_identity is not None
         else None
     )
@@ -931,7 +787,7 @@ def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: s
         track=track,
         task="trial_to_patient",
         profile=profile,
-        system=TRIAL_TO_PATIENT_BM25_SYSTEM_ID,
+        system=system_id,
     )
     source_identity = release_source_identity(
         resolved.prepared,
@@ -939,7 +795,7 @@ def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: s
         profile=profile,
         evidence_scope=cast(str, capability["evidence_scope"]),
     )
-    run_id = args.run_id or _run_id(TRIAL_TO_PATIENT_BM25_SYSTEM_ID)
+    run_id = args.run_id or _run_id(system_id)
     request = TrialToPatientRunRequest.for_benchmark(
         resolved,
         run_id=run_id,
@@ -948,10 +804,10 @@ def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: s
         options={"b": args.b, "k1": args.k1},
         identity_version="2.0",
     )
-    result = run_trial_to_patient_system(TRIAL_TO_PATIENT_BM25_SYSTEM_ID, request)
+    result = run_trial_to_patient_system(system_id, request)
     final_git_state = _revalidate_release_producer(
         args,
-        system_id=TRIAL_TO_PATIENT_BM25_SYSTEM_ID,
+        system_id=system_id,
         release_identity=producer_release_identity,
         dependency_environment=producer_dependency_environment,
         git_state=producer_git_state,
@@ -963,7 +819,7 @@ def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: s
             "track": track,
             "task": "trial_to_patient",
             "profile": profile,
-            "system": TRIAL_TO_PATIENT_BM25_SYSTEM_ID,
+            "system": system_id,
         },
         "release_source": source_identity,
     }
@@ -1142,12 +998,20 @@ def _inspect_pool(args: argparse.Namespace) -> int:
         args.protocol_approval_id,
         "pool inspection protocol_approval_id",
     )
-    capability = require_supported_combination(
-        track=args.track,
-        task="patient_to_trial",
-        profile=args.profile,
-        system="bm25",
-    )
+    # The pool belongs to the Profile, not to a System: any published System declared for this
+    # Track and Profile carries its evidence scope. The first System in the table need not be one.
+    declared = [
+        row
+        for row in cast(Sequence[Mapping[str, JsonValue]], load_release_support()["support_matrix"])
+        if (row["track"], row["task"], row["profile"])
+        == (args.track, "patient_to_trial", args.profile)
+    ]
+    if not declared:
+        raise ValueError(
+            "unsupported release combination: "
+            f"Track={args.track}, Task=patient_to_trial, Profile={args.profile}"
+        )
+    capability = declared[0]
     prepared = load_prepared_benchmark(args.data_dir)
     if prepared.snapshot.benchmark_lineage != args.track:
         raise ValueError("prepared Track does not match --track")
@@ -1182,91 +1046,6 @@ def _inspect_pool(args: argparse.Namespace) -> int:
     return 0
 
 
-def _prepare_folded_queries(args: argparse.Namespace) -> int:
-    prepared = load_prepared_benchmark(args.data_dir)
-    if prepared.snapshot.benchmark_lineage != "trec-ct-2021":
-        raise ValueError("folded queries are qualified only for TREC CT 2021")
-    # The folded queries are the input of the System this subcommand is bound to.
-    system = SUBCOMMAND_SYSTEMS[("patient-to-trial", "queries")]
-    capability = require_supported_combination(
-        track="trec-ct-2021",
-        task="patient_to_trial",
-        profile=args.profile,
-        system=system,
-    )
-    if (
-        args.profile.endswith("-judgment-union")
-        or args.profile == EXTERNAL_FIDELITY_TREC_2021_PROFILE
-    ):
-        require_frozen_effectiveness_protocol(
-            args.profile,
-            args.protocol_approval_id,
-            "effectiveness protocol_approval_id",
-        )
-        if _verified_release_identity(args) is None:
-            raise ValueError(
-                "compute-bounded execution requires --release-manifest, --package-artifact, and "
-                "--dependency-lock"
-            )
-        _verified_dependency_environment(args, system_id=system)
-    elif args.protocol_approval_id is not None:
-        raise ValueError("full-corpus folded queries cannot claim a protocol approval")
-    release_source_identity(
-        prepared,
-        track="trec-ct-2021",
-        profile=args.profile,
-        evidence_scope=cast(str, capability["evidence_scope"]),
-    )
-    benchmark = resolve_benchmark_profile(
-        prepared,
-        profile_id=args.profile,
-        expected_pool_count=args.pool_count,
-        expected_pool_ids_sha256=args.pool_ids_sha256,
-        expected_pool_receipt_id=args.pool_receipt_id,
-        supplied_pool_ids=_read_pool_ids(args.pool_file),
-    )
-    request = SystemRunRequest.for_benchmark(
-        benchmark,
-        run_id="folded-query-preparation",
-        top_k=DEFAULT_RETRIEVAL_DEPTH,
-        metric_cutoff=DEFAULT_METRIC_CUTOFF,
-        options={},
-        clinical_as_of=args.clinical_as_of,
-        patient_evidence_profile=source_grounded_patient_evidence_profile(),
-        identity_version="2.0",
-    )
-    payload = build_folded_query_bundle(
-        request.snapshot.topics,
-        task_input_id=request.snapshot.task_input_id,
-        snomed_release=args.snomed_release,
-    )
-    queries, bundle_id = validate_folded_query_bundle(
-        payload,
-        expected_task_input_id=request.snapshot.task_input_id,
-        expected_topic_ids=tuple(topic.topic_id for topic in request.snapshot.topics),
-    )
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(payload, allow_nan=False, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-    _print(
-        {
-            "release": RELEASE_VERSION,
-            "track": "trec-ct-2021",
-            "task": "patient_to_trial",
-            "profile": args.profile,
-            "system": system,
-            "task_input_id": request.snapshot.task_input_id,
-            "folded_query_bundle_id": bundle_id,
-            "topics": len(queries),
-            "output": str(args.output.resolve()),
-        }
-    )
-    return 0
-
-
 def _release_validate(args: argparse.Namespace) -> int:
     from taim.benchmark_release import validate_benchmark_release
 
@@ -1293,24 +1072,26 @@ def _add_forward_options(parser: argparse.ArgumentParser, *, real: bool) -> None
         choices=tuple(
             system for system, tasks in SYSTEM_TASKS.items() if "patient_to_trial" in tasks
         ),
-        default="bm25",
+        default=next(
+            (
+                extension.default_system
+                for extension in pipeline_extensions()
+                if extension.default_system is not None
+                and extension.system_tasks[extension.default_system] == "patient_to_trial"
+            ),
+            next(
+                (system for system, tasks in SYSTEM_TASKS.items() if "patient_to_trial" in tasks),
+                None,
+            ),
+        ),
     )
     parser.add_argument("--run-id")
     parser.add_argument("--output-dir", type=Path, default=Path("runs"))
     parser.add_argument("--top-k", type=_positive_integer, default=DEFAULT_RETRIEVAL_DEPTH)
     parser.add_argument("--metric-cutoff", type=_positive_integer, default=DEFAULT_METRIC_CUTOFF)
-    parser.add_argument("--k1", type=float, default=1.2)
-    parser.add_argument("--b", type=float, default=0.75)
-    parser.add_argument("--index-dir", type=Path)
-    parser.add_argument("--device", default="cpu")
-    parser.add_argument("--document-batch-size", type=_positive_integer, default=8)
-    parser.add_argument("--query-batch-size", type=_positive_integer, default=8)
-    parser.add_argument("--rebuild-index", action="store_true")
-    parser.add_argument("--bm25-run", type=Path)
-    parser.add_argument("--dense-run", type=Path)
-    parser.add_argument("--folded-query-bundle", type=Path)
-    for extension in pipeline_extensions():
-        extension.add_run_options(parser)
+    option_adders = dict.fromkeys(extension.add_run_options for extension in pipeline_extensions())
+    for add_options in option_adders:
+        add_options(parser)
     _add_release_identity_options(parser)
     if real:
         parser.add_argument("--data-dir", type=Path, required=True)
@@ -1401,27 +1182,15 @@ def _add_direction_commands(parent: argparse.ArgumentParser, *, reverse: bool) -
             help="evaluate one named stage as a diagnostic, leaving the Primary Ranking unchanged",
         )
     evaluate.set_defaults(handler=_reverse_evaluate if reverse else _forward_evaluate)
+    add_submission_commands(commands, reverse=reverse)
     if not reverse:
-        queries = commands.add_parser(
-            "queries", help="prepare the licensed local folded-query transformation"
+        command_adders = dict.fromkeys(
+            extension.add_patient_to_trial_commands
+            for extension in pipeline_extensions()
+            if extension.add_patient_to_trial_commands is not None
         )
-        query_commands = queries.add_subparsers(dest="query_operation", required=True)
-        prepare = query_commands.add_parser("prepare")
-        prepare.add_argument("--data-dir", type=Path, required=True)
-        prepare.add_argument("--clinical-as-of", type=parse_clinical_as_of, required=True)
-        prepare.add_argument("--profile", default="official-full")
-        prepare.add_argument("--pool-count", type=_positive_integer)
-        prepare.add_argument("--pool-ids-sha256", type=_sha256_identity)
-        prepare.add_argument("--pool-receipt-id", type=_sha256_identity)
-        prepare.add_argument("--pool-file", type=Path)
-        prepare.add_argument("--protocol-approval-id", type=_sha256_identity)
-        prepare.add_argument("--snomed-release", type=Path, required=True)
-        prepare.add_argument("--output", type=Path, required=True)
-        _add_release_identity_options(prepare)
-        prepare.set_defaults(handler=_prepare_folded_queries)
-        for extension in pipeline_extensions():
-            if extension.add_patient_to_trial_commands is not None:
-                extension.add_patient_to_trial_commands(commands)
+        for add_commands in command_adders:
+            add_commands(commands)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1434,10 +1203,12 @@ def build_parser() -> argparse.ArgumentParser:
     support_commands = support.add_subparsers(dest="support_operation", required=True)
     support_list = support_commands.add_parser("list")
     support_list.set_defaults(handler=_support_list)
-    forward = commands.add_parser("patient-to-trial", help="patient query against trial corpus")
-    _add_direction_commands(forward, reverse=False)
-    reverse = commands.add_parser("trial-to-patient", help="trial query against patient corpus")
-    _add_direction_commands(reverse, reverse=True)
+    if any("patient_to_trial" in tasks for tasks in SYSTEM_TASKS.values()):
+        forward = commands.add_parser("patient-to-trial", help="patient query against trial corpus")
+        _add_direction_commands(forward, reverse=False)
+    if any("trial_to_patient" in tasks for tasks in SYSTEM_TASKS.values()):
+        reverse = commands.add_parser("trial-to-patient", help="trial query against patient corpus")
+        _add_direction_commands(reverse, reverse=True)
     data = commands.add_parser("data", help="prepare checksum-locked local source files")
     data_commands = data.add_subparsers(dest="data_operation", required=True)
     prepare = data_commands.add_parser("prepare")

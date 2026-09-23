@@ -8,7 +8,6 @@ import re
 import shutil
 import statistics
 import tempfile
-import time
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
@@ -17,7 +16,6 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar, Protocol, cast
 
-from taim.baselines.bm25 import BM25Retriever, bm25_ranking_configuration
 from taim.contracts import (
     SNAPSHOT_CONTRACT_VERSION,
     EvaluatorOnlyMaterial,
@@ -68,7 +66,6 @@ TRIAL_TO_PATIENT_SCHEMA_VERSION = "1.0"
 TRIAL_TO_PATIENT_RUN_MANIFEST_VERSION = "1.0"
 TRIAL_TO_PATIENT_TASK = "trial_to_patient"
 TRIAL_TO_PATIENT_PRIMARY_RANKING = "patient_candidates"
-TRIAL_TO_PATIENT_BM25_SYSTEM_ID = "bm25-trial-to-patient"
 DEFAULT_TRIAL_TO_PATIENT_PROFILE_ID = "trec-ct-2021-trial-to-patient"
 REVERSE_TRANSPOSE_COMPLETE_PAIR_MATRIX_V1 = "transpose-patient-trial-pairs-v1"
 REVERSE_PRESERVE_JUDGED_PAIRS_V1 = "transpose-judged-pairs-preserve-unjudged-v1"
@@ -1179,89 +1176,15 @@ class TrialToPatientSystem(Protocol):
     def run(self, request: TrialToPatientRunRequest) -> TrialToPatientRunResult: ...
 
 
-def _reverse_option(request: TrialToPatientRunRequest, name: str) -> object:
-    try:
-        return request.options[name]
-    except KeyError as exc:
-        raise ValueError(f"{request.run_id} is missing reverse System option {name!r}") from exc
+def _reverse_systems() -> dict[str, TrialToPatientSystem]:
+    from taim.pipeline_extensions import pipeline_extensions
 
-
-class TrialToPatientBM25System:
-    system_id = TRIAL_TO_PATIENT_BM25_SYSTEM_ID
-    option_names = frozenset({"b", "k1"})
-    required_capabilities = frozenset(
-        {CAPABILITY_CANONICAL_PATIENT_TEXT, CAPABILITY_CANONICAL_TRIAL_TEXT}
-    )
-    optional_capabilities: frozenset[str] = frozenset()
-
-    def run(self, request: TrialToPatientRunRequest) -> TrialToPatientRunResult:
-        started_at = time.perf_counter()
-        index = BM25Retriever(
-            request.task_input.patient_versions,
-            document_id=lambda patient: patient.patient_id,
-            document_text=lambda patient: patient.topic.canonical_text,
-            k1=cast(float, _reverse_option(request, "k1")),
-            b=cast(float, _reverse_option(request, "b")),
-        )
-        candidates: list[TrialToPatientCandidate] = []
-        for trial_version in request.task_input.trial_versions:
-            ranked = index.rank(
-                trial_version.trial.canonical_text,
-                top_k=request.top_k,
-            )
-            candidates.extend(
-                TrialToPatientCandidate(
-                    run_id=request.run_id,
-                    system_id=self.system_id,
-                    trial_id=trial_version.trial_id,
-                    trial_version_id=trial_version.trial_version_id,
-                    patient_id=patient.patient_id,
-                    patient_version_id=patient.patient_version_id,
-                    rank=rank,
-                    score=score,
-                )
-                for rank, (patient, score) in enumerate(ranked, start=1)
-            )
-        runtime_seconds = time.perf_counter() - started_at
-        ranking = bm25_ranking_configuration(
-            k1=index.k1,
-            b=index.b,
-            requested_top_k=request.top_k,
-            document_count=len(index.documents),
-        )
-        return TrialToPatientRunResult(
-            candidates=tuple(candidates),
-            system_id=self.system_id,
-            system_input_id=request.system_input_id,
-            configuration={
-                "implementation": ("taim.trial_to_patient.TrialToPatientBM25System"),
-                "system_identity": {"system_id": self.system_id},
-                "model_identity": {
-                    "kind": "none",
-                    "reason": "deterministic_bm25",
-                },
-                "index_identity": {
-                    "implementation": ranking["retrieval_formula"]["id"],
-                    "persistent": False,
-                },
-                "retrieval_formula": ranking["retrieval_formula"],
-                "parameters": ranking["parameters"],
-                "requested_top_k": ranking["requested_top_k"],
-                "effective_top_k": ranking["effective_top_k"],
-                "metric_cutoff": request.metric_cutoff,
-                "score_tie_breaking": "score descending, patient_id ascending",
-                "indexed_fields": ["PatientEntityVersion.topic.canonical_text"],
-                "query_fields": ["TrialVersion.trial.canonical_text"],
-                "corpus_statistics": index.corpus_statistics,
-                "runtime_seconds": runtime_seconds,
-            },
-            runtime_seconds=runtime_seconds,
-        )
-
-
-TRIAL_TO_PATIENT_SYSTEMS: dict[str, TrialToPatientSystem] = {
-    TRIAL_TO_PATIENT_BM25_SYSTEM_ID: TrialToPatientBM25System()
-}
+    return {
+        system_id: cast(TrialToPatientSystem, system)
+        for extension in pipeline_extensions()
+        if extension.reverse_systems is not None
+        for system_id, system in extension.reverse_systems().items()
+    }
 
 
 def _effective_trial_to_patient_request(
@@ -1269,9 +1192,9 @@ def _effective_trial_to_patient_request(
     request: TrialToPatientRunRequest,
 ) -> tuple[TrialToPatientSystem, TrialToPatientRunRequest]:
     try:
-        system = TRIAL_TO_PATIENT_SYSTEMS[system_id]
+        system = _reverse_systems()[system_id]
     except KeyError as exc:
-        known = ", ".join(sorted(TRIAL_TO_PATIENT_SYSTEMS))
+        known = ", ".join(sorted(_reverse_systems()))
         raise ValueError(
             f"unknown trial-to-patient System {system_id!r}; available Systems: {known}"
         ) from exc
@@ -1982,7 +1905,7 @@ def write_trial_to_patient_run(
     if not isinstance(execution_provenance, TrialToPatientExecutionProvenance):
         raise TypeError("execution_provenance must be a TrialToPatientExecutionProvenance")
     system_id = result.system_id
-    if system_id not in TRIAL_TO_PATIENT_SYSTEMS:
+    if system_id not in _reverse_systems():
         raise SchemaValidationError("reverse result was not produced by a registered System")
     _system, effective_request = _effective_trial_to_patient_request(system_id, request)
     if result.system_input_id != effective_request.system_input_id:
@@ -2272,9 +2195,7 @@ __all__ = [
     "DEFAULT_TRIAL_TO_PATIENT_PROFILE_ID",
     "REVERSE_PRESERVE_JUDGED_PAIRS_V1",
     "REVERSE_TRANSPOSE_COMPLETE_PAIR_MATRIX_V1",
-    "TRIAL_TO_PATIENT_BM25_SYSTEM_ID",
     "TRIAL_TO_PATIENT_PRIMARY_RANKING",
-    "TRIAL_TO_PATIENT_SYSTEMS",
     "TRIAL_TO_PATIENT_TASK",
     "PatientEvidenceProfile",
     "ResolvedTrialToPatientBenchmark",

@@ -1,6 +1,6 @@
 # TrialGPT retrieval producer
 
-Benchmark Release 0.1.0 ships the complete producer for the four TrialGPT rows frozen by protocols
+Benchmark Release 0.1 ships the complete producer for the four TrialGPT rows frozen by protocols
 v5 through v7. The contract is `trialgpt-three-luna-consensus-v2`: three Luna query plans,
 `taim-controlled-bm25-v2` and pinned MedCPT retrieval to depth 2,000, fixed three-arm consensus,
 and a 500-candidate handoff to `TrialGPT-TAIM-Luna-v1`. BM25 v2 corrects the older v1
@@ -55,7 +55,7 @@ protocol.
 
 ## 3. Run retrieval and freeze evidence
 
-Use a clean checkout of the exact public 0.1.1 source commit and the verified 0.1.1 wheel. The
+Use a clean checkout of the exact public 0.1.2 source commit and the verified 0.1.2 wheel. The
 prepared-package loader is validated on an 18 GB Apple-silicon laptop. That memory result covers
 loading and bounded-pool projection; MedCPT execution still needs a compatible local or cluster
 runtime. Install the candidate's locked `dense` extra (`uv sync --locked --extra dense`) so the
@@ -70,11 +70,11 @@ python scripts/freeze_trialgpt_retrieval.py \
   --pool-ids-sha256 sha256:<ordered-id-digest> \
   --pool-receipt-id sha256:<receipt-id> \
   --protocol-approval-id sha256:a617a46c2d61e76ad25963e709cad2c3ff99d4be466f173b8add02f1754927ef \
-  --release-manifest /path/to/benchmark-v0.1.1-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
+  --release-manifest /path/to/benchmark-v0.1.2-manifest.json \
+  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
   --clinical-as-of 2022-01-01T00:00:00Z \
   --query-plans /path/to/local-workspace/trec22-three-luna-query-plans.jsonl \
-  --run-id paper-v0.1.1-trialgpt-trec22-retrieval-v2 \
+  --run-id paper-v0.1.2-trialgpt-trec22-retrieval-v2 \
   --workspace /path/to/cluster-workspace/trec22-medcpt \
   --model-cache /path/to/huggingface-cache \
   --batch-size 16 \

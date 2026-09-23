@@ -13,7 +13,7 @@ import math
 import os
 import subprocess
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -36,9 +36,6 @@ TRIALMATCHAI_REQUIRED_CAPABILITIES = frozenset({CAPABILITY_CANONICAL_PATIENT_TEX
 TRIALMATCHAI_OPTIONAL_CAPABILITIES = frozenset({CAPABILITY_TYPED_PATIENT_CORE})
 TRIALMATCHAI_CONCEPT_STORE_MANIFEST_FILENAME = "concept-store-manifest.json"
 TRIALMATCHAI_CONCEPT_STORE_MANIFEST_VERSION = "2"
-TRIALMATCHAI_L4_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec21-development-v4"
-TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec22-development-v4"
-TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID = "trialmatchai-current-cuda-l4-trec23-development-v4"
 TRIALMATCHAI_L4_REPOSITORY = "https://github.com/MehulMittal27/TrialMatchAI.git"
 TRIALMATCHAI_L4_COMMIT = "99aa499e7296ebde836a0ebf00a5ed4948892a83"
 TRIALMATCHAI_L4_CONFIG_RELATIVE_PATH = "src/trialmatchai/config/taim_l4_cuda.json"
@@ -344,6 +341,8 @@ def _git_checkout_output(cwd: Path, *arguments: str) -> str:
             check=True,
             capture_output=True,
             text=True,
+            # The checkout is a blob:none partial clone: an object read must never fetch.
+            env={**os.environ, "GIT_NO_LAZY_FETCH": "1"},
         )
     except (OSError, ExecutableNotFoundError, subprocess.CalledProcessError) as exc:
         raise TrialMatchAIAdapterError(
@@ -996,8 +995,8 @@ def _concept_store_configuration(
     }
 
 
-#: Sidecar written by the Snapshot corpus filter beside the ``processed_trials`` and
-#: ``processed_criteria`` folders it derives from a Snapshot.
+#: Sidecar written by the Snapshot corpus filter beside the
+#: ``processed_trials`` and ``processed_criteria`` folders it derives from a Snapshot.
 TRIALMATCHAI_CORPUS_FILTER_MANIFEST_FILENAME = "filter-manifest.json"
 
 
@@ -1139,8 +1138,8 @@ def _trialmatchai_index_identity(
     index is persistent. The identity carries no locator: paths are recorded in the
     run configuration only. What it carries is the Task Input the corpus was
     validated against, the corpus filter manifest digest when the corpus was
-    derived by the Snapshot corpus filter, the declared search backend, and the
-    concept store's provenance manifest.
+    derived by the Snapshot corpus filter, the declared search
+    backend, and the concept store's provenance manifest.
     """
 
     validated = processed_trials_folder is not None
@@ -1331,7 +1330,7 @@ class TrialMatchAIHarnessInputs:
     timeout_seconds: float
 
 
-class _TrialMatchAISystem(StrictSystemOptions):
+class TrialMatchAIBase(StrictSystemOptions):
     """Run a pinned TrialMatchAI checkout through TAIM's System contract.
 
     The command is supplied by the harness as a tokenized template. It may use
@@ -1344,7 +1343,7 @@ class _TrialMatchAISystem(StrictSystemOptions):
     ``trialmatchai_prepared_corpus_sha256`` option. Constructed without, it takes them as options.
     """
 
-    system_id = TRIALMATCHAI_L4_SYSTEM_ID
+    system_id: str
     expected_config_sha256: str | None = None
     option_names = frozenset(
         {
@@ -1427,6 +1426,17 @@ class _TrialMatchAISystem(StrictSystemOptions):
                 f"{self.system_id} requires shared-model batch execution for multiple topics"
             )
         return expected
+
+    def _execution_observer(
+        self,
+        *,
+        cwd: Path,
+        commit: str,
+        config_path: Path | None,
+        environment: Mapping[str, str],
+    ) -> Callable[[Mapping[str, Path], int], dict[str, object]]:
+        """Allow private instrumentation without coupling the public runner to it."""
+        return lambda _directories, _budget: {}
 
     def run(self, request: SystemRunRequest) -> SystemRunResult:
         from taim.system_contracts import SystemRunResult
@@ -1543,6 +1553,18 @@ class _TrialMatchAISystem(StrictSystemOptions):
             environment=base_environment,
             declared_override=_backend_override_option(request),
             system_id=self.system_id,
+        )
+        # Effect, not presence: what the pinned code will actually read, diffed against the
+        # fork's own defaults resolved the same way. Recorded before any model loads.
+        observe_execution = self._execution_observer(
+            cwd=cwd,
+            commit=str(upstream_checkout["commit"]),
+            config_path=(
+                Path(str(upstream_checkout["config_path"]))
+                if upstream_checkout.get("config_path") is not None
+                else None
+            ),
+            environment=base_environment,
         )
         concept_store_configuration = _concept_store_configuration(
             command_template,
@@ -1682,6 +1704,7 @@ class _TrialMatchAISystem(StrictSystemOptions):
             }
             patient_state_layout = "<root>/<topic_id>/{profiles,raw,summaries}"
 
+        topic_artifact_directories: dict[str, Path] = {}
         for topic in topics:
             output_root = topic_output_roots[topic.topic_id]
             ranked_path = (
@@ -1698,6 +1721,7 @@ class _TrialMatchAISystem(StrictSystemOptions):
                     f"{artifact_description} for topic {topic.topic_id}"
                 )
             raw_paths.append(ranked_path)
+            topic_artifact_directories[topic.topic_id] = ranked_path.parent
             first_level_path = ranked_path.parent / "first_level_scores.json"
             has_first_level_scores = first_level_path.is_file()
             if has_first_level_scores:
@@ -1770,6 +1794,7 @@ class _TrialMatchAISystem(StrictSystemOptions):
                 "environment": recorded_environment,
                 "backends": backends,
                 "config_overrides": config_overrides,
+                **observe_execution(topic_artifact_directories, request.top_k),
                 "patient_state": {
                     "root": str(workspace / "patient_state"),
                     "layout": patient_state_layout,
@@ -1785,27 +1810,14 @@ class _TrialMatchAISystem(StrictSystemOptions):
         )
 
 
-class TrialMatchAIL4System(_TrialMatchAISystem):
-    """Frozen CUDA-L4 TREC-2021 development variant with an exact config."""
+class TrialMatchAIL4Base(TrialMatchAIBase):
+    """The frozen L4 method; a selected release unit supplies its System identity."""
 
-    system_id = TRIALMATCHAI_L4_SYSTEM_ID
     expected_config_sha256 = TRIALMATCHAI_L4_CONFIG_SHA256
-    option_names = _TrialMatchAISystem.option_names | {"trialmatchai_runtime_contract"}
+    option_names = TrialMatchAIBase.option_names | {"trialmatchai_runtime_contract"}
 
     def _runtime_contract(self) -> dict[str, object]:
         return trialmatchai_l4_runtime_contract()
-
-
-class TrialMatchAIL4TREC2022System(TrialMatchAIL4System):
-    """The same frozen L4 implementation under its TREC 2022 System identity."""
-
-    system_id = TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID
-
-
-class TrialMatchAIL4TREC2023System(TrialMatchAIL4System):
-    """The same frozen L4 implementation under its later TREC 2023 System identity."""
-
-    system_id = TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID
 
 
 def _non_empty_string(value: object, name: str) -> str:
@@ -1916,7 +1928,7 @@ def normalize_ranked_trials(
     *,
     run_id: str,
     topic_id: str,
-    system_id: str = TRIALMATCHAI_L4_SYSTEM_ID,
+    system_id: str,
 ) -> TrialMatchAIResult:
     """Normalize TrialMatchAI final and available diagnostic rankings.
 
@@ -1964,7 +1976,7 @@ def load_and_normalize_ranked_trials(
     *,
     run_id: str,
     topic_id: str,
-    system_id: str = TRIALMATCHAI_L4_SYSTEM_ID,
+    system_id: str,
     first_level_scores_path: str | Path | None = None,
 ) -> TrialMatchAIResult:
     """Load a JSON artifact and normalize it without executing upstream code."""
@@ -2035,21 +2047,18 @@ __all__ = [
     "PATIENT_RENDERER_VERSION",
     "TRIALMATCHAI_L4_ADAPTER_SHA256",
     "TRIALMATCHAI_L4_ADAPTER_WEIGHT_FILENAME",
-    "TRIALMATCHAI_L4_COMMIT",
     "TRIALMATCHAI_L4_CONFIG_RELATIVE_PATH",
     "TRIALMATCHAI_L4_CONFIG_SHA256",
     "TRIALMATCHAI_L4_FORBIDDEN_ENVIRONMENT",
     "TRIALMATCHAI_L4_PROCESS_EXECUTION_MODE",
-    "TRIALMATCHAI_L4_REPOSITORY",
     "TRIALMATCHAI_L4_REQUIRED_ENVIRONMENT",
-    "TRIALMATCHAI_L4_SYSTEM_ID",
-    "TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID",
-    "TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID",
+    "TRIALMATCHAI_OPTIONAL_CAPABILITIES",
+    "TRIALMATCHAI_REQUIRED_CAPABILITIES",
+    "TRIALMATCHAI_SERVING_BACKEND_OVERRIDES",
     "TrialMatchAIAdapterError",
+    "TrialMatchAIBase",
     "TrialMatchAIHarnessInputs",
-    "TrialMatchAIL4System",
-    "TrialMatchAIL4TREC2022System",
-    "TrialMatchAIL4TREC2023System",
+    "TrialMatchAIL4Base",
     "TrialMatchAIResult",
     "load_and_normalize_ranked_trials",
     "normalize_ranked_trials",

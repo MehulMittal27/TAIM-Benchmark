@@ -21,7 +21,7 @@ from typing import Any, Protocol, cast
 
 from taim.baselines.encoder_registry import (
     BGE_M3_POLICY,
-    DENSE_ENCODER_REGISTRY,
+    QWEN3_EMBEDDING_06B_NO_TEMPLATE_POLICY,
     QWEN3_EMBEDDING_06B_POLICY,
     EncoderPolicy,
 )
@@ -439,7 +439,7 @@ class Qwen3Embedding06BEncoder:
             raise ValueError("device must be a non-empty string")
         if not isinstance(policy, EncoderPolicy):
             raise TypeError("policy must be an EncoderPolicy")
-        if policy != QWEN3_EMBEDDING_06B_POLICY:
+        if policy not in (QWEN3_EMBEDDING_06B_POLICY, QWEN3_EMBEDDING_06B_NO_TEMPLATE_POLICY):
             raise ValueError(
                 "Qwen3Embedding06BEncoder requires the registered immutable "
                 "Qwen3-Embedding-0.6B policy"
@@ -760,17 +760,14 @@ class Qwen3Embedding06BEncoder:
 _BI_ENCODER_ATTENTION_SCORE_BUDGET_BYTES = 2 * 1024**3
 _BI_ENCODER_INFERENCE_VALUE_BYTES = 4
 
-# Attention head counts are declared, not discovered, because configuration()
-# must describe the batching policy before any weights are loaded.  Every value
-# is re-checked against the loaded config in _validate_loaded_runtime().
-_BI_ENCODER_ATTENTION_HEAD_COUNTS = MappingProxyType(
-    {
-        "medcpt": 12,
-        "medcpt-dot": 12,
-        "biolord-2023": 12,
-        "e5-large-v2": 16,
-    }
-)
+# The attention head count is declared by the caller, not discovered here, because
+# configuration() must describe the batching policy before any weights are loaded.  It is
+# re-checked against the loaded config in _validate_loaded_runtime().
+#
+# It arrives as an argument rather than from a table keyed by encoder id.  A table here would
+# have to name every arm this class serves, and a release that publishes none of them would
+# still carry their names.  The registry that declares an arm is the registry that knows its
+# head count, so that is where the number lives.
 
 _BI_ENCODER_QUERY_ROLE = "query"
 _BI_ENCODER_DOCUMENT_ROLE = "document"
@@ -836,15 +833,21 @@ class TransformerBiEncoder:
     yields a well-formed run that is silently wrong.
     """
 
-    def __init__(self, *, policy: EncoderPolicy, device: str = "cpu") -> None:
+    def __init__(
+        self, *, policy: EncoderPolicy, attention_head_count: int, device: str = "cpu"
+    ) -> None:
         if not isinstance(device, str) or not device.strip():
             raise ValueError("device must be a non-empty string")
         if not isinstance(policy, EncoderPolicy):
             raise TypeError("policy must be an EncoderPolicy")
-        if policy.encoder_id not in _BI_ENCODER_ATTENTION_HEAD_COUNTS:
+        if (
+            isinstance(attention_head_count, bool)
+            or not isinstance(attention_head_count, int)
+            or attention_head_count < 1
+        ):
             raise ValueError(
-                f"TransformerBiEncoder has no registered batching policy for "
-                f"encoder {policy.encoder_id!r}"
+                "TransformerBiEncoder needs the declared attention head count of "
+                f"encoder {policy.encoder_id!r} as a positive integer"
             )
         if policy.pooling not in ("CLS", "mean"):
             raise ValueError(
@@ -852,6 +855,7 @@ class TransformerBiEncoder:
             )
         self.device = device
         self.policy = policy
+        self._attention_head_count_declared = attention_head_count
         self._resolved_device: str | None = None
         self._torch: Any | None = None
         self._towers: dict[str, _BiEncoderTower] = {}
@@ -882,7 +886,7 @@ class TransformerBiEncoder:
         raise ValueError(f"unknown encoder role {role!r}")
 
     def _attention_head_count(self) -> int:
-        return _BI_ENCODER_ATTENTION_HEAD_COUNTS[self.policy.encoder_id]
+        return self._attention_head_count_declared
 
     def _resolve_files(self) -> dict[str, JsonValue]:
         """Resolve and checksum every weight and tokenizer file actually used."""
@@ -1786,7 +1790,7 @@ def prepare_dense_index(
     *,
     directory: str | Path,
     corpus_hash: str,
-    encoder: TextEncoder | None = None,
+    encoder: TextEncoder,
     document_batch_size: int = DEFAULT_DOCUMENT_BATCH_SIZE,
     checkpoint_interval_rows: int = DEFAULT_CHECKPOINT_INTERVAL_ROWS,
     expected_dimension: int | None = None,
@@ -1800,12 +1804,7 @@ def prepare_dense_index(
         checkpoint_interval_rows,
         "checkpoint_interval_rows",
     )
-    resolved_encoder = cast(
-        TextEncoder,
-        encoder
-        if encoder is not None
-        else DENSE_ENCODER_REGISTRY.create_encoder("dense-bge-m3", device="cpu"),
-    )
+    resolved_encoder = encoder
     policy_dimension = _encoder_policy(resolved_encoder).embedding_dimension
     if expected_dimension is None:
         expected_dimension = policy_dimension
@@ -2340,7 +2339,7 @@ class DenseRetriever:
         topics: Sequence[BenchmarkTopic],
         *,
         run_id: str,
-        system_id: str = "dense-bge-m3",
+        system_id: str,
         top_k: int = DEFAULT_RETRIEVAL_DEPTH,
     ) -> list[Candidate]:
         """Retrieve exact dense candidates for each topic in topic input order."""

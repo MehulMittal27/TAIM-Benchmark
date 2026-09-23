@@ -604,13 +604,13 @@ def build_source_arm_ranking(raw: RawArmRetrieval) -> SourceArmRanking:
     scores: dict[str, float] = {}
     lexical_exposure: set[str] = set()
     dense_exposure: set[str] = set()
-    for condition_index, (bm25, medcpt) in enumerate(
+    for condition_index, (lexical, medcpt) in enumerate(
         zip(raw.bm25_rankings, raw.medcpt_rankings, strict=True)
     ):
         condition_factor = 1 / (condition_index + 1)
-        lexical_exposure.update(bm25)
+        lexical_exposure.update(lexical)
         dense_exposure.update(medcpt)
-        for ranking in (bm25, medcpt):
+        for ranking in (lexical, medcpt):
             for zero_based_rank, trial_id in enumerate(ranking):
                 scores[trial_id] = (
                     scores.get(trial_id, 0.0) + (1 / (zero_based_rank + 20)) * condition_factor
@@ -828,10 +828,13 @@ def _validate_binding(binding: FrozenRetrievalBinding) -> None:
 def _validate_retrieval_implementation(value: object) -> None:
     if not isinstance(value, Mapping):
         raise TrialGPTRetrievalProducerError("retrieval implementation must be an object")
-    bm25 = value.get("bm25")
+    lexical = value.get("bm25")
     medcpt = value.get("medcpt")
     fusion = value.get("fusion")
-    if not isinstance(bm25, Mapping) or bm25.get("implementation") != TRIALGPT_RETRIEVAL_BM25_ID:
+    if (
+        not isinstance(lexical, Mapping)
+        or lexical.get("implementation") != TRIALGPT_RETRIEVAL_BM25_ID
+    ):
         raise TrialGPTRetrievalProducerError("retrieval implementation does not use frozen BM25 v2")
     required_medcpt = {
         "article_model": "ncbi/MedCPT-Article-Encoder",
@@ -918,14 +921,14 @@ def _raw_channel_rows(raw_retrievals: Sequence[RawArmRetrieval]) -> list[dict[st
     return [
         {
             "arm_id": raw.query.arm_id,
-            "bm25_trial_ids": list(bm25),
+            "bm25_trial_ids": list(lexical),
             "condition": condition,
             "condition_index": condition_index,
             "medcpt_trial_ids": list(medcpt),
             "topic_id": raw.query.topic_id,
         }
         for raw in sorted(raw_retrievals, key=_raw_sort_key)
-        for condition_index, (condition, bm25, medcpt) in enumerate(
+        for condition_index, (condition, lexical, medcpt) in enumerate(
             zip(raw.query.conditions, raw.bm25_rankings, raw.medcpt_rankings, strict=True)
         )
     ]

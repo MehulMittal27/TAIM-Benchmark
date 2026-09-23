@@ -1,5 +1,5 @@
 {
-  "release_version": "0.1.1",
+  "release_version": "0.1.2",
   "schema_version": "1.0",
   "support_matrix": [
     {
@@ -50,7 +50,7 @@
       "evidence_scope": "real_effectiveness",
       "profile": "description",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/sigir-ct-2016.json",
         "src/taim/data/profiles/description-v1.json",
         "src/taim/data/sigir_ct_2016.py",
@@ -142,7 +142,7 @@
       "evidence_scope": "within_pool_effectiveness",
       "profile": "sigir-ct-2016-description-judgment-union",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/sigir-ct-2016.json",
         "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
         "src/taim/data/sigir_ct_2016.py",
@@ -235,7 +235,7 @@
       "evidence_scope": "within_pool_effectiveness",
       "profile": "sigir-ct-2016-summary-judgment-union",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/sigir-ct-2016.json",
         "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
         "src/taim/data/sigir_ct_2016.py",
@@ -295,7 +295,7 @@
       "evidence_scope": "real_effectiveness",
       "profile": "summary",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/sigir-ct-2016.json",
         "src/taim/data/profiles/summary-v1.json",
         "src/taim/data/sigir_ct_2016.py",
@@ -402,7 +402,6 @@
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/profiles/official-full-v1.json",
         "src/taim/data/trec_ct_2021.py",
-        "src/taim/query_folding.py",
         "src/taim/release_cli.py"
       ],
       "system": "dense-qwen3-embedding-0.6b-no-template",
@@ -413,7 +412,7 @@
       "evidence_scope": "real_effectiveness",
       "profile": "official-full",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/profiles/official-full-v1.json",
         "src/taim/data/trec_ct_2021.py",
@@ -428,7 +427,7 @@
       "evidence_scope": "real_effectiveness",
       "profile": "official-full",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
         "src/taim/data/profiles/official-full-v1.json",
@@ -475,7 +474,7 @@
       "evidence_scope": "synthetic_conformance",
       "profile": "synthetic-patient-to-trial",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
         "src/taim/fixtures/__init__.py",
         "src/taim/release_cli.py",
@@ -602,7 +601,6 @@
         "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
         "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
         "src/taim/data/trec_ct_2021.py",
-        "src/taim/query_folding.py",
         "src/taim/release_cli.py",
         "src/taim/release_profiles.py",
         "src/taim/release_support.py"
@@ -615,7 +613,7 @@
       "evidence_scope": "external_fidelity_effectiveness",
       "profile": "trec-ct-2021-external-fidelity-26149",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
         "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
@@ -634,7 +632,7 @@
       "evidence_scope": "external_fidelity_effectiveness",
       "profile": "trec-ct-2021-external-fidelity-26149",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
         "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
@@ -663,7 +661,8 @@
         "src/taim/release_profiles.py",
         "docs/paper-analysis-protocol-2026-08-31-v4.md",
         "src/taim/release_support.py",
-        "src/taim/pipeline_extensions/trialmatchai.py"
+        "src/taim/pipeline_extensions/trialmatchai_trec2021.py",
+        "src/taim/trialmatchai_release.py"
       ],
       "system": "trialmatchai-current-cuda-l4-trec21-development-v4",
       "task": "patient_to_trial",
@@ -742,7 +741,6 @@
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
         "src/taim/data/trec_ct_2021.py",
-        "src/taim/query_folding.py",
         "src/taim/release_cli.py",
         "src/taim/release_profiles.py"
       ],
@@ -754,7 +752,7 @@
       "evidence_scope": "within_pool_effectiveness",
       "profile": "trec-ct-2021-judgment-union",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
         "src/taim/data/trec_ct_2021.py",
@@ -770,7 +768,7 @@
       "evidence_scope": "within_pool_effectiveness",
       "profile": "trec-ct-2021-judgment-union",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2021.json",
         "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
         "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
@@ -858,7 +856,7 @@
       "evidence_scope": "real_effectiveness_requires_protocol",
       "profile": "confirmation-full",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2022.json",
         "src/taim/data/profiles/confirmation-full-v1.json",
         "src/taim/data/trec_ct.py",
@@ -964,7 +962,7 @@
       "evidence_scope": "within_pool_effectiveness_requires_protocol",
       "profile": "trec-ct-2022-judgment-union",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2022.json",
         "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
         "src/taim/data/trec_ct.py",
@@ -987,10 +985,11 @@
         "src/taim/data/locks/trec-ct-2022.json",
         "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
         "src/taim/data/trec_ct.py",
-        "src/taim/pipeline_extensions/trialmatchai.py",
+        "src/taim/pipeline_extensions/trialmatchai_trec2022.py",
         "src/taim/release_cli.py",
         "src/taim/release_profiles.py",
-        "src/taim/release_support.py"
+        "src/taim/release_support.py",
+        "src/taim/trialmatchai_release.py"
       ],
       "system": "trialmatchai-current-cuda-l4-trec22-development-v4",
       "task": "patient_to_trial",
@@ -1057,7 +1056,7 @@
       "evidence_scope": "real_effectiveness_requires_protocol",
       "profile": "confirmation-full",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2023.json",
         "src/taim/data/profiles/confirmation-full-v1.json",
         "src/taim/data/trec_ct.py",
@@ -1079,10 +1078,11 @@
         "src/taim/data/locks/trec-ct-2023.json",
         "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
         "src/taim/data/trec_ct.py",
-        "src/taim/pipeline_extensions/trialmatchai.py",
+        "src/taim/pipeline_extensions/trialmatchai_trec2023.py",
         "src/taim/release_cli.py",
         "src/taim/release_profiles.py",
-        "src/taim/release_support.py"
+        "src/taim/release_support.py",
+        "src/taim/trialmatchai_release.py"
       ],
       "system": "trialmatchai-current-cuda-l4-trec23-development-v4",
       "task": "patient_to_trial",
@@ -1153,7 +1153,7 @@
       "evidence_scope": "within_pool_effectiveness_requires_protocol",
       "profile": "trec-ct-2023-judgment-union",
       "required_files": [
-        "src/taim/baselines/rrf.py",
+        "src/taim/baselines/rank_fusion.py",
         "src/taim/data/locks/trec-ct-2023.json",
         "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
         "src/taim/data/trec_ct.py",

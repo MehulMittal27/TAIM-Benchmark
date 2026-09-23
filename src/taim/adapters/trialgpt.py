@@ -31,6 +31,7 @@ from taim.snapshot import (
     CAPABILITY_COMPLETE_ELIGIBILITY_TEXT,
     CAPABILITY_SEMANTIC_TRIAL_SECTIONS,
     CAPABILITY_TYPED_PATIENT_CORE,
+    BenchmarkTopic,
 )
 from taim.system_contracts import StrictSystemOptions
 from taim.trialgpt_codex import CodexProvider
@@ -348,7 +349,7 @@ class _LegacyProviderBridge:
 def _run_generation_stage(
     *,
     provider: TrialGPTProvider,
-    cache: GenerationCache,
+    cache: GenerationCache | None,
     stage: str,
     prompt: str,
     output_schema: Mapping[str, object],
@@ -357,6 +358,7 @@ def _run_generation_stage(
     normalizer: Callable[[object], object] | None = None,
     normalizer_version: str | None = None,
     allow_unresolved: bool = False,
+    reject_duplicate_keys: bool = False,
 ) -> GenerationResult:
     provider_config = _provider_provenance(provider)
     result = run_generation(
@@ -369,6 +371,7 @@ def _run_generation_stage(
             validator=validator,
             normalizer=normalizer,
             normalizer_version=normalizer_version,
+            reject_duplicate_keys=reject_duplicate_keys,
         ),
         _LegacyProviderBridge(provider, stage=stage, payload=payload),
         cache=cache,
@@ -379,6 +382,64 @@ def _run_generation_stage(
             f"TrialGPT generation unresolved at {stage}: "
             + "; ".join(result.attempts[-1].validation_errors)
         )
+    return result
+
+
+def run_trialgpt_matching_stage(
+    *,
+    view: TrialGPTTrialView,
+    kind: Literal["inclusion", "exclusion"],
+    patient: str,
+    topic_id: str,
+    trial_id: str,
+    patient_sentence_count: int,
+    provider: TrialGPTProvider,
+    cache: GenerationCache | None = None,
+    allow_unresolved: bool = False,
+    conservative: bool = False,
+    output_schema: Mapping[str, object] | None = None,
+    validator: Validation | None = None,
+) -> GenerationResult:
+    """Run the shared criterion stage without retrieval, aggregation, or ranking."""
+    criteria = view.inclusion if kind == "inclusion" else view.exclusion
+    criterion_ids = (
+        view.inclusion_criterion_ids if kind == "inclusion" else view.exclusion_criterion_ids
+    )
+    payload = {
+        "topic_id": topic_id,
+        "trial_id": trial_id,
+        "kind": kind,
+        "patient": patient,
+        "criteria": list(criteria),
+        "criterion_ids": list(criterion_ids),
+        "eligibility_view_sha256": view.eligibility_view_sha256,
+        "eligibility_source_sha256": view.eligibility_source_sha256,
+        "eligibility_criterion_inventory_sha256": (view.eligibility_criterion_inventory_sha256),
+    }
+    criterion_prompt = matching_prompt(view, kind, patient, conservative=conservative)
+    matching_provider: TrialGPTProvider = provider if criteria else _EmptyEligibilityProvider()
+    result = _run_generation_stage(
+        provider=matching_provider,
+        cache=cache,
+        stage=f"criterion_matching_{kind}",
+        prompt=criterion_prompt,
+        output_schema=output_schema if output_schema is not None else PAPER_MATCHING_SCHEMA,
+        payload=payload,
+        validator=validator
+        if validator is not None
+        else lambda value: _validate_paper_matching_output(
+            value,
+            kind=kind,
+            criterion_count=len(criteria),
+            patient_sentence_count=patient_sentence_count,
+        ),
+        normalizer=(
+            None if conservative else lambda value: normalize_matching_output(value, kind=kind)
+        ),
+        normalizer_version=None if conservative else TRIALGPT_MATCHING_NORMALIZER_VERSION,
+        allow_unresolved=allow_unresolved,
+        reject_duplicate_keys=conservative,
+    )
     return result
 
 
@@ -515,18 +576,21 @@ TRIALGPT_MODEL_IDENTITY_OMITTED_FIELDS: Mapping[str, str] = {
 }
 
 
-def _trialgpt_model_identity(provider_configuration: Mapping[str, object]) -> dict[str, object]:
-    """Identify the models a TrialGPT run generated with.
+def _trialgpt_model_identity(
+    provider_configuration: Mapping[str, object],
+    *,
+    dense_configuration: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Identify the models a TrialGPT run generated and retrieved with.
 
     The release writer requires ``model_identity`` so a result traces back to what scored
     it. Every generation call goes through the one provider whose provenance the run
     records, so the identity is that provenance: the requested model, the provider's
     reported version, and its model provenance (for Codex, the pinned catalog entry and
-    its identity digest). This System ranks from frozen retrieval and runs no dense model;
-    the retrieval producers are identified by the frozen retrieval lock in
-    ``index_identity``. The executable location is caller-local and stays in
-    ``provider_configuration`` only, because the public projection keeps every key that is
-    not path-shaped.
+    its identity digest). Frozen retrieval ran no dense model in this run; its producers
+    are identified by the frozen retrieval lock in ``index_identity``. The executable
+    location is caller-local and stays in ``provider_configuration`` only, because the
+    public projection keeps every key that is not path-shaped.
     """
 
     raw_transport = provider_configuration.get("transport")
@@ -539,8 +603,9 @@ def _trialgpt_model_identity(provider_configuration: Mapping[str, object]) -> di
         "provider_version": transport.get("codex_version"),
         "model_provenance": transport.get("model_provenance"),
         "tokenizer_id": TRIALGPT_TOKENIZER_ID,
-        # Frozen retrieval loads no dense model in the run, so there is none to identify.
-        "dense_retrieval_model": None,
+        "dense_retrieval_model": (
+            dict(dense_configuration) if dense_configuration is not None else None
+        ),
         # transport.codex_executable is excluded on purpose: an executable location is not a
         # property of the model. The statement travels with the identity so the absence reads
         # as a decision. It does not keep the value out of the published System Input options.
@@ -785,15 +850,7 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
             for trial in request.snapshot.trials
         )
         views_by_trial_id = {view.trial_id: view for view in views}
-        if self.frozen_retrieval is None:
-            raise TrialGPTAdapterError(
-                "the public TrialGPT System requires a preflight-validated frozen "
-                "retrieval artifact"
-            )
-        if depth != 2_000 or request.top_k != 20:
-            raise TrialGPTAdapterError(
-                "TrialGPT publication requires retrieval_depth 2000 and final top_k 20"
-            )
+        self._prepare_retrieval(request, views, run_workspace, device, precision, depth)
         cache = GenerationCache(
             run_workspace / "trialgpt-generation-cache.sqlite3",
             flush_every=TRIALGPT_GENERATION_CACHE_FLUSH_EVERY,
@@ -819,17 +876,15 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
             topic_matching_artifacts: list[dict[str, object]] = []
             topic_aggregation_artifacts: list[dict[str, object]] = []
             topic_abstention_artifacts: list[dict[str, object]] = []
-            try:
-                retrieval_fused = [
-                    (row.trial_id, row.score)
-                    for row in self.frozen_retrieval.rankings[topic.topic_id]
-                ]
-                fused = [
-                    (row.trial_id, row.score)
-                    for row in self.frozen_retrieval.selected_rows(topic.topic_id)
-                ]
-            except TrialGPTPublicationError as exc:
-                raise TrialGPTAdapterError(str(exc)) from exc
+            retrieval_fused, fused, keyword_trace, keyword_audit = self._retrieve_topic(
+                topic, cache, depth
+            )
+            if keyword_trace is not None:
+                traces.append(keyword_trace)
+                topic_traces.append(keyword_trace)
+            if keyword_audit is not None:
+                prompt_audit.append(keyword_audit)
+                topic_prompt_audit.append(keyword_audit)
             topic_retrieval_candidates.extend(
                 Candidate(
                     request.run_id,
@@ -870,44 +925,15 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
                 trial_id, raw_view, raw_kind = task
                 kind = cast(Literal["inclusion", "exclusion"], raw_kind)
                 view = raw_view
-                criteria = view.inclusion if kind == "inclusion" else view.exclusion
-                criterion_ids = (
-                    view.inclusion_criterion_ids
-                    if kind == "inclusion"
-                    else view.exclusion_criterion_ids
-                )
-                payload = {
-                    "topic_id": selected_topic_id,
-                    "trial_id": trial_id,
-                    "kind": kind,
-                    "patient": selected_patient,
-                    "criteria": list(criteria),
-                    "criterion_ids": list(criterion_ids),
-                    "eligibility_view_sha256": view.eligibility_view_sha256,
-                    "eligibility_source_sha256": view.eligibility_source_sha256,
-                    "eligibility_criterion_inventory_sha256": (
-                        view.eligibility_criterion_inventory_sha256
-                    ),
-                }
-                criterion_prompt = matching_prompt(view, kind, selected_patient)
-                matching_provider: TrialGPTProvider = (
-                    self.provider if criteria else _EmptyEligibilityProvider()
-                )
-                result = _run_generation_stage(
-                    provider=matching_provider,
+                result = run_trialgpt_matching_stage(
+                    view=view,
+                    kind=kind,
+                    patient=selected_patient,
+                    topic_id=selected_topic_id,
+                    trial_id=trial_id,
+                    patient_sentence_count=selected_patient_sentence_count,
+                    provider=self.provider,
                     cache=cache,
-                    stage=f"criterion_matching_{kind}",
-                    prompt=criterion_prompt,
-                    output_schema=PAPER_MATCHING_SCHEMA,
-                    payload=payload,
-                    validator=lambda value: _validate_paper_matching_output(
-                        value,
-                        kind=kind,
-                        criterion_count=len(criteria),
-                        patient_sentence_count=selected_patient_sentence_count,
-                    ),
-                    normalizer=lambda value: normalize_matching_output(value, kind=kind),
-                    normalizer_version=TRIALGPT_MATCHING_NORMALIZER_VERSION,
                     allow_unresolved=allow_trial_abstention,
                 )
                 if not result.resolved:
@@ -1381,10 +1407,8 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
                 "implementation": f"{type(self).__module__}.{type(self).__qualname__}",
                 "provider": self.provider.provider_id,
                 "provider_configuration": provider_configuration,
-                "model_identity": _trialgpt_model_identity(provider_configuration),
-                "index_identity": _trialgpt_index_identity(
-                    request, frozen_retrieval=self.frozen_retrieval
-                ),
+                "model_identity": self._model_identity(provider_configuration),
+                "index_identity": self._index_identity(request),
                 "codex_model": getattr(self.provider, "model", None),
                 "prompt_version": TRIALGPT_PAPER_PROMPT_VERSION,
                 "matching_output_contract_version": TRIALGPT_MATCHING_OUTPUT_CONTRACT_VERSION,
@@ -1415,11 +1439,7 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
                 "effective_generation_workers": generation_workers,
                 "per_topic_generation": per_topic_generation,
                 "generation_cache_flush_every": TRIALGPT_GENERATION_CACHE_FLUSH_EVERY,
-                "frozen_retrieval": self.frozen_retrieval.provenance(
-                    [topic.topic_id for topic in request.snapshot.topics]
-                ),
-                "keyword_generation": "not_executed_frozen_three_luna_consensus",
-                "expected_logical_calls_per_topic": TRIALGPT_PUBLICATION_LOGICAL_CALLS_PER_TOPIC,
+                **self._retrieval_configuration(request),
                 "qrels_used": False,
                 "prepared_snapshot_id": request.snapshot.prepared_snapshot_id,
                 "task_input_id": request.snapshot.task_input_id,
@@ -1450,15 +1470,7 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
                 },
                 **(
                     {
-                        # The System these factors are declared against is not part of the
-                        # release, so the record keeps the factors and names no parent.
-                        "controlled_variant": {
-                            "declared_factors": [
-                                "retry_exhaustion_policy",
-                                "unambiguous_matching_tuple_normalization",
-                                "patient_sentence_id_bounds_validation",
-                            ],
-                        },
+                        "controlled_variant": self._controlled_variant(),
                         "failure_policy": {
                             "policy_version": TRIALGPT_FAILURE_AWARE_POLICY_VERSION,
                             "keyword_generation": "fail_before_retrieval",
@@ -1499,6 +1511,75 @@ class TrialGPTTAIMLunaV1System(StrictSystemOptions):
                 ),
             ),
         )
+
+    def _prepare_retrieval(
+        self,
+        request: SystemRunRequest,
+        views: tuple[TrialGPTTrialView, ...],
+        run_workspace: Path,
+        device: str,
+        precision: str,
+        depth: int,
+    ) -> None:
+        if self.frozen_retrieval is None:
+            raise TrialGPTAdapterError(
+                "the public TrialGPT System requires a preflight-validated frozen "
+                "retrieval artifact"
+            )
+        if depth != 2_000 or request.top_k != 20:
+            raise TrialGPTAdapterError(
+                "TrialGPT publication requires retrieval_depth 2000 and final top_k 20"
+            )
+
+    def _retrieve_topic(
+        self, topic: BenchmarkTopic, cache: GenerationCache, depth: int
+    ) -> tuple[
+        list[tuple[str, float]],
+        list[tuple[str, float]],
+        dict[str, object] | None,
+        dict[str, object] | None,
+    ]:
+        if self.frozen_retrieval is None:
+            raise TrialGPTAdapterError("frozen TrialGPT retrieval was not initialized")
+        try:
+            rows = [
+                (row.trial_id, row.score) for row in self.frozen_retrieval.rankings[topic.topic_id]
+            ]
+            selected = [
+                (row.trial_id, row.score)
+                for row in self.frozen_retrieval.selected_rows(topic.topic_id)
+            ]
+        except TrialGPTPublicationError as exc:
+            raise TrialGPTAdapterError(str(exc)) from exc
+        return rows, selected, None, None
+
+    def _model_identity(self, provider_configuration: Mapping[str, object]) -> dict[str, object]:
+        return _trialgpt_model_identity(provider_configuration)
+
+    def _index_identity(self, request: SystemRunRequest) -> dict[str, object]:
+        if self.frozen_retrieval is None:
+            raise TrialGPTAdapterError("frozen TrialGPT retrieval was not initialized")
+        return _trialgpt_index_identity(request, frozen_retrieval=self.frozen_retrieval)
+
+    def _retrieval_configuration(self, request: SystemRunRequest) -> dict[str, object]:
+        if self.frozen_retrieval is None:
+            raise TrialGPTAdapterError("frozen TrialGPT retrieval was not initialized")
+        return {
+            "frozen_retrieval": self.frozen_retrieval.provenance(
+                [topic.topic_id for topic in request.snapshot.topics]
+            ),
+            "keyword_generation": "not_executed_frozen_three_luna_consensus",
+            "expected_logical_calls_per_topic": TRIALGPT_PUBLICATION_LOGICAL_CALLS_PER_TOPIC,
+        }
+
+    def _controlled_variant(self) -> dict[str, object]:
+        return {
+            "declared_factors": [
+                "retry_exhaustion_policy",
+                "unambiguous_matching_tuple_normalization",
+                "patient_sentence_id_bounds_validation",
+            ],
+        }
 
     def _runtime_options(self, request: SystemRunRequest) -> tuple[Path, str, str, int, int]:
         if self.execution_workspace is None:

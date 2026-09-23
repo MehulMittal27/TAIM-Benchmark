@@ -17,7 +17,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any, cast
 
-from taim.baselines.rrf import fuse_rrf_n, rrf_n_configuration
+from taim.baselines.rank_fusion import fuse_rrf_n, rrf_n_configuration
 from taim.contracts import require_sha256
 from taim.folded_query_bundle import (
     FOLDED_QUERY_BUNDLE_SCHEMA_VERSION,

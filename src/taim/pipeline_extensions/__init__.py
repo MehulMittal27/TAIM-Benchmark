@@ -5,9 +5,10 @@ dispatch and the release rules for its files in a module of this package, and on
 owns the module. The release commands find the modules this package ships and never name one, so a
 release that holds a pipeline back leaves its module out and nothing else refers to it.
 
-Each module assigns one public name, ``EXTENSION``: a single :class:`PipelineExtension` call that
-writes its :data:`LITERAL_FIELDS` as literals. Its other names are private. The release validator
-reads those literals from a candidate tree without importing the module.
+Each module assigns ``EXTENSION`` once: a single :class:`PipelineExtension` call that writes its
+:data:`LITERAL_FIELDS` as literals. A module may also own its System class and identity; shared
+helpers belong outside this discovery package. The release validator reads those literals from
+a candidate tree without importing the module.
 """
 
 from __future__ import annotations
@@ -42,6 +43,7 @@ LITERAL_FIELDS = frozenset(
         "protected_reference_paths",
         "dependency_declarations",
         "ci_jobs",
+        "default_system",
     }
 )
 
@@ -79,7 +81,9 @@ class PipelineExtension:
     the re-evaluation extension for the Profiles in ``evaluation_profiles``.
 
     ``required_distributions`` are the locked distributions a producer environment must have
-    installed to run the pipeline's Systems. ``run_from_components`` runs a System assembled from
+    installed to run the pipeline's Systems. ``default_system`` names one of this unit's Systems
+    that can run the synthetic quick start, and offers a CLI default in that System's direction.
+    ``run_from_components`` runs a System assembled from
     validated component runs in place of ``run_options`` and ``run``; ``stage_depths`` (each stage's
     pipeline depth and ranking depth, in order) and ``validate_component_producers`` are the rules
     its Result Bundles meet.
@@ -103,6 +107,8 @@ class PipelineExtension:
     evaluation_profiles: tuple[str, ...] = ()
     evaluation_extension: Callable[[], RunEvaluationExtension] | None = None
     required_distributions: tuple[str, ...] = ()
+    default_system: str | None = None
+    reverse_systems: Callable[[], Mapping[str, object]] | None = None
     run_from_components: Callable[[ComponentRun], SystemRunResult] | None = None
     stage_depths: Mapping[str, tuple[str, int]] = field(default_factory=dict)
     validate_component_producers: (
@@ -110,6 +116,8 @@ class PipelineExtension:
     ) = None
 
     def __post_init__(self) -> None:
+        if self.default_system is not None and self.default_system not in self.system_tasks:
+            raise ValueError("pipeline default_system must name one of its declared Systems")
         for name in (
             "system_tasks",
             "subcommands",
@@ -142,8 +150,15 @@ def pipeline_extensions() -> tuple[PipelineExtension, ...]:
     return tuple(found)
 
 
+def add_argument_once(parser: argparse.ArgumentParser, *flags: str, **options: object) -> None:
+    """Shared options are installed once when several shipped units use them."""
+
+    if not any(flag in parser._option_string_actions for flag in flags):
+        parser.add_argument(*flags, **options)  # type: ignore[arg-type]
+
+
 def extension_for(system_id: str) -> PipelineExtension | None:
-    """The shipped extension that runs ``system_id``, or None when core code runs it."""
+    """The shipped extension that runs ``system_id``, or None for an unselected System."""
 
     for extension in pipeline_extensions():
         if system_id in extension.system_tasks:
@@ -156,6 +171,7 @@ __all__ = [
     "ComponentRun",
     "PipelineExtension",
     "SubcommandAdder",
+    "add_argument_once",
     "extension_for",
     "pipeline_extensions",
 ]

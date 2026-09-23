@@ -1,11 +1,4 @@
-"""Deterministic reciprocal-rank fusion over two or more candidate runs.
-
-:func:`fuse_rrf` is the frozen two-component baseline and is unchanged.
-:func:`fuse_rrf_n` is the same formula, the same constant, the same component
-depth and the same tie-break generalised to any number of components; both call
-one scoring kernel, so the two-component case is the N-component case by
-construction rather than by assertion.  ``tests/test_rrf.py`` pins that.
-"""
+"""Deterministic shared reciprocal-rank fusion scoring kernel."""
 
 from __future__ import annotations
 
@@ -66,23 +59,6 @@ def _validated_component(
     return rows, next(iter(run_ids))
 
 
-def _validated_components(
-    bm25_candidates: Iterable[Candidate],
-    dense_candidates: Iterable[Candidate],
-) -> tuple[tuple[Candidate, ...], str, tuple[Candidate, ...], str]:
-    bm25_rows, bm25_run_id = _validated_component(
-        bm25_candidates,
-        expected_system_id="bm25",
-    )
-    dense_rows, dense_run_id = _validated_component(
-        dense_candidates,
-        expected_system_id="dense-bge-m3",
-    )
-    if bm25_run_id == dense_run_id:
-        raise ValueError("BM25 and dense component runs must have distinct run_id values")
-    return bm25_rows, bm25_run_id, dense_rows, dense_run_id
-
-
 def _fused_ranking(
     components: Sequence[tuple[Candidate, ...]],
     *,
@@ -129,66 +105,31 @@ def _fused_ranking(
 
 
 def fuse_rrf(
-    bm25_candidates: Iterable[Candidate],
-    dense_candidates: Iterable[Candidate],
+    first_candidates: Iterable[Candidate],
+    second_candidates: Iterable[Candidate],
     *,
+    expected_system_ids: tuple[str, str],
     run_id: str,
-    system_id: str = "rrf",
+    system_id: str,
     top_k: int = DEFAULT_RRF_OUTPUT_DEPTH,
 ) -> list[Candidate]:
-    """Fuse the frozen BM25 and dense component top-1000 ranks using ``1 / (60 + rank)``."""
+    """Fuse two declared component identities through the shared exact kernel."""
 
-    output_depth = _non_negative_integer(top_k, "top_k")
-    bm25_rows, _, dense_rows, _ = _validated_components(
-        bm25_candidates,
-        dense_candidates,
+    first, first_run = _validated_component(
+        first_candidates, expected_system_id=expected_system_ids[0]
     )
+    second, second_run = _validated_component(
+        second_candidates, expected_system_id=expected_system_ids[1]
+    )
+    if first_run == second_run:
+        raise ValueError("component runs must have distinct run_id values")
     return _fused_ranking(
-        (bm25_rows, dense_rows),
+        (first, second),
         run_id=run_id,
         system_id=system_id,
         component_depth=RRF_COMPONENT_DEPTH,
-        output_depth=output_depth,
+        output_depth=_non_negative_integer(top_k, "top_k"),
     )
-
-
-def rrf_configuration(
-    bm25_candidates: Sequence[Candidate],
-    dense_candidates: Sequence[Candidate],
-    *,
-    top_k: int = DEFAULT_RRF_OUTPUT_DEPTH,
-) -> dict[str, JsonValue]:
-    """Return the complete JSON-compatible RRF retrieval configuration."""
-
-    output_depth = _non_negative_integer(top_k, "top_k")
-    bm25_rows, bm25_run_id, dense_rows, dense_run_id = _validated_components(
-        bm25_candidates,
-        dense_candidates,
-    )
-    return {
-        "implementation": "taim.baselines.rrf.fuse_rrf",
-        "formula": "sum(1 / (60 + component_rank))",
-        "constant": RRF_CONSTANT,
-        "component_retrieval_depth": RRF_COMPONENT_DEPTH,
-        "requested_top_k": output_depth,
-        "raw_component_scores_used": False,
-        "tie_breaking": "RRF score descending, trial_id ascending",
-        "topic_order": "topic_id ascending",
-        "components": [
-            {
-                "system_id": "bm25",
-                "run_id": bm25_run_id,
-                "candidate_count": len(bm25_rows),
-                "maximum_input_rank": max(candidate.rank for candidate in bm25_rows),
-            },
-            {
-                "system_id": "dense-bge-m3",
-                "run_id": dense_run_id,
-                "candidate_count": len(dense_rows),
-                "maximum_input_rank": max(candidate.rank for candidate in dense_rows),
-            },
-        ],
-    }
 
 
 def _validated_named_components(
@@ -255,7 +196,7 @@ def fuse_rrf_n(
     components: Mapping[str, Iterable[Candidate]],
     *,
     run_id: str,
-    system_id: str = "rrf",
+    system_id: str,
     top_k: int = DEFAULT_RRF_OUTPUT_DEPTH,
     component_depth: int = RRF_COMPONENT_DEPTH,
 ) -> list[Candidate]:
@@ -319,16 +260,11 @@ def rrf_n_configuration(
     }
 
 
-reciprocal_rank_fusion = fuse_rrf
-
-
 __all__ = [
     "DEFAULT_RRF_OUTPUT_DEPTH",
     "RRF_COMPONENT_DEPTH",
     "RRF_CONSTANT",
     "fuse_rrf",
     "fuse_rrf_n",
-    "reciprocal_rank_fusion",
-    "rrf_configuration",
     "rrf_n_configuration",
 ]

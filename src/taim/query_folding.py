@@ -269,7 +269,7 @@ class ConceptLexicon:
         }
 
 
-def normalize(text: str) -> list[str]:
+def normalize_concept_text(text: str) -> list[str]:
     """Casefold and split on anything that is not a letter or digit."""
 
     return _NON_ALPHANUMERIC.sub(" ", text.lower()).split()
@@ -329,7 +329,7 @@ def load_concept_lexicon(release: Path) -> ConceptLexicon:
         if semantic_tag.get(concept_id) not in CLINICAL_SEMANTIC_TAGS:
             continue
         for term in concept_terms:
-            form = " ".join(normalize(term))
+            form = " ".join(normalize_concept_text(term))
             if len(form) < MINIMUM_TERM_CHARACTERS:
                 continue
             if len(form.split()) > MAXIMUM_TERM_TOKENS:
@@ -345,9 +345,9 @@ def load_concept_lexicon(release: Path) -> ConceptLexicon:
 
 
 def words(text: str) -> list[Word]:
-    """Split exactly as :func:`normalize` does, but keeping offsets.
+    """Split exactly as :func:`normalize_concept_text` does, but keeping offsets.
 
-    ``normalize`` collapses every non-alphanumeric run and lowercases, which is
+    ``normalize_concept_text`` collapses every non-alphanumeric run and lowercases, which is
     the same partition as ``[a-z0-9]+`` over the lowered text - and the same
     partition :func:`taim.baselines.bm25.tokenize` uses, so a term written back
     into a folded query survives BM25 tokenisation unchanged.
@@ -355,8 +355,8 @@ def words(text: str) -> list[Word]:
 
     lowered = text.lower()
     found = [Word(match.group(), match.start(), match.end()) for match in _WORD.finditer(lowered)]
-    if [word.text for word in found] != normalize(text):
-        raise ValueError("offset-preserving tokenisation disagrees with normalize()")
+    if [word.text for word in found] != normalize_concept_text(text):
+        raise ValueError("offset-preserving tokenisation disagrees with normalize_concept_text()")
     return found
 
 
@@ -704,7 +704,7 @@ __all__ = [
     "lexicon_spans",
     "load_concept_lexicon",
     "merge_spans",
-    "normalize",
+    "normalize_concept_text",
     "sha256_file",
     "words",
 ]

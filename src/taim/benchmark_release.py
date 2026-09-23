@@ -164,7 +164,7 @@ _INSPECTABLE_TEXT_SUFFIXES = {
     ".yaml",
     ".yml",
 }
-_INSPECTABLE_TEXT_FILENAMES = {".gitignore", "LICENSE", "SHA256SUMS"}
+_INSPECTABLE_TEXT_FILENAMES = {".gitignore", "LICENSE", "MANIFEST.in", "SHA256SUMS"}
 _TREC_QRELS_ROW = re.compile(r"^\S+\s+\S+\s+\S+\s+[0-2]\s*$")
 
 
@@ -777,6 +777,36 @@ def _module_ships(module: str, destinations: Collection[str]) -> bool:
     return f"{relative}.py" in destinations or f"{relative}/__init__.py" in destinations
 
 
+def _synthetic_tasks(files: Mapping[str, Path]) -> set[str]:
+    return {
+        cast(str, cast(Mapping[str, str], declaration["system_tasks"])[default])
+        for declaration in _extension_declarations(files).values()
+        if isinstance(default := declaration.get("default_system"), str)
+    }
+
+
+def _selected_workflow_commands(
+    payload: dict[str, object], definition: Mapping[str, object]
+) -> None:
+    tasks = {
+        command[1]
+        for command in cast(list[list[str]], definition["quick_start"])
+        if len(command) > 1
+    }
+    for job in cast(dict[str, dict[str, object]], payload["jobs"]).values():
+        for step in cast(list[dict[str, object]], job["steps"]):
+            if not isinstance(step.get("run"), str):
+                continue
+            step["run"] = "\n".join(
+                line
+                for line in cast(str, step["run"]).splitlines()
+                if not any(
+                    f"trial-benchmark {task} " in line and task not in tasks
+                    for task in ("patient-to-trial", "trial-to-patient")
+                )
+            )
+
+
 def _generate_workflow_jobs(source: bytes, definition: Mapping[str, object]) -> bytes:
     """The CI workflow without each job that imports a taim module the release does not ship.
 
@@ -800,7 +830,11 @@ def _generate_workflow_jobs(source: bytes, definition: Mapping[str, object]) -> 
         )
     ]
     if not dropped:
-        return source
+        original = json.loads(text)
+        _selected_workflow_commands(payload, definition)
+        if payload == original:
+            return source
+        return (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
     lines = text.splitlines(keepends=True)
     for name in dropped:
         start = next(
@@ -840,7 +874,11 @@ def _generate_workflow_jobs(source: bytes, definition: Mapping[str, object]) -> 
         raise BenchmarkReleaseError(
             "generated workflow is not the source without jobs " + ", ".join(sorted(dropped))
         )
-    return generated.encode("utf-8")
+    original = json.loads(generated)
+    _selected_workflow_commands(emitted, definition)
+    if emitted == original:
+        return generated.encode("utf-8")
+    return (json.dumps(emitted, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
 
 
 # Generators make a shipped file from its committed source and the projected definition. Markers
@@ -889,6 +927,22 @@ def _validate_pipelines(
         if system_id in declared or not set(declared) <= set(raw_pipelines):
             raise BenchmarkReleaseError(f"{role} components must be other declared pipelines")
         components[cast(str, system_id)] = tuple(declared)
+    visited: set[str] = set()
+    visiting: set[str] = set()
+
+    def visit(system_id: str) -> None:
+        if system_id in visiting:
+            raise BenchmarkReleaseError(f"pipeline dependency cycle includes {system_id}")
+        if system_id in visited:
+            return
+        visiting.add(system_id)
+        for component in components[system_id]:
+            visit(component)
+        visiting.remove(system_id)
+        visited.add(system_id)
+
+    for system_id in components:
+        visit(system_id)
     published = definition["published_pipelines"]
     if (
         not isinstance(published, list)
@@ -1690,6 +1744,12 @@ def _validate_ci_contract(
         ("trial-to-patient", "run", "evaluate"),
         ("trial-to-patient", "run", "validate"),
     }
+    synthetic_tasks = {task.replace("_", "-") for task in _synthetic_tasks(files)}
+    required_public_operations = {
+        operation
+        for operation in required_public_operations
+        if operation[0] == "support" or operation[0] in synthetic_tasks
+    }
     public_operations = {
         operation
         for operation in required_public_operations
@@ -1722,10 +1782,8 @@ def _validate_ci_contract(
                 f"public CI {name} job imports taim modules the release does not ship: "
                 + ", ".join(unshipped)
             )
-    # Core needs a folding job; each shipped pipeline extension declares the jobs it needs.
-    requirements: list[tuple[set[str], set[str], str]] = [
-        ({"folding"}, {"taim.query_folding"}, "core")
-    ]
+    # Each selected unit owns its optional-runtime import checks.
+    requirements: list[tuple[set[str], set[str], str]] = []
     for relative, declaration in _extension_declarations(files).items():
         for requirement in cast(
             tuple[Mapping[str, tuple[str, ...]], ...], declaration.get("ci_jobs", ())
@@ -2113,6 +2171,14 @@ def _project_definition(
             if row["system"] in published
         ],
     }
+    synthetic_tasks = {task.replace("_", "-") for task in _synthetic_tasks(projected_files)}
+    projected["quick_start"] = [
+        command
+        for command in cast(list[list[str]], definition["quick_start"])
+        if len(command) < 2
+        or command[1] not in {"patient-to-trial", "trial-to-patient"}
+        or command[1] in synthetic_tasks
+    ]
     derived = _derived_license_bindings(projected_files, projected)
     all_bindings = cast(list[Mapping[str, object]], definition["license_bindings"])
     bindings = [item for item in all_bindings if (item["kind"], item["locator"]) in derived]
@@ -3192,7 +3258,9 @@ def _taim_imports(relative: str, module: ast.Module) -> set[tuple[str, str | Non
             )
         ):
             found.add((node.args[0].value, None))
-    return {(target, name) for target, name in found if target.split(".")[0] == "taim"}
+    return {
+        (target, name) for target, name in found if target.split(".")[0].partition("_")[0] == "taim"
+    }
 
 
 def _validate_public_import_closure(files: Mapping[str, Path]) -> None:
@@ -3226,7 +3294,7 @@ def _validate_public_import_closure(files: Mapping[str, Path]) -> None:
         missing: set[str] = set()
         for target, name in _taim_imports(relative, module):
             owner = module_file(target)
-            if owner is None:
+            if target.split(".")[0] != "taim" or owner is None:
                 missing.add(target)
                 continue
             if name is None or not owner.endswith("/__init__.py") or owner not in modules:
@@ -3520,6 +3588,8 @@ def _literal_field_is_valid(name: str, value: object) -> bool:
         return isinstance(value, tuple) and all(
             isinstance(item, tuple) and len(item) == 3 and _strings(item) for item in value
         )
+    if name == "default_system":
+        return value is None or isinstance(value, str)
     if name == "pipeline_depth":
         return isinstance(value, str) and bool(value)
     if name == "ci_jobs":
@@ -3565,8 +3635,10 @@ def _extension_declaration(tree: ast.Module, relative: str) -> dict[str, object]
             continue
         try:
             value: object = ast.literal_eval(keyword.value)
-        except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
-            value = None
+        except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError) as exc:
+            raise BenchmarkReleaseError(
+                f"pipeline extension {name} is not a valid literal: {relative}"
+            ) from exc
         if not _literal_field_is_valid(name, value):
             raise BenchmarkReleaseError(
                 f"pipeline extension {name} is not a valid literal: {relative}"
@@ -3574,6 +3646,12 @@ def _extension_declaration(tree: ast.Module, relative: str) -> dict[str, object]
         declaration[name] = value
     if "system_tasks" not in declaration:
         raise BenchmarkReleaseError(f"pipeline extension declares no system_tasks: {relative}")
+    if (default := declaration.get("default_system")) is not None and default not in cast(
+        Mapping[str, str], declaration["system_tasks"]
+    ):
+        raise BenchmarkReleaseError(
+            f"pipeline extension default_system must name one of its declared Systems: {relative}"
+        )
     return declaration
 
 
@@ -3856,9 +3934,10 @@ _CORE_PROTECTED_REFERENCE_PATHS = frozenset(
         "src/taim/release_cli.py",
         "src/taim/release_profiles.py",
         "src/taim/release_support.py",
-        "tests/test_bundle_roundtrip.py",
+        "tests/test_bundle_profile_contracts.py",
         "tests/test_connectors.py",
-        "tests/test_quick_start.py",
+        "tests/test_profile_contracts.py",
+        "tests/test_submissions.py",
     }
 )
 

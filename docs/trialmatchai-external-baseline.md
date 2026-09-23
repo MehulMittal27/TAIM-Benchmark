@@ -6,10 +6,11 @@ adapter verifies the clean checkout, origin, commit, config digest, model and ad
 identities, concept-store manifest, index inputs, environment overrides, and normalized ranking.
 
 Provision the upstream checkout, its own locked runtime, licensed model snapshots, a frozen
-concept store, and a prepared TrialMatchAI corpus outside this repository. Then add:
+concept store, and a prepared TrialMatchAI corpus outside this repository. Find the selected
+TrialMatchAI System for your Track with `trial-benchmark support list`, then add its ID and inputs:
 
 ```console
-  --system trialmatchai-current-cuda-l4-trec21-development-v4 \
+  --system <selected-trialmatchai-system-id> \
   --trialmatchai-cwd /path/to/pinned/TrialMatchAI \
   --trialmatchai-corpus-dir /path/to/trialmatchai-corpus \
   --trialmatchai-search-db-path /path/to/trialmatchai-corpus/search \

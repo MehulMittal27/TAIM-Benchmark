@@ -47,8 +47,11 @@ access, model or terminology terms, result admission, or publication; those gate
 
 ## Run TAIM reference Systems
 
+Use `trial-benchmark support list` to select a System declared for this Profile.
 Pass the same `--pool-file`, receipt values, external protocol ID, immutable release manifest,
-package artifact, and dependency lock to every row. For example:
+package artifact, and dependency lock to every row.
+
+For BM25:
 
 ```console
 trial-benchmark patient-to-trial benchmark run \
@@ -62,12 +65,12 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<receipt-id> \
   --protocol-approval-id "$EXTERNAL_PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.1-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25 \
   --run-id external-fidelity-bm25 \
   --output-dir runs
 ```
 
-The other reference Systems' commands use the same System-specific options documented in the main
-README. Their effective Task Input must be identical to the BM25 row.
+Apply the System-specific options documented in the main README. Runs compared in this stratum
+must use the same effective Task Input.

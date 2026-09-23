@@ -18,3 +18,6 @@ Do not commit official benchmark inputs, patient or trial text from a Local Run,
 dense indexes, credentials, provider traces, or machine-local paths. Use the packaged synthetic
 fixture for tests. A pull request should state which contract or reference System changes and how
 the change affects existing artifact identities.
+
+Scoring a pipeline of your own needs no change to this repository: follow
+[Score your own pipeline](docs/external-pipelines.md).

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from taim.trial_to_patient import TrialToPatientRunManifest
 
 RELEASE_SUPPORT_SCHEMA_VERSION = "1.0"
-RELEASE_VERSION = "0.1.1"
+RELEASE_VERSION = "0.1.2"
 RELEASE_SUPPORT_RESOURCE = "release-support-v0.1.json"
 FROZEN_PAPER_PROTOCOL_SHA256 = (
     "sha256:18a9c9bd3c76455038d01458a5cb2d933059d1e72924285e26500a8aaab1baf6"
@@ -108,7 +108,7 @@ def _packaged_system_tasks() -> dict[str, frozenset[str]]:
 
 
 def _subcommand_systems() -> dict[tuple[str, str], str]:
-    bindings = dict(_CORE_SUBCOMMAND_SYSTEMS)
+    bindings: dict[tuple[str, str], str] = {}
     for extension in pipeline_extensions():
         for command, system in extension.subcommands.items():
             if command in bindings:
@@ -131,11 +131,6 @@ EXTERNAL_BASELINE_SYSTEMS = frozenset(
 # The System a CLI subcommand runs when it takes no --system option. The release validator's
 # catalogue-CLI-dispatch check and the documented-command checker both read this declaration. A
 # pipeline extension declares its own subcommands, which are added here.
-_CORE_SUBCOMMAND_SYSTEMS: Mapping[tuple[str, str], str] = {
-    ("patient-to-trial", "queries"): "bm25-folded",
-    ("trial-to-patient", "benchmark"): "bm25-trial-to-patient",
-    ("trial-to-patient", "fixture"): "bm25-trial-to-patient",
-}
 SUBCOMMAND_SYSTEMS: Mapping[tuple[str, str], str] = _subcommand_systems()
 PROFILE_TASKS: Mapping[str, str] = {
     "confirmation-full": "patient_to_trial",

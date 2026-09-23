@@ -1,805 +1,998 @@
 {
   "artifact_type": "taim-benchmark-release-provenance",
-  "release_version": "0.1.1",
+  "release_version": "0.1.2",
   "schema_version": "2.0",
   "source_files": [
     {
-      "byte_size": 4155,
+      "byte_size": 4082,
       "destination": ".github/workflows/ci.yml",
       "generator": "workflow-jobs",
-      "sha256": "sha256:883af04eb988791017a4ba7f9795a7984d433828cf7f3e7c5da155bf91e6f082",
-      "source": "release/public/.github/workflows/ci.approved.yml"
+      "sha256": "sha256:cfde371117279a5b08d15a8acd8d24aa9965c965cc95ff18612dca9796b7c53b",
+      "source": "public/.github/workflows/ci.yml"
     },
     {
       "byte_size": 146,
       "destination": ".gitignore",
       "sha256": "sha256:106192d933c5702163cd21921b24b6545739cb19798c319232c815bf634be0f2",
-      "source": "release/public/.gitignore"
+      "source": "public/.gitignore"
     },
     {
       "byte_size": 405,
       "destination": "CITATION.cff",
-      "sha256": "sha256:e7d0e806041a9e699ad514935abfc026e6470cf8bd80dfbc730aff403edaf172",
-      "source": "release/public/CITATION.cff.approved"
+      "sha256": "sha256:d0d24f16122c325b29d937bc43d1dd321207503415e89a13f7aa9ce08e7469aa",
+      "source": "public/CITATION.cff"
     },
     {
-      "byte_size": 822,
+      "byte_size": 952,
       "destination": "CONTRIBUTING.md",
-      "sha256": "sha256:d56f8be2ac6c73a3e1c4abdd1421c3bacaafbbcfcd3482cbbe0e60fc0ecd0894",
-      "source": "release/public/CONTRIBUTING.md"
+      "sha256": "sha256:8d5d7cf00d06d808d2f05eb76b1b28703835d7e8e903403fcdcf8e54bf1f36f1",
+      "source": "public/CONTRIBUTING.md"
     },
     {
       "byte_size": 11412,
       "destination": "LICENSE",
       "sha256": "sha256:cc1dfe9f98a5d3a7b197c3b423fe0d6e0e682bf4de769f619b0644738dbf82fc",
-      "source": "release/public/LICENSE.approved"
+      "source": "public/LICENSE"
     },
     {
-      "byte_size": 18875,
+      "byte_size": 29,
+      "destination": "MANIFEST.in",
+      "sha256": "sha256:6a88ba54420f5e7e1395f425e22c80eba3f6cc555478601d0bdfb355440614ce",
+      "source": "public/MANIFEST.in"
+    },
+    {
+      "byte_size": 19673,
       "destination": "README.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:7577d418f82ed53be55745dbe348f3d0eacc110fb9f31725ec7696e8dcb710be",
-      "source": "release/public/README.md"
+      "sha256": "sha256:3fd488e62f47f6c2e04331617f469dad980c6661504827d2bc0cc0eea145c929",
+      "source": "public/README.md"
     },
     {
       "byte_size": 505,
       "destination": "SECURITY.md",
       "sha256": "sha256:5055c02200791bb24a02dc507e91521a06b48f9c31d2bfa81e9d7751ac556166",
-      "source": "release/public/SECURITY.md"
+      "source": "public/SECURITY.md"
     },
     {
       "byte_size": 8967,
       "destination": "THIRD_PARTY_NOTICES.md",
       "generator": "markdown-sections",
       "sha256": "sha256:46b3cfa5d426b29a01179b995670d10f008349d571689dd8d77e8909081049a1",
-      "source": "release/public/THIRD_PARTY_NOTICES.approved.md"
+      "source": "public/THIRD_PARTY_NOTICES.md"
     },
     {
-      "byte_size": 4808,
+      "byte_size": 5042,
       "destination": "docs/compatibility.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:e9e206f1b21fc20308daa9bd950d4e4b803a141b70cd14ddde089caa78348bf7",
-      "source": "release/public/docs/compatibility.md"
+      "sha256": "sha256:a111db686172b339d7fe6cd3e8450c19e86413d4a763c2454fe5d259912d3091",
+      "source": "public/docs/compatibility.md"
     },
     {
       "byte_size": 1747,
       "destination": "docs/external-baselines.md",
       "sha256": "sha256:77b258254086a36614e0399bf680ccd31745d6afcf5e0944f49a9fc07d8a10ab",
-      "source": "release/public/docs/external-baselines.md"
+      "source": "public/docs/external-baselines.md"
     },
     {
-      "byte_size": 3381,
+      "byte_size": 3427,
       "destination": "docs/external-fidelity-profile.md",
-      "sha256": "sha256:809a6bdbd39d431af5ac020e81a8d4021de6dd38f19c8474e314b67e1fd12203",
-      "source": "release/public/docs/external-fidelity-profile.md"
+      "generator": "markdown-sections",
+      "sha256": "sha256:7d3b30b531fb1e59020fc4b5c7a5c1f03770ba5251854ec0952f3c8ca6408324",
+      "source": "public/docs/external-fidelity-profile.md"
     },
     {
-      "byte_size": 16572,
+      "byte_size": 10224,
+      "destination": "docs/external-pipelines.md",
+      "sha256": "sha256:4b2fe315382c87660c084b47e1bf4b4c2384dd717a1fa39b0ddc011f45df1709",
+      "source": "public/docs/external-pipelines.md"
+    },
+    {
+      "byte_size": 16852,
       "destination": "docs/method-contracts.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:621efa4e808ae3d6351eb438a5659cbaa79fe47519a1295c39a51468312b93b6",
-      "source": "release/public/docs/method-contracts.md"
+      "sha256": "sha256:fe39775553a52c1e73d5a6358680b943c30ee29ae25d9355d69c031aa6616397",
+      "source": "public/docs/method-contracts.md"
     },
     {
       "byte_size": 28098,
       "destination": "docs/paper-analysis-protocol-2026-08-29.md",
       "sha256": "sha256:411ea6e8d71fe29084b8870d6ea34a366f89c127a4371698da78aa5600af2fd7",
-      "source": "docs/protocols/paper-analysis-protocol-2026-08-29.md"
+      "source": "public/docs/paper-analysis-protocol-2026-08-29.md"
     },
     {
       "byte_size": 4031,
       "destination": "docs/paper-analysis-protocol-2026-08-31-v2.md",
       "sha256": "sha256:c14f7b28689a985de7aaeaece2e131338386bcdfcb489dd1955a5b59aba94594",
-      "source": "docs/protocols/paper-analysis-protocol-2026-08-31-v2.md"
+      "source": "public/docs/paper-analysis-protocol-2026-08-31-v2.md"
     },
     {
       "byte_size": 1689,
       "destination": "docs/paper-analysis-protocol-2026-08-31-v3-supersede-note-2026-09-01.md",
       "sha256": "sha256:6802d1447fc74b1e150876ea76667c1b3f84ce1b0ceed5bf7f840f2d87d98511",
-      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v3-supersede-note-2026-09-01.md"
+      "source": "public/docs/paper-analysis-protocol-2026-08-31-v3-supersede-note-2026-09-01.md"
     },
     {
       "byte_size": 8353,
       "destination": "docs/paper-analysis-protocol-2026-08-31-v3.md",
       "sha256": "sha256:18a9c9bd3c76455038d01458a5cb2d933059d1e72924285e26500a8aaab1baf6",
-      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v3.md"
+      "source": "public/docs/paper-analysis-protocol-2026-08-31-v3.md"
     },
     {
       "byte_size": 474,
       "destination": "docs/paper-analysis-protocol-2026-08-31-v4-supersede-note-2026-09-18.md",
       "sha256": "sha256:f02c332cb1278e1cb4ed9c62071548e4e96d637aa4476c4e193c6cfd9309cde9",
-      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v4-supersede-note-2026-09-18.md"
+      "source": "public/docs/paper-analysis-protocol-2026-08-31-v4-supersede-note-2026-09-18.md"
     },
     {
       "byte_size": 11410,
       "destination": "docs/paper-analysis-protocol-2026-08-31-v4.md",
       "sha256": "sha256:55bb91f69d6494d58eff62b96f65f7b59759de45a366dc551e4ad5586fdfc896",
-      "source": "release/public/docs/paper-analysis-protocol-2026-08-31-v4.md"
+      "source": "public/docs/paper-analysis-protocol-2026-08-31-v4.md"
     },
     {
       "byte_size": 460,
       "destination": "docs/paper-analysis-protocol-2026-09-02-v5-v7-supersede-note-2026-09-19.md",
       "sha256": "sha256:0123b6f7258d4aaf2afc1411addb500f94af0b117bcd76ab206463ffe7b61a48",
-      "source": "release/public/docs/paper-analysis-protocol-2026-09-02-v5-v7-supersede-note-2026-09-19.md"
+      "source": "public/docs/paper-analysis-protocol-2026-09-02-v5-v7-supersede-note-2026-09-19.md"
     },
     {
       "byte_size": 5992,
       "destination": "docs/paper-analysis-protocol-2026-09-02-v5.md",
       "sha256": "sha256:68ac1fa5bf2c25f4f54f106343ffcb153ed5f89a78c8fba4b774dc3c5bdc0bbf",
-      "source": "docs/protocols/paper-analysis-protocol-2026-09-02-v5.md"
+      "source": "public/docs/paper-analysis-protocol-2026-09-02-v5.md"
     },
     {
       "byte_size": 4516,
       "destination": "docs/paper-analysis-protocol-2026-09-02-v6.md",
       "sha256": "sha256:42aaad46b91eeb56a75d416de1a29e93e90cb3d15eb87db33c40fc1bc4a61208",
-      "source": "docs/protocols/paper-analysis-protocol-2026-09-02-v6.md"
+      "source": "public/docs/paper-analysis-protocol-2026-09-02-v6.md"
     },
     {
       "byte_size": 3492,
       "destination": "docs/paper-analysis-protocol-2026-09-02-v7.md",
       "sha256": "sha256:a617a46c2d61e76ad25963e709cad2c3ff99d4be466f173b8add02f1754927ef",
-      "source": "docs/protocols/paper-analysis-protocol-2026-09-02-v7.md"
+      "source": "public/docs/paper-analysis-protocol-2026-09-02-v7.md"
     },
     {
-      "byte_size": 2277,
-      "destination": "docs/release-notes-0.1.1.md",
-      "sha256": "sha256:da69bed229a563ee02d5ff6ab8a6afea9ca34f8216af39a5ce3e24dade486d9a",
-      "source": "release/public/docs/release-notes-0.1.1.md"
+      "byte_size": 7437,
+      "destination": "docs/reference-scores.json",
+      "sha256": "sha256:6c83803654d00c47f14390b033f690f81cd66bc1cfe689c1c9b49c8e1f9b0a9e",
+      "source": "public/docs/reference-scores.json"
     },
     {
-      "byte_size": 7287,
+      "byte_size": 8050,
       "destination": "docs/release-verification.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:11ed8f3c3139c9f943cb27cfe9cd47302a56d25d483a42f39d7f7441ed2acd1b",
-      "source": "release/public/docs/release-verification.md"
+      "sha256": "sha256:8756072635472daf40d84e4e1e2f783d0911d0598c2e72cd2d767ed74a79fe89",
+      "source": "public/docs/release-verification.md"
     },
     {
-      "byte_size": 10004,
+      "byte_size": 9909,
       "destination": "docs/reporting-policy.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:8a62038ffa56ab7fe9400f6f47abfdd55b5a7013f62529c1b1f71e14f42b373a",
-      "source": "release/public/docs/reporting-policy.md"
+      "sha256": "sha256:be5950b1fae406c75604c6cfff1e2fa6da0cd6704827554b107ab14f0f093605",
+      "source": "public/docs/reporting-policy.md"
     },
     {
       "byte_size": 2134,
       "destination": "docs/sigir-2016-acquisition.md",
       "sha256": "sha256:6d0e9d5b182e3d7e5bdca4eea6c8f7d216f1d9a9ea26950acdbfb58874b4ffdf",
-      "source": "release/public/docs/sigir-2016-acquisition.md"
+      "source": "public/docs/sigir-2016-acquisition.md"
     },
     {
       "byte_size": 2538,
       "destination": "docs/trec-2021-acquisition.md",
       "sha256": "sha256:d65cf6f4dcb0f3da0b9ac0903ac0b2f837f2eeca3004f9a473ad2149764e8e26",
-      "source": "release/public/docs/trec-2021-acquisition.md"
+      "source": "public/docs/trec-2021-acquisition.md"
     },
     {
       "byte_size": 1745,
       "destination": "docs/trec-2022-acquisition.md",
       "sha256": "sha256:c09da60a48a8f36ac1da1f66483ef32b1b9b2bc51203dd0f81bcac4fdbf03f31",
-      "source": "release/public/docs/trec-2022-acquisition.md"
+      "source": "public/docs/trec-2022-acquisition.md"
     },
     {
       "byte_size": 1833,
       "destination": "docs/trec-2023-acquisition.md",
       "sha256": "sha256:eb0018dcbda45931ef71cd9b67544099224ab2c3851b945209aeca44498847aa",
-      "source": "release/public/docs/trec-2023-acquisition.md"
+      "source": "public/docs/trec-2023-acquisition.md"
     },
     {
       "byte_size": 2856,
       "destination": "docs/trialgpt-external-baseline.md",
-      "sha256": "sha256:aa3f47d72543f4d7dce709c37724f1b3100c306c054108abbc95ce4bcd9cdb3e",
-      "source": "release/public/docs/trialgpt-external-baseline.md"
+      "sha256": "sha256:f68dc39a0f7e582c196a6b41354328d26645cd652ae58eb45739c686c4110be2",
+      "source": "public/docs/trialgpt-external-baseline.md"
     },
     {
-      "byte_size": 4988,
+      "byte_size": 4986,
       "destination": "docs/trialgpt-retrieval-producer.md",
-      "sha256": "sha256:07c9bf3a63136968db169c83028b9c69fc794bac0bf8e5dc9aabb84b6252c997",
-      "source": "docs/agents/trialgpt-retrieval-producer.md"
+      "sha256": "sha256:174c70b2337512b9aa26bd823b33e76178902235ecf3ce8ec25e9547649ec988",
+      "source": "public/docs/trialgpt-retrieval-producer.md"
     },
     {
-      "byte_size": 2563,
+      "byte_size": 2654,
       "destination": "docs/trialmatchai-external-baseline.md",
-      "sha256": "sha256:f83f0220fb9f79759eb77f88defe573de95d7b7baec62598d622ee7c08157927",
-      "source": "release/public/docs/trialmatchai-external-baseline.md"
+      "sha256": "sha256:a72cd8acd4b4e4665f09632ae0dec80a79a57023f96428d473fba849a21fb3d2",
+      "source": "public/docs/trialmatchai-external-baseline.md"
+    },
+    {
+      "byte_size": 2671,
+      "destination": "examples/external-pipeline/pipeline.py",
+      "sha256": "sha256:4c4f029c78f6ed64ebc5d1f9e0bfbbcd3cef8acafee31f430924ba0b58356729",
+      "source": "public/examples/external-pipeline/pipeline.py"
+    },
+    {
+      "byte_size": 94,
+      "destination": "examples/external-pipeline/requirements.lock",
+      "sha256": "sha256:3791f14555b58c7cc51146dc930c7d02ea8a6b9ef0d7b88d67fd81de5730d4ce",
+      "source": "public/examples/external-pipeline/requirements.lock"
     },
     {
       "byte_size": 834,
       "destination": "external/trialgpt-lock.json",
       "sha256": "sha256:ab91fdcb8c6bafa539ed352c496c7a9d6a741baa0be93eadb20d8d7d90cbd6df",
-      "source": "external/trialgpt-lock.json"
+      "source": "public/external/trialgpt-lock.json"
     },
     {
       "byte_size": 1185,
       "destination": "external/trialmatchai-lock.json",
       "sha256": "sha256:e4e12086214468e77fb960732f97b2be5658ebeb73052b78e30779da90923feb",
-      "source": "external/trialmatchai-lock.json"
+      "source": "public/external/trialmatchai-lock.json"
     },
     {
-      "byte_size": 1839,
+      "byte_size": 1818,
       "destination": "pyproject.toml",
       "generator": "pyproject",
-      "sha256": "sha256:ad654e874b96c70984fa5304e82febf79586d1874f68d14f579df5e8d8c1eaf9",
-      "source": "release/public/pyproject.toml.approved"
+      "sha256": "sha256:cbfc5626cb9815ae76ee1495554901c40bd479b2ab620f1e832b3846af04d8df",
+      "source": "public/pyproject.toml"
     },
     {
       "byte_size": 10111,
       "destination": "scripts/freeze_trialgpt_retrieval.py",
       "sha256": "sha256:f7769522838fd40ef32a46b2c4fca7d5099fa5c82cf50597d66fddc5fa2dfb27",
-      "source": "scripts/freeze_trialgpt_retrieval.py"
+      "source": "public/scripts/freeze_trialgpt_retrieval.py"
     },
     {
       "byte_size": 5401,
       "destination": "scripts/generate_trialgpt_retrieval_queries.py",
       "sha256": "sha256:ee6576e2379439eead70feb7201dffcc288eb2cfd63edfe4a2c164fdbdc2026e",
-      "source": "scripts/generate_trialgpt_retrieval_queries.py"
+      "source": "public/scripts/generate_trialgpt_retrieval_queries.py"
     },
     {
       "byte_size": 1034,
       "destination": "src/taim/__init__.py",
-      "sha256": "sha256:8aee72cd2b5ac6b0699e41a770d4abf49f7bd2732a972dc71d4c3a8446e28f88",
-      "source": "src/taim/__init__.py"
+      "sha256": "sha256:e4708f8f163cb7baad7986faeaa85a55131af4fbcfea1a394f342b405e5f8fd1",
+      "source": "public/src/taim/__init__.py"
     },
     {
-      "byte_size": 433,
+      "byte_size": 68,
       "destination": "src/taim/adapters/__init__.py",
       "generator": "python-sections",
-      "sha256": "sha256:f51d28381442ce4b79f78fcf04eb250d9f124bb0b66510ce4b5d355570148568",
-      "source": "release/public/adapters-init.py"
+      "sha256": "sha256:bd624d696c226c98e97622ad71afb0a4d3eaf85743a52ca6113751b6560fcbf7",
+      "source": "public/src/taim/adapters/__init__.py"
     },
     {
-      "byte_size": 64852,
+      "byte_size": 67348,
       "destination": "src/taim/adapters/trialgpt.py",
-      "sha256": "sha256:a2170927c82db7016bf8ea69bcb2d22bb726410cf5cde70b68558336d5cf3680",
-      "source": "release/public/trialgpt-adapter.py"
+      "sha256": "sha256:c8de2b2d988106096d9c69302e9c7671274f6d0d784f307425568fc1334ba52c",
+      "source": "public/src/taim/adapters/trialgpt.py"
     },
     {
-      "byte_size": 91198,
+      "byte_size": 91607,
       "destination": "src/taim/adapters/trialmatchai.py",
-      "sha256": "sha256:387ecde97445a997d9d61d8c751e28d99e5887b73c747d3d8c7c191f1a9b320e",
-      "source": "release/public/trialmatchai-adapter.py"
+      "sha256": "sha256:72255f2d02161432a528398c1cff86cec5b1dd05066c50a3f0a12fdd99fe2ad2",
+      "source": "public/src/taim/adapters/trialmatchai.py"
     },
     {
       "byte_size": 48370,
       "destination": "src/taim/artifacts.py",
       "sha256": "sha256:0b60fdd2a52a5e83dee9e53b702e4f733927851e4f81d0bb1b2f628e54caac4a",
-      "source": "src/taim/artifacts.py"
+      "source": "public/src/taim/artifacts.py"
     },
     {
-      "byte_size": 625,
+      "byte_size": 82,
       "destination": "src/taim/baselines/__init__.py",
-      "sha256": "sha256:0ec10f2b4448118bb27dc09dc75b6c933c35b937467e9bca16b91a99bb08280c",
-      "source": "src/taim/baselines/__init__.py"
+      "sha256": "sha256:bc4e3dfe0e64ccce1946dd87b03012e8c2f4bba900c629e250cfd98544332e2f",
+      "source": "public/src/taim/baselines/__init__.py"
     },
     {
       "byte_size": 20280,
       "destination": "src/taim/baselines/bm25.py",
       "sha256": "sha256:45817b352adadc84ed062baedf4aa730f43e45578402442e31f5301fbe685d02",
-      "source": "src/taim/baselines/bm25.py"
+      "source": "public/src/taim/baselines/bm25.py"
     },
     {
-      "byte_size": 104944,
+      "byte_size": 105205,
       "destination": "src/taim/baselines/dense.py",
-      "sha256": "sha256:e9cf057a922b70abf1f192f0f35c6fa1044c9c619423c8b6bfea696a48024798",
-      "source": "src/taim/baselines/dense.py"
+      "sha256": "sha256:bb676c85369b595b2cebbac8b9905e7754408fefa1bef0efd08ce76206ffc5bf",
+      "source": "public/src/taim/baselines/dense.py"
     },
     {
-      "byte_size": 20486,
+      "byte_size": 20558,
       "destination": "src/taim/baselines/encoder_registry.py",
-      "sha256": "sha256:1e82fbef35f48c3717338f9b8b6f0a48687f2d008393fedc41d89e98f6ac6e01",
-      "source": "src/taim/baselines/encoder_registry.py"
+      "sha256": "sha256:f6e0cf7cd7a08f82b4a615c67c7cbd093806fdd641903634aefc701dd8526404",
+      "source": "public/src/taim/baselines/encoder_registry.py"
     },
     {
-      "byte_size": 12736,
-      "destination": "src/taim/baselines/rrf.py",
-      "sha256": "sha256:bbcbe18abc9ca570c5bdda40a1c50e8cc89fa099eb6facb1befcc282542f3af7",
-      "source": "src/taim/baselines/rrf.py"
+      "byte_size": 10451,
+      "destination": "src/taim/baselines/rank_fusion.py",
+      "sha256": "sha256:d35d4af67bb6e9898706fa06d7eb6d98a20df9060d91e21590734d5f3a6ccc0c",
+      "source": "public/src/taim/baselines/rank_fusion.py"
     },
     {
-      "byte_size": 190055,
+      "byte_size": 193284,
       "destination": "src/taim/benchmark_release.py",
-      "sha256": "sha256:24bae68321ca7ad35d19bbaba2b61f01a67642e351ab03bf57e0cca0e0f05e61",
-      "source": "src/taim/benchmark_release.py"
+      "sha256": "sha256:fffb2c6b8035d4a26d8cb053d21e3da015f2be0e6e5425ad8333ed5d71e9f08c",
+      "source": "public/src/taim/benchmark_release.py"
     },
     {
       "byte_size": 54639,
       "destination": "src/taim/constraint_facts.py",
       "sha256": "sha256:26170f8db31078e2574e5cae16be53f0767d9f66637599a278fea420da7054ae",
-      "source": "src/taim/constraint_facts.py"
+      "source": "public/src/taim/constraint_facts.py"
     },
     {
       "byte_size": 10648,
       "destination": "src/taim/contracts.py",
       "sha256": "sha256:74ec6868b375c5c8b4c5730e59e2132d20f4fb33ca63f40e56fd51092004a319",
-      "source": "src/taim/contracts.py"
+      "source": "public/src/taim/contracts.py"
     },
     {
       "byte_size": 581,
       "destination": "src/taim/data/__init__.py",
       "sha256": "sha256:3a56e9ab0c590ebe67467d84b0eb9b43e099ce17735fade39ae84bdf49c967fd",
-      "source": "src/taim/data/__init__.py"
+      "source": "public/src/taim/data/__init__.py"
     },
     {
       "byte_size": 4966,
       "destination": "src/taim/data/external-system-dependencies-v1.json",
       "generator": "external-system-dependencies",
       "sha256": "sha256:514d14072dfe022b08ed38da849c54cdd7075385c19058f3b481b5fe57d1d1db",
-      "source": "src/taim/data/external-system-dependencies-v1.json"
+      "source": "public/src/taim/data/external-system-dependencies-v1.json"
     },
     {
       "byte_size": 4718,
       "destination": "src/taim/data/locks/sigir-ct-2016.json",
       "sha256": "sha256:102c3b1e924990adbb150eb4594ff36bbd0941b3add09d236e408f34da00269a",
-      "source": "src/taim/data/locks/sigir-ct-2016.json"
+      "source": "public/src/taim/data/locks/sigir-ct-2016.json"
     },
     {
       "byte_size": 4287,
       "destination": "src/taim/data/locks/trec-ct-2021.json",
       "sha256": "sha256:0c433287d4a5fe68d45964d4cef6f8e38dad66d29f477b782810d345e0042b9a",
-      "source": "src/taim/data/locks/trec-ct-2021.json"
+      "source": "public/src/taim/data/locks/trec-ct-2021.json"
     },
     {
       "byte_size": 4204,
       "destination": "src/taim/data/locks/trec-ct-2022.json",
       "sha256": "sha256:870f9955b3fab8f711a5f2e6123c1c873ab7c8e728efa0fa1c5b4d31570c0587",
-      "source": "src/taim/data/locks/trec-ct-2022.json"
+      "source": "public/src/taim/data/locks/trec-ct-2022.json"
     },
     {
       "byte_size": 4816,
       "destination": "src/taim/data/locks/trec-ct-2023.json",
       "sha256": "sha256:f3499ab6f62e2177f15f8e048f91a35f05aecf0301a2542c385431893c563abf",
-      "source": "src/taim/data/locks/trec-ct-2023.json"
+      "source": "public/src/taim/data/locks/trec-ct-2023.json"
     },
     {
       "byte_size": 1032,
       "destination": "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json",
       "sha256": "sha256:96be3bd12a1acf4474bcf3127a255b7346528e24e5b11b6d28702399c04c524b",
-      "source": "src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json"
+      "source": "public/src/taim/data/locks/trialgpt-trec-2021-external-fidelity.json"
     },
     {
       "byte_size": 1645,
       "destination": "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json",
       "sha256": "sha256:0126943d88852981f1a10edaf1625dc832b4fc37b8d0359ea1984c9fe7b85a95",
-      "source": "src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json"
+      "source": "public/src/taim/data/pipelines/staged-bm25-qwen3-rrf-rerank-v1.json"
     },
     {
       "byte_size": 48619,
       "destination": "src/taim/data/prepared.py",
       "sha256": "sha256:f93a08a6d2a6870886e77032082e4649937cd79f47ca9f63fb42de475d23781d",
-      "source": "src/taim/data/prepared.py"
+      "source": "public/src/taim/data/prepared.py"
     },
     {
       "byte_size": 643,
       "destination": "src/taim/data/profiles/confirmation-full-v1.json",
       "sha256": "sha256:c6ebe55a036717a4a650f6b6c6f237a3070128f52330409db673aaf6d438fe5f",
-      "source": "src/taim/data/profiles/confirmation-full-v1.json"
+      "source": "public/src/taim/data/profiles/confirmation-full-v1.json"
     },
     {
       "byte_size": 630,
       "destination": "src/taim/data/profiles/description-v1.json",
       "sha256": "sha256:9e1b0d60d4d08e0b8fce102270124087942557fa0e37c85bd84112783cb5d9ff",
-      "source": "src/taim/data/profiles/description-v1.json"
+      "source": "public/src/taim/data/profiles/description-v1.json"
     },
     {
       "byte_size": 632,
       "destination": "src/taim/data/profiles/official-full-v1.json",
       "sha256": "sha256:7eb5f4bef05291bfe83e78f6d83ef0bd7fe7fc1d3d13f42e1dfd5414eb2a8a92",
-      "source": "src/taim/data/profiles/official-full-v1.json"
+      "source": "public/src/taim/data/profiles/official-full-v1.json"
     },
     {
       "byte_size": 656,
       "destination": "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json",
       "sha256": "sha256:0fbc3afb991aefabcc29ecaabcdcf9bc67924df4ea279c93f772d5aee38e9426",
-      "source": "src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json"
+      "source": "public/src/taim/data/profiles/sigir-ct-2016-description-judgment-union-v1.json"
     },
     {
       "byte_size": 652,
       "destination": "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json",
       "sha256": "sha256:ddf304462f69b8d3a2c4f6436ae2fdf5a93eb10d365794d29e2b58dda1a24d8a",
-      "source": "src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json"
+      "source": "public/src/taim/data/profiles/sigir-ct-2016-summary-judgment-union-v1.json"
     },
     {
       "byte_size": 622,
       "destination": "src/taim/data/profiles/summary-v1.json",
       "sha256": "sha256:15116b6f8035ed5a9103af1400b6f67feff68d831860000d4f7bbc94222b9e78",
-      "source": "src/taim/data/profiles/summary-v1.json"
+      "source": "public/src/taim/data/profiles/summary-v1.json"
     },
     {
       "byte_size": 654,
       "destination": "src/taim/data/profiles/synthetic-patient-to-trial-v1.json",
       "sha256": "sha256:3e6c093443a5c7b4d3ebfe57c9bba99ec062f04c31c81e498713878bc410855a",
-      "source": "src/taim/data/profiles/synthetic-patient-to-trial-v1.json"
+      "source": "public/src/taim/data/profiles/synthetic-patient-to-trial-v1.json"
     },
     {
       "byte_size": 675,
       "destination": "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json",
       "sha256": "sha256:eadea5bb4886da1a7d9f8600f6048c71dc0f7dac8f0bb422b5cc7d727614ab43",
-      "source": "src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json"
+      "source": "public/src/taim/data/profiles/trec-ct-2021-external-fidelity-26149-v1.json"
     },
     {
       "byte_size": 646,
       "destination": "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json",
       "sha256": "sha256:e369fd2d5c26526c126c4b0a856b325fd02e5f9d8f5afa8d933ff439c887e298",
-      "source": "src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json"
+      "source": "public/src/taim/data/profiles/trec-ct-2021-judgment-union-v1.json"
     },
     {
       "byte_size": 633,
       "destination": "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
       "sha256": "sha256:0a045632c93af90d55ae65693430426ae7cf5cdaf049422741f3ebb6f411578e",
-      "source": "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json"
+      "source": "public/src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json"
     },
     {
       "byte_size": 633,
       "destination": "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json",
       "sha256": "sha256:25386cccc8e6c250d53cddf831f77dec895e74838d1eb5cab6e8804e9bb09732",
-      "source": "src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json"
+      "source": "public/src/taim/data/profiles/trec-ct-2023-judgment-union-v1.json"
     },
     {
-      "byte_size": 43003,
+      "byte_size": 43171,
       "destination": "src/taim/data/release-support-v0.1.json",
       "generator": "support-catalogue",
-      "sha256": "sha256:ded751002dfa31eaa1680b3d2b81deb09516ff5306173bfe823c8d4cf0bcd549",
-      "source": "src/taim/data/release-support-v0.1.json"
+      "sha256": "sha256:7080de095c2b45d7f4f918543e57bc03a1c7b16f08774d2b135713ba2b63515d",
+      "source": "public/src/taim/data/release-support-v0.1.json"
     },
     {
       "byte_size": 19987,
       "destination": "src/taim/data/sigir_ct_2016.py",
       "sha256": "sha256:2f726f9331f86d8d8dcbe11a26ad8443976a117bc01bcb4730397d56a6cbc5b0",
-      "source": "src/taim/data/sigir_ct_2016.py"
+      "source": "public/src/taim/data/sigir_ct_2016.py"
     },
     {
       "byte_size": 28383,
       "destination": "src/taim/data/trec_ct.py",
       "sha256": "sha256:32dc965ab0cee0984ef4dc278b6990286a0267a29138a86a4cc163b499dffbb7",
-      "source": "src/taim/data/trec_ct.py"
+      "source": "public/src/taim/data/trec_ct.py"
     },
     {
       "byte_size": 66267,
       "destination": "src/taim/data/trec_ct_2021.py",
       "sha256": "sha256:8e67831075f46da047d5c5a8c21009db2f0070e500db8e1bace7dc18a6ee8411",
-      "source": "src/taim/data/trec_ct_2021.py"
+      "source": "public/src/taim/data/trec_ct_2021.py"
     },
     {
       "byte_size": 81018,
       "destination": "src/taim/eligibility.py",
       "sha256": "sha256:70083e9a899acda3d65254b058ee62bb1e416c333bf6792ccc58417b7893ef6c",
-      "source": "src/taim/eligibility.py"
+      "source": "public/src/taim/eligibility.py"
     },
     {
       "byte_size": 35240,
       "destination": "src/taim/entity_versions.py",
       "sha256": "sha256:c564d39e32e2ef450a2fb950f0d774f092f664a44af13c9615ee43bd1a381514",
-      "source": "src/taim/entity_versions.py"
+      "source": "public/src/taim/entity_versions.py"
     },
     {
       "byte_size": 37373,
       "destination": "src/taim/evaluation.py",
       "sha256": "sha256:4e71145a0ebeb19c1c79dd77546ad0e49d2dba42cd7f04a7bac39eb24d07e9a1",
-      "source": "src/taim/evaluation.py"
+      "source": "public/src/taim/evaluation.py"
     },
     {
       "byte_size": 9123,
       "destination": "src/taim/evaluation_package.py",
       "sha256": "sha256:f194f74d192c733aee5e250b43151628485ff56e266afde50601d63e1f9259f2",
-      "source": "src/taim/evaluation_package.py"
+      "source": "public/src/taim/evaluation_package.py"
     },
     {
       "byte_size": 1040,
       "destination": "src/taim/executables.py",
       "sha256": "sha256:59a09cd09b55e27dedfdbf5e06fd7d9bb1bac51a164d74b7b73513af05075535",
-      "source": "src/taim/executables.py"
+      "source": "public/src/taim/executables.py"
     },
     {
       "byte_size": 475,
       "destination": "src/taim/file_hash.py",
       "sha256": "sha256:258f31d6739623f72fe5c7e8a835f630c10265f9c315bd517d133253bdaa6e23",
-      "source": "src/taim/file_hash.py"
+      "source": "public/src/taim/file_hash.py"
     },
     {
       "byte_size": 8840,
       "destination": "src/taim/fixtures/__init__.py",
       "sha256": "sha256:e87a3df6fde80c2a139d15a4b40638b330cdf7166ef17f4413ba669251d1f6dc",
-      "source": "src/taim/fixtures/__init__.py"
+      "source": "public/src/taim/fixtures/__init__.py"
     },
     {
       "byte_size": 473,
       "destination": "src/taim/fixtures/trec-mini/README.md",
       "sha256": "sha256:bdff06632b9c6fca5e3f0ee60d3c8ee5984c2c061543d0fb5f21346bff6d73c7",
-      "source": "src/taim/fixtures/trec-mini/README.md"
+      "source": "public/src/taim/fixtures/trec-mini/README.md"
     },
     {
       "byte_size": 1006,
       "destination": "src/taim/fixtures/trec-mini/qrels.jsonl",
       "sha256": "sha256:9919b6c924dd62043e7d1aff2a0e228aa34d938256c70cb1c65bdaf1ceb1a3f4",
-      "source": "src/taim/fixtures/trec-mini/qrels.jsonl"
+      "source": "public/src/taim/fixtures/trec-mini/qrels.jsonl"
     },
     {
       "byte_size": 853,
       "destination": "src/taim/fixtures/trec-mini/topics.jsonl",
       "sha256": "sha256:7d6fdb22f0ccbe911b59bbf0acb8a4cb3ee9a277c75d398462d0c0628c5f1963",
-      "source": "src/taim/fixtures/trec-mini/topics.jsonl"
+      "source": "public/src/taim/fixtures/trec-mini/topics.jsonl"
     },
     {
       "byte_size": 2377,
       "destination": "src/taim/fixtures/trec-mini/trials.jsonl",
       "sha256": "sha256:086381f8c8ca722b9db3ab4dbf611a0acc267e31ec5fc0629643e13667e3996b",
-      "source": "src/taim/fixtures/trec-mini/trials.jsonl"
+      "source": "public/src/taim/fixtures/trec-mini/trials.jsonl"
     },
     {
       "byte_size": 6780,
       "destination": "src/taim/folded_query_bundle.py",
       "sha256": "sha256:ecede2a725e433b92f84b7b55706ba4bef26b430426a52fa26242434bca40607",
-      "source": "src/taim/folded_query_bundle.py"
+      "source": "public/src/taim/folded_query_bundle.py"
     },
     {
       "byte_size": 7744,
       "destination": "src/taim/judgments.py",
       "sha256": "sha256:46f0cac78c6f8fbb2c92482d40c9d91514f1b230472cafaf96d689eac07fa592",
-      "source": "src/taim/judgments.py"
+      "source": "public/src/taim/judgments.py"
     },
     {
       "byte_size": 68972,
       "destination": "src/taim/pair_assessment.py",
       "sha256": "sha256:79080fe9f8173f62285cbc3c9e93e5f3b6430a88e7ac47a1c44b62fd7f7981be",
-      "source": "src/taim/pair_assessment.py"
+      "source": "public/src/taim/pair_assessment.py"
     },
     {
       "byte_size": 1562,
       "destination": "src/taim/pair_evidence.py",
       "sha256": "sha256:5540c9a646b1c2411edb47ad4b95acfea43cdb5eb8447abd746aeff0bab4a614",
-      "source": "src/taim/pair_evidence.py"
+      "source": "public/src/taim/pair_evidence.py"
     },
     {
-      "byte_size": 6927,
+      "byte_size": 7820,
       "destination": "src/taim/pipeline_extensions/__init__.py",
-      "sha256": "sha256:276843b98386ef4946b86f7a82e2dd599ef51cc78726b8655638cbf293725820",
-      "source": "src/taim/pipeline_extensions/__init__.py"
+      "sha256": "sha256:69cae33780e631b00ecff433c79a8dca3a23d11fbe4edfba449a6a469f5618f7",
+      "source": "public/src/taim/pipeline_extensions/__init__.py"
     },
     {
-      "byte_size": 17909,
+      "byte_size": 3317,
+      "destination": "src/taim/pipeline_extensions/bm25.py",
+      "sha256": "sha256:5731d63d9026f2e2ce25733dcb2209f25e1c891606800db36e13b2be8035c362",
+      "source": "public/src/taim/pipeline_extensions/bm25.py"
+    },
+    {
+      "byte_size": 935,
+      "destination": "src/taim/pipeline_extensions/dense_bge_m3.py",
+      "sha256": "sha256:5c657c88a06353e55b4556cff5f2106392e2c69b6789e1f5cebd46ea58fdc41b",
+      "source": "public/src/taim/pipeline_extensions/dense_bge_m3.py"
+    },
+    {
+      "byte_size": 949,
+      "destination": "src/taim/pipeline_extensions/dense_qwen3.py",
+      "sha256": "sha256:26cc25d21f4d4d814c272f0fb85c70e577d8118e8a7956ca5e3b3a2ac8d992c2",
+      "source": "public/src/taim/pipeline_extensions/dense_qwen3.py"
+    },
+    {
+      "byte_size": 961,
+      "destination": "src/taim/pipeline_extensions/dense_qwen3_no_template.py",
+      "sha256": "sha256:9925d207a1c39700dc14cb0b18908c4a570a8ad2ec3b1dcd49360972daff784e",
+      "source": "public/src/taim/pipeline_extensions/dense_qwen3_no_template.py"
+    },
+    {
+      "byte_size": 10349,
+      "destination": "src/taim/pipeline_extensions/folded_bm25.py",
+      "sha256": "sha256:7d6b9378c272de4870fcb6607c06126fd6839c176d4f720ae537350d9bd9dc6b",
+      "source": "public/src/taim/pipeline_extensions/folded_bm25.py"
+    },
+    {
+      "byte_size": 4902,
+      "destination": "src/taim/pipeline_extensions/reverse_bm25.py",
+      "sha256": "sha256:aa751550ebd2ca5d4a26715b4f6b3e05208625e02a83c2584f86f6befede714b",
+      "source": "public/src/taim/pipeline_extensions/reverse_bm25.py"
+    },
+    {
+      "byte_size": 11939,
+      "destination": "src/taim/pipeline_extensions/rrf.py",
+      "sha256": "sha256:831dfd45fa3bd6dd1c347419c01913af0de93f750fb5dcc4816dd66c5d758626",
+      "source": "public/src/taim/pipeline_extensions/rrf.py"
+    },
+    {
+      "byte_size": 17917,
       "destination": "src/taim/pipeline_extensions/staged.py",
-      "sha256": "sha256:0c06bc1855b6f4e09cb1f6d6a253ab7422f37000e6f44dc0f814080327b1fa45",
-      "source": "src/taim/pipeline_extensions/staged.py"
+      "sha256": "sha256:a120809287b070fd9aee98f58f3882dd266684bd90c43430f704ba61d5983d52",
+      "source": "public/src/taim/pipeline_extensions/staged.py"
     },
     {
-      "byte_size": 17039,
+      "byte_size": 16926,
       "destination": "src/taim/pipeline_extensions/trialgpt.py",
-      "sha256": "sha256:52b336e5b1aa5ff07d4e0a425d4c138d3bc86bc44bdc36cd78aa0d370d465c9c",
-      "source": "src/taim/pipeline_extensions/trialgpt.py"
+      "sha256": "sha256:5a014f72f55ceb6a0ff8b30b0d9b461a83e7dbf5bc06d9cd33983af257c12c7a",
+      "source": "public/src/taim/pipeline_extensions/trialgpt.py"
     },
     {
-      "byte_size": 22824,
-      "destination": "src/taim/pipeline_extensions/trialmatchai.py",
-      "sha256": "sha256:c022e1cbf165e2ca6470eb96c920ac5c9df80194f1f8ca105bf6fa99be3476d2",
-      "source": "src/taim/pipeline_extensions/trialmatchai.py"
+      "byte_size": 2539,
+      "destination": "src/taim/pipeline_extensions/trialmatchai_trec2021.py",
+      "sha256": "sha256:a870e56d3129ed2747be4a8314791db3fa5b7da1b3ef0948e4f5b1f434600a63",
+      "source": "public/src/taim/pipeline_extensions/trialmatchai_trec2021.py"
+    },
+    {
+      "byte_size": 2697,
+      "destination": "src/taim/pipeline_extensions/trialmatchai_trec2022.py",
+      "sha256": "sha256:d6a8e42132e78715e46d2480c118c19c50c11d42328e3e051b3a5294462891b9",
+      "source": "public/src/taim/pipeline_extensions/trialmatchai_trec2022.py"
+    },
+    {
+      "byte_size": 2697,
+      "destination": "src/taim/pipeline_extensions/trialmatchai_trec2023.py",
+      "sha256": "sha256:d0f2a177ad38f54ca7ed6b7a0270701754f7f881d917521e5fdfe1d19769df1f",
+      "source": "public/src/taim/pipeline_extensions/trialmatchai_trec2023.py"
     },
     {
       "byte_size": 24049,
       "destination": "src/taim/profiles.py",
       "sha256": "sha256:ca6a7b18fbae6794a083621b3f7d37149a5354324f1d5e71ac334a0e1d9610ad",
-      "source": "src/taim/profiles.py"
+      "source": "public/src/taim/profiles.py"
     },
     {
       "byte_size": 21610,
       "destination": "src/taim/public_patient_to_trial.py",
       "sha256": "sha256:f497e8168042219f8c556963a162e72577fd603dc06581af921a5861bbe7b291",
-      "source": "src/taim/public_patient_to_trial.py"
+      "source": "public/src/taim/public_patient_to_trial.py"
     },
     {
       "byte_size": 1,
       "destination": "src/taim/py.typed",
       "sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
-      "source": "src/taim/py.typed"
+      "source": "public/src/taim/py.typed"
     },
     {
-      "byte_size": 27982,
+      "byte_size": 28073,
       "destination": "src/taim/query_folding.py",
-      "sha256": "sha256:406f7ffe6b9be2c4147565da416be14cded229e4cf8d6dd3107bb00c533777c9",
-      "source": "src/taim/query_folding.py"
+      "sha256": "sha256:00146f612fa05b3a33725bb2474a706cf23c51c4a7b46500151089427e8a7f31",
+      "source": "public/src/taim/query_folding.py"
     },
     {
-      "byte_size": 60946,
+      "byte_size": 50409,
       "destination": "src/taim/release_cli.py",
-      "sha256": "sha256:575ec40584f8dc28c0e46d059408888d7673e71eb2ce6354fd3014bcc2c7c00a",
-      "source": "src/taim/release_cli.py"
+      "sha256": "sha256:297a34a54c801624701dd8bdc7609b9e4c5eeee81ad1c89ad202e1d8332702fb",
+      "source": "public/src/taim/release_cli.py"
     },
     {
       "byte_size": 5059,
       "destination": "src/taim/release_fixture.py",
       "sha256": "sha256:edac38da33fda5c60654efc4c1d4b93abbc537f415c6dfc11740eea30e7b151a",
-      "source": "src/taim/release_fixture.py"
+      "source": "public/src/taim/release_fixture.py"
     },
     {
       "byte_size": 26247,
       "destination": "src/taim/release_profiles.py",
       "sha256": "sha256:f71f53ea8b1fa439907964ce8d29e4099979190f704504872ed4eb2ad1c6535e",
-      "source": "src/taim/release_profiles.py"
+      "source": "public/src/taim/release_profiles.py"
     },
     {
-      "byte_size": 12034,
+      "byte_size": 7897,
       "destination": "src/taim/release_reference_systems.py",
-      "sha256": "sha256:8712d3b998861e4071158c63159332f84d8c6473934c555715c7efad4f6d11cf",
-      "source": "src/taim/release_reference_systems.py"
+      "sha256": "sha256:03dcebaaa4c0c43c295b4c26d3621ab44bfe4acf38ab5e89c54fd1277be4f8d1",
+      "source": "public/src/taim/release_reference_systems.py"
     },
     {
-      "byte_size": 76309,
+      "byte_size": 74088,
       "destination": "src/taim/release_result_bundle.py",
-      "sha256": "sha256:f9f75530ca42ccd885a433ace7f7cc77d2f12b9c5de583ad98983c33418b4dac",
-      "source": "src/taim/release_result_bundle.py"
+      "sha256": "sha256:78ebad6b8a755c0956495d8b3aac103c245551e37526daf9a49b5ed30b4c51b8",
+      "source": "public/src/taim/release_result_bundle.py"
     },
     {
-      "byte_size": 39171,
+      "byte_size": 39179,
       "destination": "src/taim/release_staged_pipeline.py",
-      "sha256": "sha256:8eaff24bd194bfa0d990bedc05f4fb48bab2e37796f8bd87879944bcb8f10f00",
-      "source": "src/taim/release_staged_pipeline.py"
+      "sha256": "sha256:40fe897a4572cfa7cf5aca4413c56dacbfb81ab5fe5af2be0ae46ad70fc5eff1",
+      "source": "public/src/taim/release_staged_pipeline.py"
     },
     {
-      "byte_size": 29285,
+      "byte_size": 29045,
       "destination": "src/taim/release_support.py",
-      "sha256": "sha256:7b58dec8755f0dacc9060bfddcd936901df5ca0a6f64a69311689ff1b26ec104",
-      "source": "src/taim/release_support.py"
+      "sha256": "sha256:e2cafb001d82f379435f201b053ce305f646f07a99e313cf30f805b0c1cbc9a4",
+      "source": "public/src/taim/release_support.py"
     },
     {
       "byte_size": 1437,
       "destination": "src/taim/reverse_fixture.py",
       "sha256": "sha256:f66a51848bfb932084b857a64becda9728cf0a1aec1d8805e5eafef6f9b17db8",
-      "source": "src/taim/reverse_fixture.py"
+      "source": "public/src/taim/reverse_fixture.py"
     },
     {
       "byte_size": 8484,
       "destination": "src/taim/reverse_viability.py",
       "sha256": "sha256:75a43e9e86157a1baf7528c1c452fd67ce46493ce40ff440006cacf70638a382",
-      "source": "src/taim/reverse_viability.py"
+      "source": "public/src/taim/reverse_viability.py"
     },
     {
       "byte_size": 2824,
       "destination": "src/taim/safe_xml.py",
       "sha256": "sha256:46fd0a45a76449f2fd63dbe101d227da69a3eb48d73b953e1e4f61f836425f2f",
-      "source": "src/taim/safe_xml.py"
+      "source": "public/src/taim/safe_xml.py"
     },
     {
       "byte_size": 50487,
       "destination": "src/taim/schemas.py",
       "sha256": "sha256:7dc8dbf03a32f1866f0f881bd5f712dfeab92c7d08cbc8eda670ee088d04a2c7",
-      "source": "src/taim/schemas.py"
+      "source": "public/src/taim/schemas.py"
     },
     {
       "byte_size": 84808,
       "destination": "src/taim/scorecards.py",
       "sha256": "sha256:f29983bfad6cad60d26e51ff4ebbc70a1db68f769d1957d05db05b8959533f57",
-      "source": "src/taim/scorecards.py"
+      "source": "public/src/taim/scorecards.py"
     },
     {
       "byte_size": 83512,
       "destination": "src/taim/snapshot.py",
       "sha256": "sha256:b9b5e88b182c5b3d98d4b4521d04868a369bab52ac7b0a8a4d78d50138b76442",
-      "source": "src/taim/snapshot.py"
+      "source": "public/src/taim/snapshot.py"
     },
     {
       "byte_size": 6938,
       "destination": "src/taim/source.py",
       "sha256": "sha256:f266e4881ee372beaad6383e9912563e29e1bcd9e4d5287efc2676367ce5f435",
-      "source": "src/taim/source.py"
+      "source": "public/src/taim/source.py"
+    },
+    {
+      "byte_size": 10608,
+      "destination": "src/taim/submission_cli.py",
+      "sha256": "sha256:7c2271db1c448ac2820414cf4fd0232b86a35037b911b07352749f049b9c3b38",
+      "source": "public/src/taim/submission_cli.py"
+    },
+    {
+      "byte_size": 21681,
+      "destination": "src/taim/submissions.py",
+      "sha256": "sha256:c56c258d27227e0817ed7fd1dc51a6d659a26790bfc90ef41adeff4c16d8c5d1",
+      "source": "public/src/taim/submissions.py"
     },
     {
       "byte_size": 23110,
       "destination": "src/taim/system_contracts.py",
       "sha256": "sha256:e6f9767242371d8cd14e7ba2824e8913225407cb03bbcfc491a78962c72411e6",
-      "source": "src/taim/system_contracts.py"
+      "source": "public/src/taim/system_contracts.py"
     },
     {
-      "byte_size": 98434,
+      "byte_size": 94953,
       "destination": "src/taim/trial_to_patient.py",
-      "sha256": "sha256:73edf6bc29bc1b0599119c5f7384d4eedb533066d5da4a34d716c4ac4f3c5b43",
-      "source": "src/taim/trial_to_patient.py"
+      "sha256": "sha256:2c681489fac7d90cfb6d160c6c1c442f3797c7dfc3a5c500e318eac095c298a0",
+      "source": "public/src/taim/trial_to_patient.py"
     },
     {
       "byte_size": 20188,
       "destination": "src/taim/trialgpt_codex.py",
       "sha256": "sha256:9b5d461b7c68238d636a7c59bdf111cc3911326b2c5a433977b1c45ad73d3669",
-      "source": "src/taim/trialgpt_codex.py"
+      "source": "public/src/taim/trialgpt_codex.py"
     },
     {
       "byte_size": 18330,
       "destination": "src/taim/trialgpt_evaluation.py",
       "sha256": "sha256:4473a9a7790194406702b21e769fb9a1e3b1c3a7ec327558a0169f10d19aa087",
-      "source": "src/taim/trialgpt_evaluation.py"
+      "source": "public/src/taim/trialgpt_evaluation.py"
     },
     {
       "byte_size": 27029,
       "destination": "src/taim/trialgpt_generation.py",
       "sha256": "sha256:c52ad5fb1f9d7d6c288e4879492cfd9cb2618ee0ba899e94f5f6ffbdaf3b58b4",
-      "source": "src/taim/trialgpt_generation.py"
+      "source": "public/src/taim/trialgpt_generation.py"
     },
     {
-      "byte_size": 26367,
+      "byte_size": 27858,
       "destination": "src/taim/trialgpt_paper.py",
-      "sha256": "sha256:946a19ccbd13eccb4235925409922d9255ed56826f56ca9b88c4f215c2feb882",
-      "source": "release/public/trialgpt-method.py"
+      "sha256": "sha256:b9625d1a70e4282f896ec1958bd0081c856fa804984eed06e6e6c971fd6cef01",
+      "source": "public/src/taim/trialgpt_paper.py"
     },
     {
       "byte_size": 28916,
       "destination": "src/taim/trialgpt_publication.py",
       "sha256": "sha256:acc17726c2843589a3afde9e1ac5986e22ca94671d1588cc56fa69c9fc0effb3",
-      "source": "src/taim/trialgpt_publication.py"
+      "source": "public/src/taim/trialgpt_publication.py"
     },
     {
       "byte_size": 10645,
       "destination": "src/taim/trialgpt_retrieval_backends.py",
       "sha256": "sha256:dbc0e7f7cdbecf2ab13f25be3ff6136d85fe9e49e65074ba1789c50957d95f84",
-      "source": "src/taim/trialgpt_retrieval_backends.py"
+      "source": "public/src/taim/trialgpt_retrieval_backends.py"
     },
     {
-      "byte_size": 63916,
+      "byte_size": 63964,
       "destination": "src/taim/trialgpt_retrieval_producer.py",
-      "sha256": "sha256:1db22634dd4d78e66cb3536dd0bb867ee2caa327052c6475f0274f2652338bb0",
-      "source": "src/taim/trialgpt_retrieval_producer.py"
+      "sha256": "sha256:2a198bfa749b96d9c45e46ebf4b6b4e48d560e8f03487145229930366ce0d04a",
+      "source": "public/src/taim/trialgpt_retrieval_producer.py"
     },
     {
-      "byte_size": 40154,
+      "byte_size": 19590,
+      "destination": "src/taim/trialmatchai_release.py",
+      "sha256": "sha256:890861fd96ce32474e0b2417dac05b47a8354d8f2087cad9936c93b3889d4aea",
+      "source": "public/src/taim/trialmatchai_release.py"
+    },
+    {
+      "byte_size": 68,
+      "destination": "tests/__init__.py",
+      "sha256": "sha256:1dd257e40a042903aa66728e9e74f86c79222780bdbd1b39e591b7d458b6ea76",
+      "source": "public/tests/__init__.py"
+    },
+    {
+      "byte_size": 2488,
+      "destination": "tests/bundle_support.py",
+      "sha256": "sha256:774883af3769156ced8bb1c57341ce048752a82b33967c4d08433c2e1f34461d",
+      "source": "public/tests/bundle_support.py"
+    },
+    {
+      "byte_size": 6822,
+      "destination": "tests/test_bm25_external_fidelity.py",
+      "sha256": "sha256:c1c91c3b1e5de18ebaf761f10586e0752821fc3662b7a2447ad4e03bc85e84df",
+      "source": "public/tests/test_bm25_external_fidelity.py"
+    },
+    {
+      "byte_size": 6865,
+      "destination": "tests/test_bundle_profile_contracts.py",
+      "sha256": "sha256:0be08c4763c7f119e0eb8394bc00e107afecec07317d4ecb792de41a40bbac5e",
+      "source": "public/tests/test_bundle_profile_contracts.py"
+    },
+    {
+      "byte_size": 21967,
       "destination": "tests/test_bundle_roundtrip.py",
-      "sha256": "sha256:8605c5b102ad3b08856a8f80a169af80c08dcdf0cfffdfb3463a8baf0cb7a18b",
-      "source": "release/public/tests/test_bundle_roundtrip.py"
+      "sha256": "sha256:66e5837b2b4925eea568fd58df76fba35b68af3d0b20f3b6d0ba57da3c6a0e4c",
+      "source": "public/tests/test_bundle_roundtrip.py"
     },
     {
       "byte_size": 8843,
       "destination": "tests/test_connectors.py",
       "sha256": "sha256:3af3ac038ba71849acb8485fdc9b3650a1aebbeb82a08022e57901b2a99ee63b",
-      "source": "release/public/tests/test_connectors.py"
+      "source": "public/tests/test_connectors.py"
+    },
+    {
+      "byte_size": 5324,
+      "destination": "tests/test_dense_bundle.py",
+      "sha256": "sha256:2478007d3173b1e0ef531851d182cd1d84214f5929f1117f540a74d354a47b60",
+      "source": "public/tests/test_dense_bundle.py"
+    },
+    {
+      "byte_size": 1308,
+      "destination": "tests/test_dense_units.py",
+      "sha256": "sha256:cc747ce80178aeafe8663c1ccadb4ef40bca41a59795b16ce6ccb2d4fa6a09e3",
+      "source": "public/tests/test_dense_units.py"
     },
     {
       "byte_size": 849,
       "destination": "tests/test_external_baselines.py",
       "sha256": "sha256:1273c319a16e2937d15b431452a3a7755b90a5e8a14014c238768ac53bf02438",
-      "source": "release/public/tests/test_external_baselines.py"
+      "source": "public/tests/test_external_baselines.py"
     },
     {
-      "byte_size": 13873,
+      "byte_size": 7077,
       "destination": "tests/test_external_fidelity_profile.py",
-      "sha256": "sha256:2a027c1867aa51e65234109f1640d577c7c8a6608a0a2a1e31b66d66f9ea7c87",
-      "source": "release/public/tests/test_external_fidelity_profile.py"
+      "sha256": "sha256:8f4021a4e6a8c55af9e48d921286e9b6508f874545effe0e7d24933e59f31473",
+      "source": "public/tests/test_external_fidelity_profile.py"
     },
     {
-      "byte_size": 13173,
+      "byte_size": 2717,
+      "destination": "tests/test_folded_query_unit.py",
+      "sha256": "sha256:ea79544508ca01d765753e62216ca87055582a97ae329c7f91512e6f713a7e4c",
+      "source": "public/tests/test_folded_query_unit.py"
+    },
+    {
+      "byte_size": 8533,
+      "destination": "tests/test_profile_contracts.py",
+      "sha256": "sha256:73ee96d5dedb088cb1822e4221f203e14effe6c7199b84b1b66765f1d2cc5cfa",
+      "source": "public/tests/test_profile_contracts.py"
+    },
+    {
+      "byte_size": 1285,
       "destination": "tests/test_quick_start.py",
-      "sha256": "sha256:32ed5c867eaa2d83b9951cd290ff419878720f2b37dec48304b0e6667206eb0c",
-      "source": "release/public/tests/test_quick_start.py"
+      "sha256": "sha256:dfa67e5b20ff876cb2b5539aeb2b9f13873b8758cf715dc05afe806ccc17cc62",
+      "source": "public/tests/test_quick_start.py"
     },
     {
-      "byte_size": 10074,
+      "byte_size": 1659,
       "destination": "tests/test_release_tracks.py",
-      "sha256": "sha256:1454377ce94a972833ef1ed3446d40dfd9ee7f24cb12e1d643bc5e7f55f9fb0a",
-      "source": "release/public/tests/test_release_tracks.py"
+      "sha256": "sha256:d0945485cd166de46026d4978504e792c47c8f1e367650d1979027520f419f54",
+      "source": "public/tests/test_release_tracks.py"
     },
     {
-      "byte_size": 2942,
+      "byte_size": 2513,
+      "destination": "tests/test_reverse_bundle.py",
+      "sha256": "sha256:52b7c312c1715a8193d6a28243a030181d7be04d828a83c1d1a8066457b33fd4",
+      "source": "public/tests/test_reverse_bundle.py"
+    },
+    {
+      "byte_size": 3601,
+      "destination": "tests/test_reverse_quick_start.py",
+      "sha256": "sha256:fbb1902b2167967d48dde91cc28d4ea87a95807018a2c1ebce791900e75e753f",
+      "source": "public/tests/test_reverse_quick_start.py"
+    },
+    {
+      "byte_size": 8684,
+      "destination": "tests/test_reverse_tracks.py",
+      "sha256": "sha256:c1d70a5a370b46b49c73687994f5dedf8d3dcab81a238327030223d7f7a087bf",
+      "source": "public/tests/test_reverse_tracks.py"
+    },
+    {
+      "byte_size": 4470,
+      "destination": "tests/test_rrf_bundle.py",
+      "sha256": "sha256:61c0cd6825931a86ccbe03d6ea7dd39a2384e4c66fbd72a2eefb6ce8434d3cd1",
+      "source": "public/tests/test_rrf_bundle.py"
+    },
+    {
+      "byte_size": 2926,
       "destination": "tests/test_staged_pipeline.py",
-      "sha256": "sha256:dd46577f90d92c0a89922361f2c3dc6785ddc43c2bf192c94cb5cede55e4e5c1",
-      "source": "release/public/tests/test_staged_pipeline.py"
+      "sha256": "sha256:433a786129b00db81b7d9e5436288c36d2b0d03c645d770debaf74b2fcd2ccf6",
+      "source": "public/tests/test_staged_pipeline.py"
+    },
+    {
+      "byte_size": 11178,
+      "destination": "tests/test_submissions.py",
+      "sha256": "sha256:864f8735c9223b78f1e1137ee5e97b3ec79b44a127d16912d1174b0065c14c0f",
+      "source": "public/tests/test_submissions.py"
     },
     {
       "byte_size": 6007,
       "destination": "tests/test_trialgpt_external_baseline.py",
       "sha256": "sha256:8bee1fbe90c973fc340997049829356889bf9639f1bddb6a6f15dcda4dec25a6",
-      "source": "release/public/tests/test_trialgpt_external_baseline.py"
+      "source": "public/tests/test_trialgpt_external_baseline.py"
     },
     {
       "byte_size": 20863,
       "destination": "tests/test_trialgpt_retrieval_producer.py",
       "sha256": "sha256:0c4c93cdb359bf04079f9d2373bcbc31927b580b22aa5fbca40c7187a7a8d22d",
-      "source": "tests/test_trialgpt_retrieval_producer.py"
+      "source": "public/tests/test_trialgpt_retrieval_producer.py"
     },
     {
-      "byte_size": 5105,
+      "byte_size": 1603,
       "destination": "tests/test_trialmatchai_external_baselines.py",
-      "sha256": "sha256:7f5cbfbdf3bc9813b1ada3507ca2977a7e0e9ac430181dd414aca95370d3c958",
-      "source": "release/public/tests/test_trialmatchai_external_baselines.py"
+      "sha256": "sha256:667f813eb13c383ff008ad504fa15f9023bf779b145b7cfe4e359d6ba1dddf4a",
+      "source": "public/tests/test_trialmatchai_external_baselines.py"
+    },
+    {
+      "byte_size": 944,
+      "destination": "tests/test_trialmatchai_trec2021.py",
+      "sha256": "sha256:4c64ab85cb58aa22cd52706515d3d1d33e22f598729dac0dcf3351df7dcc99f3",
+      "source": "public/tests/test_trialmatchai_trec2021.py"
+    },
+    {
+      "byte_size": 980,
+      "destination": "tests/test_trialmatchai_trec2022.py",
+      "sha256": "sha256:d88bfe891c7aba1e5ef891ff62e38b8bd2970f838f0fc187729649fb3f7d5e97",
+      "source": "public/tests/test_trialmatchai_trec2022.py"
+    },
+    {
+      "byte_size": 980,
+      "destination": "tests/test_trialmatchai_trec2023.py",
+      "sha256": "sha256:7d741cd1361143f0a3e8a850385319ad78fe5694e7b3cde265655ae4fcb59cb7",
+      "source": "public/tests/test_trialmatchai_trec2023.py"
     },
     {
       "byte_size": 516864,
       "destination": "uv.lock",
-      "sha256": "sha256:8e67affd21562ee1fdba9a238d0eeb11c371142efa18ee584874e522a5c7f995",
-      "source": "release/public/uv.lock.approved"
+      "sha256": "sha256:aca90eafbc1f4913885cf08752e3ccad7a3e2b35bd76f2b44b235147ba71d944",
+      "source": "public/uv.lock"
     }
   ],
-  "taim_source_commit": "0ee494ba1771bf20ac7728ee050226c8ce1b859d"
+  "taim_source_commit": "2cf564206fceea1b72fc40cc2c2702e3a3d05ac8"
 }

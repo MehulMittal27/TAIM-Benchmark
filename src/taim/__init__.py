@@ -19,7 +19,7 @@ from taim.trial_to_patient import (
     load_trial_to_patient_run,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "ResolvedTrialToPatientBenchmark",

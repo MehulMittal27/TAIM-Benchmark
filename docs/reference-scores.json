@@ -1,0 +1,163 @@
+{
+  "artifact_type": "taim-reference-scores",
+  "produced_with": {
+    "candidate_manifest_id": "sha256:e2165fafe459baba083cc5c7aa8491c23b2a54f757139446c0f97cac30268a4e",
+    "package_artifact_id": "sha256:28655c82c019e3c438ea1804e010fdaf8bfc90a10c14a8830f81b3cbf0e2f531",
+    "source_commit": "a495b8d673fea8c9fd0585bef7848eda856a7612"
+  },
+  "release_version": "0.1.2",
+  "rows": [
+    {
+      "clinical_as_of": "2021-04-27T00:00:00Z",
+      "clinical_as_of_basis": "chosen by the repository owner on 2026-09-21 to equal paper-matrix-v0.1's date for this Track: the date changes no ranking or score, only the Task Input identity, so matching the matrix makes this row, the paper rows and a stranger's result comparable",
+      "evaluation_package_id": "sha256:fa47e8e588e06a0d69f3fc32ea34f59113c875bdc8219327ce8faaa8930e9dba",
+      "metrics_by_cutoff": {
+        "10": {
+          "aggregate": {
+            "eligible_precision_at_10": 0.184,
+            "mrr": 0.36175956917039137,
+            "ndcg_at_10": 0.3435972871368804,
+            "recall": {
+              "eligible_at_10": 0.036461895566159426,
+              "relevant_or_eligible_at_10": 0.043392016436201185
+            },
+            "relevant_or_eligible_precision_at_10": 0.47333333333333333
+          }
+        },
+        "20": {
+          "aggregate": {
+            "eligible_precision_at_20": 0.17200000000000001,
+            "mrr": 0.36175956917039137,
+            "ndcg_at_20": 0.32758547959071266,
+            "recall": {
+              "eligible_at_20": 0.05648720115348566,
+              "relevant_or_eligible_at_20": 0.0710262543020588
+            },
+            "relevant_or_eligible_precision_at_20": 0.43866666666666665
+          }
+        },
+        "5": {
+          "aggregate": {
+            "eligible_precision_at_5": 0.216,
+            "mrr": 0.36175956917039137,
+            "ndcg_at_5": 0.3681911680034711,
+            "recall": {
+              "eligible_at_5": 0.0227733664203443,
+              "relevant_or_eligible_at_5": 0.025323495578925114
+            },
+            "relevant_or_eligible_precision_at_5": 0.504
+          }
+        }
+      },
+      "pool_count": 26162,
+      "pool_ids_sha256": "sha256:1b0d2f34b76dbc96fb5c7c88d73271ca205a39ce4db32c6407b7031b250b55da",
+      "pool_receipt_id": "sha256:8c8e7f4b8ad03254fec917cdf71ec32306a55242a144b249fa9e8c12b2d8f6f5",
+      "prepared_snapshot_id": "sha256:5ddeded840f94964e578ca7cfe3e08d2fbb2ac0afe6588e350526eab3531a4c8",
+      "profile": "trec-ct-2021-judgment-union",
+      "system_input_id": "sha256:e112080d8d695d0b8d97254ed4f8b69698ef4dd00a96f66b43588c17edd4b032",
+      "task": "patient_to_trial",
+      "task_input_id": "sha256:c393b4f1034db49a2e5fb5a60d8ee49ea7c488b59a8d224dd1530d905298df30",
+      "track": "trec-ct-2021"
+    },
+    {
+      "clinical_as_of": "2015-12-16T00:00:00Z",
+      "clinical_as_of_basis": "chosen by the repository owner on 2026-09-21 to equal paper-matrix-v0.1's date for this Track: the date changes no ranking or score, only the Task Input identity, so matching the matrix makes this row, the paper rows and a stranger's result comparable",
+      "evaluation_package_id": "sha256:3067020a9f9bf8613700a8737418a2130b0b72951e62dfd009562f6afdea3f6c",
+      "metrics_by_cutoff": {
+        "10": {
+          "aggregate": {
+            "mrr": 0.12925760650051696,
+            "ndcg_at_10": 0.10968234108492525,
+            "recall": {
+              "highly_likely_referral_at_10": 0.06553559403559403,
+              "referral_candidate_at_10": 0.08920163301335901
+            },
+            "referral_candidate_precision_at_10": 0.10833333333333334
+          }
+        },
+        "20": {
+          "aggregate": {
+            "mrr": 0.12925760650051696,
+            "ndcg_at_20": 0.1326698233126918,
+            "recall": {
+              "highly_likely_referral_at_20": 0.1467372078751389,
+              "referral_candidate_at_20": 0.15269246707114353
+            },
+            "referral_candidate_precision_at_20": 0.09833333333333334
+          }
+        },
+        "5": {
+          "aggregate": {
+            "mrr": 0.12925760650051696,
+            "ndcg_at_5": 0.09926749729613903,
+            "recall": {
+              "highly_likely_referral_at_5": 0.02715897065897066,
+              "referral_candidate_at_5": 0.04740776045497408
+            },
+            "referral_candidate_precision_at_5": 0.12333333333333334
+          }
+        }
+      },
+      "pool_count": 3626,
+      "pool_ids_sha256": "sha256:9a106146c9e1a5da49e15cda3dcc44add3c028e6b0d26a55a40bf60813f5ec5a",
+      "pool_receipt_id": "sha256:10ff30fa39ca1e35fab675396b7648dfc78b2cf8c7a0780312be107b02941217",
+      "prepared_snapshot_id": "sha256:c8fe1bce5118520f6e07972cece00e5d1953a3d96a118e29d7b5e1b2fa0f97f8",
+      "profile": "sigir-ct-2016-description-judgment-union",
+      "system_input_id": "sha256:9c19e224ad14a27fc33ba158469a0122fd0980f0fc8298012ec4c7cb4ecc1bf9",
+      "task": "patient_to_trial",
+      "task_input_id": "sha256:c05154f17b6be8168c0c89e4fdb62813913cf50cec2088796ed9293c6e957578",
+      "track": "sigir-ct-2016"
+    },
+    {
+      "clinical_as_of": "2015-12-16T00:00:00Z",
+      "clinical_as_of_basis": "chosen by the repository owner on 2026-09-21 to equal paper-matrix-v0.1's date for this Track: the date changes no ranking or score, only the Task Input identity, so matching the matrix makes this row, the paper rows and a stranger's result comparable",
+      "evaluation_package_id": "sha256:aa811def8436f58445116fef62539876c45164c97afec318d87a34fa27e89760",
+      "metrics_by_cutoff": {
+        "10": {
+          "aggregate": {
+            "mrr": 0.181838242541425,
+            "ndcg_at_10": 0.14565279497474076,
+            "recall": {
+              "highly_likely_referral_at_10": 0.11867131080924184,
+              "referral_candidate_at_10": 0.10949481202989661
+            },
+            "referral_candidate_precision_at_10": 0.14666666666666667
+          }
+        },
+        "20": {
+          "aggregate": {
+            "mrr": 0.181838242541425,
+            "ndcg_at_20": 0.16942113082099702,
+            "recall": {
+              "highly_likely_referral_at_20": 0.18694139257932363,
+              "referral_candidate_at_20": 0.1871448778808752
+            },
+            "referral_candidate_precision_at_20": 0.12666666666666668
+          }
+        },
+        "5": {
+          "aggregate": {
+            "mrr": 0.181838242541425,
+            "ndcg_at_5": 0.13757891738992944,
+            "recall": {
+              "highly_likely_referral_at_5": 0.06906124463021014,
+              "referral_candidate_at_5": 0.06481898872675132
+            },
+            "referral_candidate_precision_at_5": 0.16333333333333336
+          }
+        }
+      },
+      "pool_count": 3626,
+      "pool_ids_sha256": "sha256:9a106146c9e1a5da49e15cda3dcc44add3c028e6b0d26a55a40bf60813f5ec5a",
+      "pool_receipt_id": "sha256:8696755dfeaf1a6029f803d59c29bae62cb38db5ea76a0c37c856e668b18acf4",
+      "prepared_snapshot_id": "sha256:3c571a03f10419ee5782c2d9aedae1e4825dbf012035bbf1bdbf27d099fc8cfc",
+      "profile": "sigir-ct-2016-summary-judgment-union",
+      "system_input_id": "sha256:9b86e6a48a4328f27bd9a736dc41e7ec3a786a530d3f2253e554b9cb3b06bd48",
+      "task": "patient_to_trial",
+      "task_input_id": "sha256:e371944d1bfc5b9a8aab24639c5d2c1547422ec0d9c0bdd18fef9899be960938",
+      "track": "sigir-ct-2016"
+    }
+  ],
+  "schema_version": "1.0",
+  "system": "bm25"
+}

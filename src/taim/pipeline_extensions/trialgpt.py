@@ -371,7 +371,6 @@ EXTENSION = PipelineExtension(
         ),
     ),
     module_exports={
-        "src/taim/adapters/__init__.py": ("TrialGPTTAIMLunaV1System",),
         "src/taim/adapters/trialgpt.py": (
             "TRIALGPT_CODEX_MODEL",
             "CodexTrialGPTProvider",
@@ -395,7 +394,6 @@ EXTENSION = PipelineExtension(
         "docs/paper-analysis-protocol-2026-09-02-v6.md",
         "docs/trialgpt-external-baseline.md",
         "docs/trialgpt-retrieval-producer.md",
-        "src/taim/adapters/__init__.py",
         "src/taim/pipeline_extensions/trialgpt.py",
         "src/taim/trialgpt_publication.py",
         "src/taim/trialgpt_retrieval_producer.py",

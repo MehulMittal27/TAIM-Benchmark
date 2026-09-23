@@ -154,7 +154,7 @@ def _validate_components(
 
 
 def _run_from_components(run: ComponentRun) -> SystemRunResult:
-    from taim.baselines.rrf import fuse_rrf_n
+    from taim.baselines.rank_fusion import fuse_rrf_n
     from taim.file_hash import sha256_file
     from taim.folded_query_bundle import validate_folded_query_bundle
     from taim.release_cli import _read_json_object

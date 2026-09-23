@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 # ruff: noqa: S101
-from taim.baselines.encoder_registry import DENSE_ENCODER_REGISTRY
+from taim.baselines.encoder_registry import DENSE_ENCODER_REGISTRY, QWEN3_EMBEDDING_06B_POLICY
 from taim.release_result_bundle import _expected_pipeline_depth
 from taim.release_staged_pipeline import load_staged_pipeline
 from taim.release_support import require_supported_combination
@@ -65,7 +65,7 @@ def test_every_staged_profile_supports_every_component_system() -> None:
 
 
 def test_no_template_qwen_policy_is_distinct_from_the_main_matrix_policy() -> None:
-    instructed = DENSE_ENCODER_REGISTRY.policy_for_system("dense-qwen3-embedding-0.6b")
+    instructed = QWEN3_EMBEDDING_06B_POLICY
     no_template = DENSE_ENCODER_REGISTRY.policy_for_system("dense-qwen3-embedding-0.6b-no-template")
 
     assert instructed.model_revision == no_template.model_revision

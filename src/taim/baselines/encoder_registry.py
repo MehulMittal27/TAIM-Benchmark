@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
+from importlib.resources import files
 from types import MappingProxyType
 from typing import ClassVar, TypeAlias
 
@@ -304,8 +305,6 @@ class EncoderRegistry:
             raise EncoderRegistryError("encoder registry requires at least one entry")
         if any(not isinstance(entry, EncoderPolicy) for entry in entries):
             raise EncoderRegistryError("encoder registry entries must be EncoderPolicy values")
-        if not bindings:
-            raise EncoderRegistryError("encoder registry requires at least one System binding")
         if any(not isinstance(binding, SystemEncoderBinding) for binding in bindings):
             raise EncoderRegistryError(
                 "encoder registry bindings must be SystemEncoderBinding values"
@@ -488,19 +487,24 @@ DENSE_ENCODER_REGISTRY = EncoderRegistry(
         QWEN3_EMBEDDING_06B_POLICY,
         QWEN3_EMBEDDING_06B_NO_TEMPLATE_POLICY,
     ),
-    bindings=(
-        SystemEncoderBinding(
-            system_id="dense-bge-m3",
-            encoder_id=BGE_M3_POLICY.encoder_id,
-        ),
-        SystemEncoderBinding(
-            system_id="dense-qwen3-embedding-0.6b",
-            encoder_id=QWEN3_EMBEDDING_06B_POLICY.encoder_id,
-        ),
-        SystemEncoderBinding(
-            system_id="dense-qwen3-embedding-0.6b-no-template",
-            encoder_id=QWEN3_EMBEDDING_06B_NO_TEMPLATE_POLICY.encoder_id,
-        ),
+    bindings=tuple(
+        SystemEncoderBinding(system_id=system_id, encoder_id=policy.encoder_id)
+        for policy in (
+            BGE_M3_POLICY,
+            QWEN3_EMBEDDING_06B_POLICY,
+            QWEN3_EMBEDDING_06B_NO_TEMPLATE_POLICY,
+        )
+        for system_id in sorted(
+            {
+                row["system"]
+                for row in json.loads(
+                    files("taim")
+                    .joinpath("data", "release-support-v0.1.json")
+                    .read_text(encoding="utf-8")
+                )["support_matrix"]
+            }
+        )
+        if system_id == "dense-" + policy.encoder_id
     ),
     factories={
         BGE_M3_POLICY.factory_id: _create_bge_m3_encoder,

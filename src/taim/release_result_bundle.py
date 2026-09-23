@@ -683,52 +683,6 @@ def _validated_producer_identity(value: object) -> dict[str, JsonValue]:
     }
 
 
-def _validate_rrf_component_producers(
-    system_input_projection: Mapping[str, object],
-    *,
-    producer_identity: Mapping[str, JsonValue],
-) -> None:
-    index_identity = system_input_projection["index_identity"]
-    if not isinstance(index_identity, Mapping):
-        raise SchemaValidationError("RRF Result Bundle lacks its index identity")
-    require_exact_keys(
-        index_identity,
-        {
-            "bm25_candidates_sha256",
-            "dense_candidates_sha256",
-            "component_producer_identities",
-            "persistent",
-        },
-        role="RRF Result Bundle index identity",
-    )
-    require_sha256(index_identity["bm25_candidates_sha256"], "RRF BM25 candidate SHA-256")
-    require_sha256(index_identity["dense_candidates_sha256"], "RRF dense candidate SHA-256")
-    if index_identity["persistent"] is not False:
-        raise SchemaValidationError("RRF Result Bundle index identity must be non-persistent")
-    raw_components = index_identity["component_producer_identities"]
-    if not isinstance(raw_components, Mapping) or set(raw_components) != {
-        "bm25",
-        "dense-bge-m3",
-    }:
-        raise SchemaValidationError("RRF Result Bundle component producers are incomplete")
-    expected_release = producer_identity["release_identity"]
-    producer_environment = cast(
-        Mapping[str, object],
-        producer_identity["dependency_environment"],
-    )
-    expected_lock = producer_environment["dependency_lock_sha256"]
-    for system_id in ("bm25", "dense-bge-m3"):
-        component = _validated_producer_identity(raw_components[system_id])
-        if component["release_identity"] != expected_release:
-            raise SchemaValidationError("RRF component producer release identity does not match")
-        component_environment = cast(
-            Mapping[str, object],
-            component["dependency_environment"],
-        )
-        if component_environment["dependency_lock_sha256"] != expected_lock:
-            raise SchemaValidationError("RRF component dependency lock does not match")
-
-
 def _forward_producer_identity(manifest: RunManifest) -> dict[str, JsonValue]:
     execution = manifest.configuration.get("execution_provenance")
     if not isinstance(execution, Mapping) or execution.get("git_commit") != manifest.git_commit:
@@ -1471,12 +1425,7 @@ def _validate_run_projection(projection: Mapping[str, object]) -> tuple[str, str
         system_input_id=cast(str, projection["system_input_id"]),
     )
     producer_identity = _validated_producer_identity(projection["producer_identity"])
-    if system == "rrf":
-        _validate_rrf_component_producers(
-            projected_input,
-            producer_identity=producer_identity,
-        )
-    elif extension is not None and extension.validate_component_producers is not None:
+    if extension is not None and extension.validate_component_producers is not None:
         extension.validate_component_producers(projected_input, producer_identity)
     return track, task, profile, system
 

@@ -24,13 +24,16 @@ The no-template dense component also requires `dense`.
 | Staged pipeline declaration | `1.0` |
 | Judgment-union pool receipt | Profile `1.0`, release support `1.0` |
 | External-fidelity pool receipt | Profile `1.0`, release support `1.0` |
+| External submission task (`input.json`) | `1.0` |
+| External submission result (`submission.json`) | `1.0` |
 | External System dependency declaration | `1.0` |
 
 The stable entry points are `trial-benchmark`, the forward `System` contracts, and the explicitly
 exported `TrialToPatientTaskInput`, `TrialToPatientRunRequest`, direction-specific Benchmark
-Profile, Evaluation Package, run, manifest, and evaluator contracts. A forward run is not accepted
-by a reverse loader, and a reverse run is not accepted by a forward loader. There is no neutral
-ranking artifact or generic direction flag.
+Profile, Evaluation Package, run, manifest, and evaluator contracts, and the `submission` input,
+ranking, and pipeline-declaration formats in [Score your own pipeline](external-pipelines.md). A
+forward run is not accepted by a reverse loader, and a reverse run is not accepted by a forward
+loader. There is no neutral ranking artifact or generic direction flag.
 
 Named forward Stage Rankings remain part of their patient-to-trial Run Manifest and closed run
 tree. They are validated against the same direction, Task Input, run, System, entity membership,

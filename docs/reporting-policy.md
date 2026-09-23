@@ -62,9 +62,8 @@ dependency lock and each identity is retained in the fusion provenance.
 Results with different
 comparison identities do not share one comparative table.
 
-The release capability matrix offers `bm25`, `dense-bge-m3`, instructed
-`dense-qwen3-embedding-0.6b`, and their declared `rrf` reference on each qualified complete and
-judgment-union patient-to-trial Profile. Capability does not by itself authorize a paper
+The installed capability matrix declares the qualified complete and judgment-union
+patient-to-trial combinations. Capability does not by itself authorize a paper
 experiment. The shipped dated protocol selects the TREC 2021, TREC 2022, TREC 2023, SIGIR
 description, and SIGIR summary judgment-union cells as separate result strata. Raw metrics must not
 be pooled across Tracks or across the two SIGIR query Profiles. Missing or unauthorized cells

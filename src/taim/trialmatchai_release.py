@@ -1,7 +1,7 @@
 """The TrialMatchAI L4 Systems in the public release: their run options, their run, and the receipt
 that identifies a prepared corpus.
 
-Only the three TrialMatchAI L4 pipelines own this module; see :mod:`taim.pipeline_extensions`.
+The selected TrialMatchAI units share these physical-input and receipt helpers.
 
 A run's System Input is location-free, so its Result Bundle publishes. The release layer here
 resolves and verifies the physical inputs (the pinned checkout, the workspace, the prepared corpus
@@ -38,8 +38,6 @@ from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from taim.pipeline_extensions import PipelineExtension
-
 if TYPE_CHECKING:
     from taim.release_profiles import ResolvedBenchmark
     from taim.system_contracts import SystemRunRequest, SystemRunResult
@@ -75,7 +73,7 @@ def _run_options(
     benchmark: ResolvedBenchmark,
     task_input_id: str,
 ) -> dict[str, object]:
-    """The physical run options. :func:`_run` turns them into harness inputs and a System Input."""
+    """The physical run options. :func:`run_system` binds harness inputs and a System Input."""
 
     from taim.adapters.trialmatchai import (
         TRIALMATCHAI_L4_COMMIT,
@@ -401,29 +399,10 @@ def _located_request(
     return system_class(harness_inputs=harness_inputs), located, search_database, run_start
 
 
-def _run(system_id: str, request: SystemRunRequest) -> SystemRunResult:
-    from taim.adapters.trialmatchai import (
-        TRIALMATCHAI_L4_SYSTEM_ID,
-        TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID,
-        TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID,
-        TrialMatchAIL4System,
-        TrialMatchAIL4TREC2022System,
-        TrialMatchAIL4TREC2023System,
-    )
+def run_system(system_class, request: SystemRunRequest) -> SystemRunResult:
     from taim.release_reference_systems import run_normalized_system
     from taim.system_contracts import normalize_system_request
 
-    trialmatchai_systems = {
-        TRIALMATCHAI_L4_SYSTEM_ID: TrialMatchAIL4System,
-        TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID: TrialMatchAIL4TREC2022System,
-        TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID: TrialMatchAIL4TREC2023System,
-    }
-    try:
-        system_class = trialmatchai_systems[system_id]
-    except KeyError as exc:
-        raise ValueError(
-            f"System {system_id!r} is not an exported direct reference System"
-        ) from exc
     system, located, search_database, run_start = _located_request(system_class, request)
     effective = normalize_system_request(system, located)  # type: ignore[arg-type]
     # Written before the System starts, so a run that stops later still shows what its start
@@ -494,64 +473,3 @@ def _adopt_corpus(args: argparse.Namespace) -> int:
         }
     )
     return 0
-
-
-EXTENSION = PipelineExtension(
-    system_tasks={
-        "trialmatchai-current-cuda-l4-trec21-development-v4": "patient_to_trial",
-        "trialmatchai-current-cuda-l4-trec22-development-v4": "patient_to_trial",
-        "trialmatchai-current-cuda-l4-trec23-development-v4": "patient_to_trial",
-    },
-    pipeline_depth="post_eligibility",
-    external_baseline=True,
-    subcommands={},
-    run=_run,
-    add_run_options=_add_run_options,
-    run_options=_run_options,
-    add_patient_to_trial_commands=_add_patient_to_trial_commands,
-    module_exports={
-        "src/taim/adapters/__init__.py": (
-            "TrialMatchAIL4System",
-            "TrialMatchAIL4TREC2022System",
-            "TrialMatchAIL4TREC2023System",
-        ),
-        "src/taim/adapters/trialmatchai.py": (
-            "PATIENT_RENDERER_VERSION",
-            "TRIALMATCHAI_L4_ADAPTER_SHA256",
-            "TRIALMATCHAI_L4_ADAPTER_WEIGHT_FILENAME",
-            "TRIALMATCHAI_L4_COMMIT",
-            "TRIALMATCHAI_L4_CONFIG_RELATIVE_PATH",
-            "TRIALMATCHAI_L4_CONFIG_SHA256",
-            "TRIALMATCHAI_L4_FORBIDDEN_ENVIRONMENT",
-            "TRIALMATCHAI_L4_PROCESS_EXECUTION_MODE",
-            "TRIALMATCHAI_L4_REPOSITORY",
-            "TRIALMATCHAI_L4_REQUIRED_ENVIRONMENT",
-            "TRIALMATCHAI_L4_SYSTEM_ID",
-            "TRIALMATCHAI_L4_TREC_2022_SYSTEM_ID",
-            "TRIALMATCHAI_L4_TREC_2023_SYSTEM_ID",
-            "TrialMatchAIAdapterError",
-            "TrialMatchAIHarnessInputs",
-            "TrialMatchAIL4System",
-            "TrialMatchAIL4TREC2022System",
-            "TrialMatchAIL4TREC2023System",
-            "TrialMatchAIResult",
-            "load_and_normalize_ranked_trials",
-            "normalize_ranked_trials",
-            "render_patient_input",
-            "run_trialmatchai_command",
-            "trialmatchai_l4_runtime_contract",
-            "verify_trialmatchai_l4_adapter_weights",
-            "write_patient_input",
-        ),
-    },
-    forbidden_classes=("TrialMatchAISystem",),
-    protected_reference_paths=(
-        "docs/external-baselines.md",
-        "docs/trialmatchai-external-baseline.md",
-        "src/taim/adapters/__init__.py",
-        "src/taim/adapters/trialmatchai.py",
-        "src/taim/pipeline_extensions/trialmatchai.py",
-        "tests/test_trialmatchai_external_baselines.py",
-    ),
-    dependency_declarations=("src/taim/data/external-system-dependencies-v1.json",),
-)

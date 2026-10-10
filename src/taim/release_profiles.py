@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Sequence, Set
+from dataclasses import InitVar, dataclass
 from pathlib import Path
-from types import MappingProxyType
 from typing import TYPE_CHECKING, Literal, cast
 
-from taim.contracts import content_sha256, require_sha256
+from taim.contracts import content_sha256, parameter_values, require_sha256
 from taim.evaluation_package import EvaluationPackage
-from taim.schemas import JsonValue, RelevanceJudgment
-from taim.snapshot import BenchmarkTopic, TrialDocument
+from taim.profile_values import (
+    ProfileDefinition,
+    ResolvedBenchmarkValue,
+    profile_bytes_sha256,
+    profile_json_bytes,
+    profile_lines_sha256,
+)
+from taim.schemas import JsonValue
+from taim.snapshot import Trial
 
 if TYPE_CHECKING:
     from taim.data import PreparedBenchmark
@@ -122,60 +127,26 @@ PrecisionDenominator = Literal["fixed_cutoff"]
 
 
 @dataclass(frozen=True, slots=True)
-class BenchmarkProfile:
-    """Validated static definition of one public Release 0.1 Profile."""
+class BenchmarkProfile(ProfileDefinition):
+    """Profile admitted by this module's corpus and evaluation policy."""
 
-    profile_id: str
-    profile_version: str
     corpus_policy: CorpusPolicy
-    expected_pool_count: int | None
-    paper_pool_identity_status: str | None
-    cutoffs: tuple[int, ...]
-    discount: str
     unjudged_policy: UnjudgedPolicy
-    gain_mapping: Mapping[str, int]
-    precision_metric: str
     precision_relevance_minimum: int
     precision_denominator: PrecisionDenominator
-    ranking_source: str
-    ideal_policy: str
-    topic_policy: str
-    definition_sha256: str
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "cutoffs", tuple(self.cutoffs))
-        object.__setattr__(self, "gain_mapping", MappingProxyType(dict(self.gain_mapping)))
-
-    def evaluation_configuration(self) -> dict[str, JsonValue]:
-        return {
-            "cutoffs": list(self.cutoffs),
-            "discount": self.discount,
-            "unjudged_policy": self.unjudged_policy,
-            "gain_mapping": dict(self.gain_mapping),
-            "precision_metric": self.precision_metric,
-            "precision_relevance_minimum": self.precision_relevance_minimum,
-            "precision_denominator": self.precision_denominator,
-            "ranking_source": self.ranking_source,
-            "ideal_policy": self.ideal_policy,
-            "topic_policy": self.topic_policy,
-        }
 
 
 @dataclass(frozen=True, slots=True)
-class ResolvedBenchmark:
-    """One full prepared corpus resolved under a public Release 0.1 Profile."""
+class ResolvedBenchmark(ResolvedBenchmarkValue[BenchmarkProfile]):
+    """An immutable corpus admitted under this module's profile policy."""
 
-    prepared: PreparedBenchmark
-    profile: BenchmarkProfile
-    trials: Sequence[TrialDocument]
-    corpus_hash: str
-    pool_ids_hash: str
-    pool_source_hash: str | None
     pool_receipt_id: str | None
     unverified_membership_acknowledged: Literal[False]
-    evaluation_package: EvaluationPackage = field(init=False)
+    #: The prepared corpus's trial IDs when resolution has already read them, so the corpus is
+    #: parsed once; omitted, the external-fidelity check reads the corpus for them.
+    prepared_trial_ids: InitVar[Set[str] | None] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, prepared_trial_ids: Set[str] | None) -> None:
         if self.profile.corpus_policy == "full_prepared_corpus":
             if self.trials != self.prepared.trials:
                 raise ValueError("full-corpus Release 0.1 Profile omitted prepared trials")
@@ -189,7 +160,11 @@ class ResolvedBenchmark:
                     "judgment-union Release 0.1 Profile must contain every and only judged trial"
                 )
         else:
-            prepared_ids = {trial.trial_id for trial in self.prepared.trials}
+            prepared_ids = (
+                prepared_trial_ids
+                if prepared_trial_ids is not None
+                else {trial.trial_id for trial in self.prepared.trials}
+            )
             judged_ids = {
                 judgment.trial_id for judgment in self.prepared.evaluation_package.judgments
             }
@@ -211,86 +186,19 @@ class ResolvedBenchmark:
         )
         object.__setattr__(self, "evaluation_package", evaluation_package)
 
-    @property
-    def name(self) -> str:
-        return self.prepared.name
-
-    @property
-    def benchmark_lineage(self) -> str:
-        return self.prepared.snapshot.benchmark_lineage
-
-    @property
-    def snapshot_contract_version(self) -> str:
-        return self.prepared.snapshot.contract_version
-
-    @property
-    def prepared_snapshot_id(self) -> str:
-        return self.prepared.snapshot.snapshot_id
-
-    @property
-    def evaluation_package_id(self) -> str:
-        return self.evaluation_package.evaluation_package_id
-
-    @property
-    def dataset_id(self) -> str:
-        return self.prepared.dataset_id
-
-    @property
-    def directory(self) -> Path:
-        return self.prepared.directory
-
-    @property
-    def topics(self) -> tuple[BenchmarkTopic, ...]:
-        return self.prepared.topics
-
-    @property
-    def judgments(self) -> tuple[RelevanceJudgment, ...]:
-        return self.evaluation_package.judgments
-
     def manifest_configuration(self) -> dict[str, JsonValue]:
         return {
-            "profile_id": self.profile.profile_id,
-            "profile_version": self.profile.profile_version,
-            "definition_sha256": self.profile.definition_sha256,
-            "corpus_policy": self.profile.corpus_policy,
-            "source_corpus_sha256": self.prepared.snapshot.logical_content_hashes()["trials"],
-            "effective_corpus_sha256": self.corpus_hash,
-            "effective_corpus_count": len(self.trials),
-            "pool_ids_sha256": self.pool_ids_hash,
-            "pool_source_sha256": self.pool_source_hash,
+            **self.profile_manifest_configuration(
+                unverified_membership_acknowledged=self.unverified_membership_acknowledged
+            ),
             "pool_receipt_id": self.pool_receipt_id,
-            "paper_pool_identity_status": self.profile.paper_pool_identity_status,
-            "unverified_membership_acknowledged": self.unverified_membership_acknowledged,
-            "evaluation": self.profile.evaluation_configuration(),
         }
-
-
-def _canonical_json_bytes(payload: object) -> bytes:
-    return json.dumps(
-        payload,
-        allow_nan=False,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-
-
-def _sha256_bytes(payload: bytes) -> str:
-    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
-
-
-def _sha256_lines(lines: Iterable[str]) -> str:
-    digest = hashlib.sha256()
-    for line in lines:
-        digest.update(line.encode("utf-8"))
-        digest.update(b"\n")
-    return f"sha256:{digest.hexdigest()}"
 
 
 def ordered_trial_ids_sha256(trial_ids: Iterable[str]) -> str:
     """Hash canonically ordered trial IDs for a judgment-union receipt."""
 
-    return _sha256_lines(trial_ids)
+    return profile_lines_sha256(trial_ids)
 
 
 def judgment_union_pool_receipt(
@@ -338,7 +246,7 @@ def pool_receipt_policy(profile_id: str) -> tuple[str, str]:
 def _project_evaluation_package(
     prepared: PreparedBenchmark,
     profile: BenchmarkProfile,
-    trials: Sequence[TrialDocument],
+    trials: Sequence[Trial],
 ) -> EvaluationPackage:
     """Project evaluator material to one strict-subset Task Input."""
 
@@ -367,7 +275,7 @@ def _project_evaluation_package(
 def _judgment_union(
     prepared: PreparedBenchmark,
     profile: BenchmarkProfile,
-) -> tuple[tuple[TrialDocument, ...], str]:
+) -> tuple[tuple[Trial, ...], str]:
     if profile.corpus_policy != "judgment_union":
         raise ValueError(f"Profile {profile.profile_id!r} is not a judgment-union Profile")
     judged_trial_ids = {judgment.trial_id for judgment in prepared.evaluation_package.judgments}
@@ -384,7 +292,7 @@ def _judgment_union(
             f"{profile.profile_id} requires exactly {profile.expected_pool_count} "
             "judged-union trials"
         )
-    return selected_trials, _sha256_lines(trial.trial_id for trial in selected_trials)
+    return selected_trials, profile_lines_sha256(trial.trial_id for trial in selected_trials)
 
 
 def inspect_judgment_union_profile(
@@ -396,6 +304,15 @@ def inspect_judgment_union_profile(
 
     profile = load_profile(profile_id)
     selected_trials, pool_ids_hash = _judgment_union(prepared, profile)
+    return _judgment_union_receipt(prepared, profile, selected_trials, pool_ids_hash)
+
+
+def _judgment_union_receipt(
+    prepared: PreparedBenchmark,
+    profile: BenchmarkProfile,
+    selected_trials: Sequence[Trial],
+    pool_ids_hash: str,
+) -> dict[str, JsonValue]:
     return judgment_union_pool_receipt(
         selection_policy="union_of_trial_ids_present_in_the_evaluation_package",
         claim_scope="within_pool_ranking_not_full_corpus_retrieval",
@@ -412,7 +329,9 @@ def _external_fidelity_pool(
     prepared: PreparedBenchmark,
     profile: BenchmarkProfile,
     supplied_pool_ids: Iterable[str],
-) -> tuple[tuple[TrialDocument, ...], str]:
+) -> tuple[tuple[Trial, ...], str, frozenset[str]]:
+    """The pool's trials in prepared order, their IDs' hash, and every prepared trial ID."""
+
     if profile.corpus_policy != "external_fidelity_pool":
         raise ValueError(f"Profile {profile.profile_id!r} is not an external-fidelity Profile")
     requested = tuple(supplied_pool_ids)
@@ -422,23 +341,33 @@ def _external_fidelity_pool(
         raise ValueError("external-fidelity pool IDs must be non-empty strings")
     if len(requested) != len(set(requested)):
         raise ValueError("external-fidelity pool contains a duplicate trial ID")
-    prepared_by_id = {trial.trial_id: trial for trial in prepared.trials}
-    unknown = sorted(set(requested) - set(prepared_by_id))
+    requested_set = set(requested)
+    # One pass over the prepared corpus, which a real package parses on every pass.
+    prepared_ids: set[str] = set()
+    pool_trials: list[Trial] = []
+    for trial in prepared.trials:
+        prepared_ids.add(trial.trial_id)
+        if trial.trial_id in requested_set:
+            pool_trials.append(trial)
+    unknown = sorted(requested_set - prepared_ids)
     if unknown:
         raise ValueError(f"external-fidelity pool contains unknown trial ID {unknown[0]!r}")
     judged_ids = {judgment.trial_id for judgment in prepared.evaluation_package.judgments}
-    unjudged = sorted(set(requested) - judged_ids)
+    unjudged = sorted(requested_set - judged_ids)
     if unjudged:
         raise ValueError(
             f"external-fidelity pool contains trial ID {unjudged[0]!r} with no supplied judgment"
         )
-    requested_set = set(requested)
-    selected = tuple(trial for trial in prepared.trials if trial.trial_id in requested_set)
+    selected = tuple(pool_trials)
     if profile.expected_pool_count is not None and len(selected) != profile.expected_pool_count:
         raise ValueError(
             f"{profile.profile_id} requires exactly {profile.expected_pool_count} trials"
         )
-    return selected, _sha256_lines(trial.trial_id for trial in selected)
+    return (
+        selected,
+        profile_lines_sha256(trial.trial_id for trial in selected),
+        frozenset(prepared_ids),
+    )
 
 
 def inspect_external_fidelity_profile(
@@ -451,7 +380,21 @@ def inspect_external_fidelity_profile(
     """Return a receipt for caller-supplied, externally authored pool membership."""
 
     profile = load_profile(profile_id)
-    selected_trials, pool_ids_hash = _external_fidelity_pool(prepared, profile, supplied_pool_ids)
+    selected_trials, pool_ids_hash, _ = _external_fidelity_pool(
+        prepared, profile, supplied_pool_ids
+    )
+    return _external_fidelity_receipt(
+        prepared, profile, selected_trials, pool_ids_hash, expected_pool_count
+    )
+
+
+def _external_fidelity_receipt(
+    prepared: PreparedBenchmark,
+    profile: BenchmarkProfile,
+    selected_trials: Sequence[Trial],
+    pool_ids_hash: str,
+    expected_pool_count: int,
+) -> dict[str, JsonValue]:
     if expected_pool_count != len(selected_trials):
         raise ValueError("caller-supplied pool membership does not match --pool-count")
     evaluation_package = _project_evaluation_package(prepared, profile, selected_trials)
@@ -477,7 +420,9 @@ def load_profile(profile_id: str) -> BenchmarkProfile:
         raise ValueError(f"unknown public Release 0.1 Profile {profile_id!r}") from exc
     path = Path(__file__).parent / "data" / "profiles" / filename
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = parameter_values(
+            json.loads(path.read_text(encoding="utf-8")), role="public Benchmark Profile"
+        )
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"invalid public Benchmark Profile: {exc}") from exc
     if not isinstance(payload, dict) or set(payload) != {
@@ -527,7 +472,7 @@ def load_profile(profile_id: str) -> BenchmarkProfile:
         ranking_source="primary",
         ideal_policy="all_topic_qrels",
         topic_policy="all_declared_topics",
-        definition_sha256=_sha256_bytes(_canonical_json_bytes(payload)),
+        definition_sha256=profile_bytes_sha256(profile_json_bytes(payload)),
     )
 
 
@@ -543,7 +488,7 @@ def resolve_benchmark_profile(
     """Resolve a prepared benchmark to one full or frozen compute-bounded corpus."""
 
     profile = load_profile(profile_id)
-    trial_ids = tuple(trial.trial_id for trial in prepared.trials)
+    # Each branch reads the prepared corpus once: a real package parses it on every pass.
     if profile.corpus_policy == "full_prepared_corpus":
         if any(
             value is not None
@@ -555,12 +500,13 @@ def resolve_benchmark_profile(
             )
         ):
             raise ValueError("full-corpus Profiles do not accept judgment-union pool pins")
+        trial_ids = tuple(trial.trial_id for trial in prepared.trials)
         return ResolvedBenchmark(
             prepared=prepared,
             profile=profile,
             trials=prepared.trials,
             corpus_hash=prepared.snapshot.logical_content_hashes()["trials"],
-            pool_ids_hash=_sha256_lines(trial_ids),
+            pool_ids_hash=profile_lines_sha256(trial_ids),
             pool_source_hash=None,
             pool_receipt_id=None,
             unverified_membership_acknowledged=False,
@@ -578,17 +524,15 @@ def resolve_benchmark_profile(
     if isinstance(expected_pool_count, bool) or expected_pool_count < 1:
         raise ValueError("--pool-count must be a positive integer")
     require_sha256(expected_pool_ids_sha256, "judgment-union pool IDs SHA-256")
+    prepared_trial_ids: frozenset[str] | None = None
     if profile.corpus_policy == "external_fidelity_pool":
         if supplied_pool_ids is None:
             raise ValueError("external-fidelity Profile requires caller-supplied pool membership")
-        selected_trials, pool_ids_hash = _external_fidelity_pool(
+        selected_trials, pool_ids_hash, prepared_trial_ids = _external_fidelity_pool(
             prepared, profile, supplied_pool_ids
         )
-        inspection = inspect_external_fidelity_profile(
-            prepared,
-            profile_id=profile_id,
-            supplied_pool_ids=supplied_pool_ids,
-            expected_pool_count=expected_pool_count,
+        inspection = _external_fidelity_receipt(
+            prepared, profile, selected_trials, pool_ids_hash, expected_pool_count
         )
     else:
         if supplied_pool_ids is not None:
@@ -596,9 +540,9 @@ def resolve_benchmark_profile(
                 "judgment-union Profiles do not accept caller-supplied pool membership"
             )
         selected_trials, pool_ids_hash = _judgment_union(prepared, profile)
-        inspection = inspect_judgment_union_profile(prepared, profile_id=profile_id)
+        inspection = _judgment_union_receipt(prepared, profile, selected_trials, pool_ids_hash)
     selected_ids = tuple(trial.trial_id for trial in selected_trials)
-    if pool_ids_hash != _sha256_lines(selected_ids):
+    if pool_ids_hash != profile_lines_sha256(selected_ids):
         raise ValueError("judgment-union trial ordering changed during resolution")
     if (
         len(selected_trials) != expected_pool_count
@@ -610,7 +554,7 @@ def resolve_benchmark_profile(
         prepared=prepared,
         profile=profile,
         trials=selected_trials,
-        corpus_hash=_sha256_lines(trial.to_json() for trial in selected_trials),
+        corpus_hash=profile_lines_sha256(trial.to_json() for trial in selected_trials),
         pool_ids_hash=pool_ids_hash,
         pool_source_hash=(
             _project_evaluation_package(prepared, profile, selected_trials).evaluation_package_id
@@ -619,6 +563,7 @@ def resolve_benchmark_profile(
         ),
         pool_receipt_id=expected_pool_receipt_id,
         unverified_membership_acknowledged=False,
+        prepared_trial_ids=prepared_trial_ids,
     )
 
 

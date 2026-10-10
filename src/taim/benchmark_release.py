@@ -1,4 +1,9 @@
-"""Deterministic, fail-closed construction of a public Benchmark Release."""
+"""Portable release manifest contracts and independent public candidate validation.
+
+Private source projection, freezing and tree construction belong to the private exporter.
+The shared rendering contract remains here because independent validation re-derives generated
+workflow and dependency declarations when checking their license and selection closure.
+"""
 
 from __future__ import annotations
 
@@ -42,6 +47,8 @@ RELEASE_PROVENANCE_VERSION = "2.0"
 _SHA256 = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _GIT_COMMIT = re.compile(r"[0-9a-f]{40}\Z")
 _MARKDOWN_LINK = re.compile(r"(?<!!)\[[^]]+\]\(([^)]+)\)")
+# A pipeline-only data file: a declaration or lock under its family's ``data`` directory.
+_PIPELINE_DATA = re.compile(r"src/taim/pipelines/[a-z0-9_]+/data/[^/]+\.json")
 _EXPECTED_SCHEMA_VERSIONS = {
     "benchmark_snapshot": "2.0",
     "run_manifest": "7.0",
@@ -208,14 +215,6 @@ def _json_object(path: Path, *, role: str) -> dict[str, object]:
     return payload
 
 
-def _write_json(path: Path, payload: object) -> None:
-    path.write_text(
-        json.dumps(payload, allow_nan=False, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-
-
 def _exact_fields(value: Mapping[str, object], expected: set[str], *, role: str) -> None:
     missing = expected - value.keys()
     unexpected = value.keys() - expected
@@ -243,7 +242,7 @@ def _release_path(value: object, *, role: str) -> str:
     return path.as_posix()
 
 
-def _sha256_bytes(content: bytes) -> str:
+def release_bytes_sha256(content: bytes) -> str:
     return "sha256:" + hashlib.sha256(content).hexdigest()
 
 
@@ -255,7 +254,7 @@ def _sha256_file(path: Path) -> str:
     return "sha256:" + digest.hexdigest()
 
 
-def _git(
+def run_release_git(
     root: Path,
     arguments: Sequence[str],
     *,
@@ -276,21 +275,6 @@ def _git(
         detail = process.stderr.strip() or process.stdout.strip() or "git command failed"
         raise BenchmarkReleaseError(detail)
     return process.stdout.strip()
-
-
-def _clean_source_commit(source_root: Path) -> str:
-    root = source_root.resolve()
-    if not root.is_dir():
-        raise BenchmarkReleaseError(f"source root is not a directory: {root}")
-    top_level = Path(_git(root, ("rev-parse", "--show-toplevel"))).resolve()
-    if top_level != root:
-        raise BenchmarkReleaseError("source root must be the Git repository root")
-    commit = _git(root, ("rev-parse", "--verify", "HEAD"))
-    if _GIT_COMMIT.fullmatch(commit) is None:
-        raise BenchmarkReleaseError("source commit must be an exact 40-character Git SHA")
-    if _git(root, ("status", "--porcelain", "--untracked-files=all")):
-        raise BenchmarkReleaseError("Benchmark Release requires a clean source worktree")
-    return commit
 
 
 def _generate_support_catalogue(source: bytes, definition: Mapping[str, object]) -> bytes:
@@ -419,7 +403,7 @@ _ROW_MARKER = re.compile(r"(\|.*\|) <!-- pipeline-row: ([^,<>]+(?:, [^,<>]+)*) -
 _ROW_WORD = "pipeline-row"
 
 
-def _markdown_sections(text: str) -> list[tuple[int, int, tuple[str, ...]]]:
+def release_markdown_sections(text: str) -> list[tuple[int, int, tuple[str, ...]]]:
     """The pipeline sections of a Markdown text: opening line, closing line (1-based), owners.
 
     A section opens with ``<!-- pipeline-section: <owner>[, <owner>...] -->`` alone on a line
@@ -459,7 +443,7 @@ def _markdown_sections(text: str) -> list[tuple[int, int, tuple[str, ...]]]:
     return sections
 
 
-def _markdown_row_markers(text: str) -> list[tuple[int, tuple[str, ...]]]:
+def release_markdown_row_markers(text: str) -> list[tuple[int, tuple[str, ...]]]:
     """The marked table rows of a Markdown text: line (1-based) and owners.
 
     A marked row ends with the extra cell ``<!-- pipeline-row: <owner>[, <owner>...] -->``. A
@@ -499,12 +483,12 @@ def _markdown_without_unpublished_sections(text: str, published: Collection[str]
 
     lines = text.splitlines(keepends=True)
     dropped: set[int] = set()
-    for first, last, owners in _markdown_sections(text):
+    for first, last, owners in release_markdown_sections(text):
         if not set(owners) & set(published):
             dropped.update(range(first - 1, last))
         else:
             dropped.update((first - 1, last - 1))
-    for number, row_owners in _markdown_row_markers(text):
+    for number, row_owners in release_markdown_row_markers(text):
         if not set(row_owners) & set(published):
             dropped.add(number - 1)
         else:
@@ -529,8 +513,8 @@ def _markdown_without_unpublished_sections(text: str, published: Collection[str]
 def _refuse_emitted_markdown_markers(text: str) -> None:
     """Refuse generated Markdown that still carries a pipeline section or row marker."""
 
-    sections = _markdown_sections(text)
-    rows = _markdown_row_markers(text)
+    sections = release_markdown_sections(text)
+    rows = release_markdown_row_markers(text)
     if sections or rows:
         lines = sorted({first for first, _last, _owners in sections} | {row for row, _ in rows})
         raise BenchmarkReleaseError(
@@ -545,7 +529,7 @@ def _refuse_sections_of_unpublished_pipelines(text: str, published: Collection[s
     remaining = sorted(
         {
             owner
-            for _first, _last, owners in _markdown_sections(text)
+            for _first, _last, owners in release_markdown_sections(text)
             if not set(owners) & set(published)
             for owner in owners
         }
@@ -558,7 +542,7 @@ def _refuse_sections_of_unpublished_pipelines(text: str, published: Collection[s
     remaining_rows = sorted(
         {
             owner
-            for _number, owners in _markdown_row_markers(text)
+            for _number, owners in release_markdown_row_markers(text)
             if not set(owners) & set(published)
             for owner in owners
         }
@@ -581,37 +565,11 @@ def _generate_markdown_sections(source: bytes, definition: Mapping[str, object])
     return source if generated == text else generated.encode("utf-8")
 
 
-def _validate_markdown_section_owners(
-    files: Mapping[str, Path], definition: Mapping[str, object]
-) -> None:
-    """Refuse a section owner the unprojected definition does not declare; a typo drops nothing."""
-
-    declared = set(cast(Mapping[str, object], definition["pipelines"]))
-    for destination, generator in cast(Mapping[str, str], definition["generated_files"]).items():
-        if generator != "markdown-sections":
-            continue
-        text = files[destination].read_text(encoding="utf-8")
-        for first, _last, owners in _markdown_sections(text):
-            undeclared = sorted(set(owners) - declared)
-            if undeclared:
-                raise BenchmarkReleaseError(
-                    f"{destination} line {first}: pipeline section names undeclared pipelines: "
-                    + ", ".join(undeclared)
-                )
-        for number, row_owners in _markdown_row_markers(text):
-            undeclared_row = sorted(set(row_owners) - declared)
-            if undeclared_row:
-                raise BenchmarkReleaseError(
-                    f"{destination} line {number}: pipeline row names undeclared pipelines: "
-                    + ", ".join(undeclared_row)
-                )
-
-
 _SHIPS_WITH = re.compile(r"(?P<code>.*\S)\s+# ships-with: (?P<path>[^\s#]+)")
 _SHIPS_WITH_WORD = "ships-with"
 
 
-def _python_ships_with_markers(text: str) -> list[tuple[int, str]]:
+def release_python_file_markers(text: str) -> list[tuple[int, str]]:
     """The lines of a Python text that ship only with one file: line (1-based) and that file.
 
     A marker is the trailing comment ``# ships-with: <destination>`` on a line of code. Any other
@@ -636,7 +594,7 @@ def _python_without_unshipped_lines(text: str, shipped: Collection[str]) -> str:
     a single-line list item, a line of code ending in a comma, stands for that line alone.
     """
 
-    markers = _python_ships_with_markers(text)
+    markers = release_python_file_markers(text)
     if not markers:
         return text
     try:
@@ -674,45 +632,20 @@ def _generate_python_sections(source: bytes, definition: Mapping[str, object]) -
     text = source.decode("utf-8")
     generated = _python_without_unshipped_lines(text, shipped)
     remaining = sorted(
-        {path for _number, path in _python_ships_with_markers(generated) if path not in shipped}
+        {path for _number, path in release_python_file_markers(generated) if path not in shipped}
     )
     if remaining:
         raise BenchmarkReleaseError(
             "generated Python still holds lines that ship only with files the release does not "
             "ship: " + ", ".join(remaining)
         )
-    left = _python_ships_with_markers(generated)
+    left = release_python_file_markers(generated)
     if left:
         raise BenchmarkReleaseError(
             "generated Python still carries ships-with markers at lines "
             + ", ".join(str(number) for number, _path in left)
         )
     return source if generated == text else generated.encode("utf-8")
-
-
-def _validate_python_ships_with_files(
-    files: Mapping[str, Path], definition: Mapping[str, object]
-) -> None:
-    """Refuse a ships-with marker naming a file the unprojected definition does not allowlist.
-
-    Such a line would drop from every release without a word, so it is refused; an unmarked import
-    of a file no release ships is refused by the public import closure instead.
-    """
-
-    allowlisted = {
-        cast(str, entry["destination"])
-        for entry in cast(list[Mapping[str, object]], definition["files"])
-    }
-    for destination, generator in cast(Mapping[str, str], definition["generated_files"]).items():
-        if generator != "python-sections":
-            continue
-        text = files[destination].read_text(encoding="utf-8")
-        for number, path in _python_ships_with_markers(text):
-            if path not in allowlisted:
-                raise BenchmarkReleaseError(
-                    f"{destination} line {number}: ships-with names a file the definition does "
-                    f"not allowlist: {path}"
-                )
 
 
 _CI_PYTHON = "uv run python -c "
@@ -777,7 +710,7 @@ def _module_ships(module: str, destinations: Collection[str]) -> bool:
     return f"{relative}.py" in destinations or f"{relative}/__init__.py" in destinations
 
 
-def _synthetic_tasks(files: Mapping[str, Path]) -> set[str]:
+def release_synthetic_tasks(files: Mapping[str, Path]) -> set[str]:
     return {
         cast(str, cast(Mapping[str, str], declaration["system_tasks"])[default])
         for declaration in _extension_declarations(files).values()
@@ -894,7 +827,7 @@ _GENERATORS: Mapping[str, Callable[[bytes, Mapping[str, object]], bytes]] = {
 }
 
 
-def _shipped_bytes(definition: Mapping[str, object], destination: str, source: bytes) -> bytes:
+def render_release_file(definition: Mapping[str, object], destination: str, source: bytes) -> bytes:
     """The bytes a release ships for one allowlisted file: its source, or its generator's output."""
 
     generator = cast(Mapping[str, str], definition["generated_files"]).get(destination)
@@ -968,7 +901,9 @@ def _validate_pipelines(
     return components, tuple(published)
 
 
-def _validate_definition(definition: Mapping[str, object], *, projected: bool = True) -> None:
+def validate_release_definition(
+    definition: Mapping[str, object], *, projected: bool = True
+) -> None:
     """Validate a release definition, in its private or its projected form.
 
     The private definition declares every public-eligible pipeline and marks the files each owns.
@@ -990,7 +925,7 @@ def _validate_definition(definition: Mapping[str, object], *, projected: bool = 
     if approval["status"] != "approved":
         raise BenchmarkReleaseError("repository identity and project license are not approved")
     _string(approval["reviewer"], role="release_approval.reviewer")
-    _aware_datetime(approval["approved_at"], role="release_approval.approved_at")
+    parse_release_datetime(approval["approved_at"], role="release_approval.approved_at")
 
     try:
         support_matrix = validate_support_matrix(definition["support_matrix"])
@@ -1328,7 +1263,7 @@ def _validate_project(project: Mapping[str, object]) -> None:
         _string(release_commit[name], role=f"project.release_commit.{name}")
     if "\n" in cast(str, release_commit["message"]):
         raise BenchmarkReleaseError("project.release_commit.message must be one line")
-    _aware_datetime(release_commit["timestamp"], role="release commit timestamp")
+    parse_release_datetime(release_commit["timestamp"], role="release commit timestamp")
     previous = release_commit["previous_public_commit"]
     if previous is not None and (
         not isinstance(previous, str) or _GIT_COMMIT.fullmatch(previous) is None
@@ -1338,7 +1273,7 @@ def _validate_project(project: Mapping[str, object]) -> None:
         )
 
 
-def _aware_datetime(value: object, *, role: str) -> datetime:
+def parse_release_datetime(value: object, *, role: str) -> datetime:
     text = _string(value, role=role)
     try:
         timestamp = datetime.fromisoformat(text)
@@ -1376,10 +1311,10 @@ def load_benchmark_release_manifest(path: str | Path) -> dict[str, object]:
     ):
         raise BenchmarkReleaseError("unsupported Benchmark Release manifest")
     definition = _definition_from_manifest(manifest)
-    _validate_definition(definition)
+    validate_release_definition(definition)
     # Validate the manifest-only file fields through the same allowlist path.
     manifest_definition = {**definition, "files": manifest["files"]}
-    _validate_definition(manifest_definition)
+    validate_release_definition(manifest_definition)
     if (
         not isinstance(manifest["source_commit"], str)
         or _GIT_COMMIT.fullmatch(cast(str, manifest["source_commit"])) is None
@@ -1395,26 +1330,6 @@ def load_benchmark_release_manifest(path: str | Path) -> dict[str, object]:
     if manifest_id != content_sha256(core):
         raise BenchmarkReleaseError("Benchmark Release manifest ID does not match its content")
     return manifest
-
-
-def _source_file(source_root: Path, relative: str, *, source_commit: str) -> Path:
-    root = source_root.resolve()
-    path = root.joinpath(*PurePosixPath(relative).parts)
-    if path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(root):
-        raise BenchmarkReleaseError(
-            f"release source is missing or is not a regular file: {relative}"
-        )
-    try:
-        object_type = _git(root, ("cat-file", "-t", f"{source_commit}:{relative}"))
-    except BenchmarkReleaseError as exc:
-        raise BenchmarkReleaseError(
-            f"release source is not tracked by the pinned commit: {relative}"
-        ) from exc
-    if object_type != "blob":
-        raise BenchmarkReleaseError(
-            f"release source is not a regular blob at the pinned commit: {relative}"
-        )
-    return path
 
 
 def _normalized_distribution(requirement: object, *, role: str) -> str:
@@ -1579,7 +1494,9 @@ def _ci_jobs(
     try:
         source = workflow.read_bytes()
         # With a definition, the jobs are read as the release ships them.
-        shipped = source if definition is None else _shipped_bytes(definition, _WORKFLOW, source)
+        shipped = (
+            source if definition is None else render_release_file(definition, _WORKFLOW, source)
+        )
         payload = json.loads(shipped.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise BenchmarkReleaseError(
@@ -1744,7 +1661,7 @@ def _validate_ci_contract(
         ("trial-to-patient", "run", "evaluate"),
         ("trial-to-patient", "run", "validate"),
     }
-    synthetic_tasks = {task.replace("_", "-") for task in _synthetic_tasks(files)}
+    synthetic_tasks = {task.replace("_", "-") for task in release_synthetic_tasks(files)}
     required_public_operations = {
         operation
         for operation in required_public_operations
@@ -1908,9 +1825,8 @@ def _model_references(files: Mapping[str, Path], definition: Mapping[str, object
                     "encoder document-tower references must have exact static revisions"
                 )
             models.add(f"{identity}@{revision}")
-    pipeline_prefix = "src/taim/data/pipelines/"
     for destination, path in files.items():
-        if not destination.startswith(pipeline_prefix) or not destination.endswith(".json"):
+        if _PIPELINE_DATA.fullmatch(destination) is None:
             continue
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -1970,7 +1886,7 @@ def _external_system_dependencies(
             raise BenchmarkReleaseError(
                 "external System dependency declaration is unreadable"
             ) from exc
-        shipped = _shipped_bytes(definition, relative, source)
+        shipped = render_release_file(definition, relative, source)
         file_models, file_inputs = _read_external_system_dependencies(shipped, declared_systems)
         models.update(file_models)
         inputs.update(file_inputs)
@@ -2044,9 +1960,8 @@ def _runtime_input_references(
     files: Mapping[str, Path], definition: Mapping[str, object]
 ) -> set[str]:
     references: set[str] = set()
-    pipeline_prefix = "src/taim/data/pipelines/"
     for destination, path in files.items():
-        if not destination.startswith(pipeline_prefix) or not destination.endswith(".json"):
+        if _PIPELINE_DATA.fullmatch(destination) is None:
             continue
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -2072,7 +1987,7 @@ def _runtime_input_references(
     return references
 
 
-def _derived_license_bindings(
+def release_license_bindings(
     files: Mapping[str, Path], definition: Mapping[str, object]
 ) -> set[tuple[str, str]]:
     """Every licence binding a file set needs: distributions, files, actions, models and inputs."""
@@ -2098,11 +2013,13 @@ def _derived_license_bindings(
     }
 
 
-def _validate_license_closure(files: Mapping[str, Path], definition: Mapping[str, object]) -> None:
+def validate_release_license_closure(
+    files: Mapping[str, Path], definition: Mapping[str, object]
+) -> None:
     _validate_ci_contract(files, definition)
     project = cast(Mapping[str, object], definition["project"])
     _validate_package_project_metadata(files, project)
-    derived = _derived_license_bindings(files, definition)
+    derived = release_license_bindings(files, definition)
     declared = {
         (cast(str, item["kind"]), cast(str, item["locator"]))
         for item in cast(list[Mapping[str, object]], definition["license_bindings"])
@@ -2118,83 +2035,6 @@ def _validate_license_closure(files: Mapping[str, Path], definition: Mapping[str
         raise BenchmarkReleaseError(
             "license bindings do not exactly cover exported components (" + "; ".join(details) + ")"
         )
-
-
-def _with_every_pipeline_published(definition: Mapping[str, object]) -> dict[str, object]:
-    """The private definition as if nothing were held back, for checks over every pipeline."""
-
-    pipelines = cast(Mapping[str, object], definition["pipelines"])
-    return {**definition, "published_pipelines": sorted(pipelines)}
-
-
-def _project_definition(
-    definition: Mapping[str, object], files: Mapping[str, Path]
-) -> tuple[dict[str, object], dict[str, Path]]:
-    """Project a private definition onto the pipelines it publishes.
-
-    A file stays when no pipeline owns it or a published pipeline does, and its owners narrow to the
-    published ones. Held-back pipelines' entries and support rows go. A licence binding stays when
-    the projected files still derive it, and a licence identity goes only with the last binding or
-    file that used it.
-    """
-
-    published = frozenset(cast(list[str], definition["published_pipelines"]))
-    kept_files: list[dict[str, object]] = []
-    for raw_file in cast(list[Mapping[str, object]], definition["files"]):
-        owners = cast(list[str], raw_file["owners"])
-        if owners and not published.intersection(owners):
-            continue
-        kept_files.append({**raw_file, "owners": [owner for owner in owners if owner in published]})
-    projected_files = {
-        cast(str, entry["destination"]): files[cast(str, entry["destination"])]
-        for entry in kept_files
-    }
-    pipelines = cast(Mapping[str, object], definition["pipelines"])
-    projected: dict[str, object] = {
-        **definition,
-        "files": kept_files,
-        "generated_files": {
-            destination: generator
-            for destination, generator in cast(
-                Mapping[str, str], definition["generated_files"]
-            ).items()
-            if destination in projected_files
-        },
-        "pipelines": {
-            system_id: pipeline
-            for system_id, pipeline in pipelines.items()
-            if system_id in published
-        },
-        "support_matrix": [
-            row
-            for row in cast(list[Mapping[str, object]], definition["support_matrix"])
-            if row["system"] in published
-        ],
-    }
-    synthetic_tasks = {task.replace("_", "-") for task in _synthetic_tasks(projected_files)}
-    projected["quick_start"] = [
-        command
-        for command in cast(list[list[str]], definition["quick_start"])
-        if len(command) < 2
-        or command[1] not in {"patient-to-trial", "trial-to-patient"}
-        or command[1] in synthetic_tasks
-    ]
-    derived = _derived_license_bindings(projected_files, projected)
-    all_bindings = cast(list[Mapping[str, object]], definition["license_bindings"])
-    bindings = [item for item in all_bindings if (item["kind"], item["locator"]) in derived]
-    used_before = {item["license_id"] for item in all_bindings} | {
-        item["license_id"] for item in cast(list[Mapping[str, object]], definition["files"])
-    }
-    used_after = {item["license_id"] for item in bindings} | {
-        item["license_id"] for item in kept_files
-    }
-    projected["license_bindings"] = bindings
-    projected["license_identities"] = [
-        identity
-        for identity in cast(list[Mapping[str, object]], definition["license_identities"])
-        if identity["license_id"] in used_after or identity["license_id"] not in used_before
-    ]
-    return projected, projected_files
 
 
 def _provenance(manifest: Mapping[str, object]) -> dict[str, object]:
@@ -2228,6 +2068,35 @@ def _json_bytes(payload: object) -> bytes:
     ).encode("utf-8")
 
 
+def seal_release_manifest(
+    definition: Mapping[str, object], source_commit: str, files: Sequence[Mapping[str, object]]
+) -> dict[str, object]:
+    """Bind a projected definition and measured file records to their portable identities.
+
+    This is a pure value operation. Source admission and measurement belong to the exporter;
+    loading a manifest and validating a candidate independently recheck this contract.
+    """
+
+    manifest: dict[str, object] = {
+        **definition,
+        "artifact_type": "taim-benchmark-release-manifest",
+        "schema_version": RELEASE_MANIFEST_VERSION,
+        "source_commit": source_commit,
+        "files": list(files),
+        "expected_public_tree_id": "sha256:" + "0" * 64,
+    }
+    manifest["expected_public_tree_id"] = _public_tree_id(_tree_records(manifest))
+    manifest["manifest_id"] = content_sha256(manifest)
+    validate_release_definition(_definition_from_manifest(manifest))
+    return manifest
+
+
+def release_provenance_bytes(manifest: Mapping[str, object]) -> bytes:
+    """Return the canonical provenance bytes also checked by the independent validator."""
+
+    return _json_bytes(_provenance(manifest))
+
+
 def _tree_records(manifest: Mapping[str, object]) -> list[dict[str, object]]:
     records = [
         {
@@ -2241,7 +2110,7 @@ def _tree_records(manifest: Mapping[str, object]) -> list[dict[str, object]]:
     records.append(
         {
             "path": RELEASE_PROVENANCE_FILENAME,
-            "sha256": _sha256_bytes(provenance),
+            "sha256": release_bytes_sha256(provenance),
             "byte_size": len(provenance),
         }
     )
@@ -2290,7 +2159,7 @@ def _artifact_package_files(
             raise BenchmarkReleaseError(
                 f"package artifact contains duplicate TAIM file {relative!r}"
             )
-        records[relative] = (_sha256_bytes(payload), len(payload))
+        records[relative] = (release_bytes_sha256(payload), len(payload))
 
     def safe_member(name: str) -> PurePosixPath:
         member = PurePosixPath(name)
@@ -2378,7 +2247,7 @@ def _artifact_package_files(
         if not isinstance(description, str):
             raise BenchmarkReleaseError(f"{role} description payload is invalid")
         description_bytes = description.encode("utf-8")
-        if (_sha256_bytes(description_bytes), len(description_bytes)) != manifest_files[
+        if (release_bytes_sha256(description_bytes), len(description_bytes)) != manifest_files[
             readme_file
         ]:
             raise BenchmarkReleaseError(f"{role} description does not match the reviewed README")
@@ -2495,7 +2364,7 @@ def _artifact_package_files(
             if wheel_payloads[f"{dist_info}/top_level.txt"].decode("utf-8").split() != ["taim"]:
                 raise BenchmarkReleaseError("release wheel top-level metadata is invalid")
             if (
-                _sha256_bytes(wheel_payloads[license_member]),
+                release_bytes_sha256(wheel_payloads[license_member]),
                 len(wheel_payloads[license_member]),
             ) != manifest_files[license_file]:
                 raise BenchmarkReleaseError(
@@ -2629,7 +2498,7 @@ def _artifact_package_files(
                 if (
                     relative in manifest_files
                     and (
-                        _sha256_bytes(payload),
+                        release_bytes_sha256(payload),
                         len(payload),
                     )
                     != manifest_files[relative]
@@ -2734,144 +2603,6 @@ def validate_release_package_artifact(
         package_files=tuple(
             (relative, digest, byte_size) for relative, (digest, byte_size) in archived.items()
         ),
-    )
-
-
-def freeze_benchmark_release_manifest(
-    source_root: str | Path,
-    definition_path: str | Path,
-    manifest_path: str | Path,
-    *,
-    gates: Sequence[Callable[[Mapping[str, object]], None]] = (),
-) -> dict[str, object]:
-    """Bind approved release inputs and an exact file allowlist to one clean commit.
-
-    The manifest carries the private definition projected onto its published pipelines, so it names
-    no held-back pipeline, no file only those pipelines own, and no licence binding only they need.
-    Each gate receives the validated manifest before it is written, and refuses it by raising. The
-    private exporter passes its release lock check here.
-    """
-
-    source = Path(source_root).resolve()
-    output = Path(manifest_path)
-    if output.resolve().is_relative_to(source):
-        raise BenchmarkReleaseError("release manifest must be outside the source tree")
-    if output.exists():
-        raise BenchmarkReleaseError(f"release manifest already exists: {output}")
-    definition = _json_object(Path(definition_path), role="Benchmark Release definition")
-    _validate_definition(definition, projected=False)
-    source_commit = _clean_source_commit(source)
-    sources = {
-        cast(str, raw_file["destination"]): _source_file(
-            source,
-            cast(str, raw_file["source"]),
-            source_commit=source_commit,
-        )
-        for raw_file in cast(list[Mapping[str, object]], definition["files"])
-    }
-    # The private definition must close over every pipeline it declares before any is held back,
-    # so its generated files are read as if every declared pipeline were published.
-    _validate_license_closure(sources, _with_every_pipeline_published(definition))
-    # Section owners are checked while the definition still declares the held-back pipelines.
-    _validate_markdown_section_owners(sources, definition)
-    _validate_python_ships_with_files(sources, definition)
-    projected, projected_sources = _project_definition(definition, sources)
-    _validate_definition(projected)
-    _validate_license_closure(projected_sources, projected)
-    files: list[dict[str, object]] = []
-    for raw_file in cast(list[Mapping[str, object]], projected["files"]):
-        destination = cast(str, raw_file["destination"])
-        shipped = _shipped_bytes(
-            projected, destination, projected_sources[destination].read_bytes()
-        )
-        files.append({**raw_file, "sha256": _sha256_bytes(shipped), "byte_size": len(shipped)})
-    manifest: dict[str, object] = {
-        **projected,
-        "artifact_type": "taim-benchmark-release-manifest",
-        "schema_version": RELEASE_MANIFEST_VERSION,
-        "source_commit": source_commit,
-        "files": files,
-        "expected_public_tree_id": "sha256:" + "0" * 64,
-    }
-    manifest["expected_public_tree_id"] = _public_tree_id(_tree_records(manifest))
-    manifest["manifest_id"] = content_sha256(manifest)
-    loadable = {**manifest}
-    _validate_definition(_definition_from_manifest(loadable))
-    for gate in gates:
-        gate(loadable)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    _write_json(output, loadable)
-    return load_benchmark_release_manifest(output)
-
-
-def _copy_release_files(source: Path, destination: Path, manifest: Mapping[str, object]) -> None:
-    for entry in cast(list[Mapping[str, object]], manifest["files"]):
-        relative_source = cast(str, entry["source"])
-        source_file = _source_file(
-            source,
-            relative_source,
-            source_commit=cast(str, manifest["source_commit"]),
-        )
-        shipped = _shipped_bytes(
-            manifest, cast(str, entry["destination"]), source_file.read_bytes()
-        )
-        if _sha256_bytes(shipped) != entry["sha256"] or len(shipped) != entry["byte_size"]:
-            raise BenchmarkReleaseError(f"release source bytes changed: {relative_source}")
-        target = destination.joinpath(*PurePosixPath(cast(str, entry["destination"])).parts)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(shipped)
-    (destination / RELEASE_PROVENANCE_FILENAME).write_bytes(_json_bytes(_provenance(manifest)))
-
-
-def build_benchmark_release(
-    source_root: str | Path,
-    manifest_path: str | Path,
-    output_directory: str | Path,
-    *,
-    gates: Sequence[Callable[[Path, Path], None]] = (),
-) -> BenchmarkReleaseCandidate:
-    """Construct a complete candidate atomically, with no Git history.
-
-    Each gate receives the staged tree and the manifest path once the tree validates, before it
-    gains history or moves into place, and refuses it by raising. The private exporter passes its
-    excluded-reference scan here. The candidate is admitted as a tree before it moves into place;
-    ``taim release chain`` gives it its only commit.
-
-    Guarantee: deny-by-default makes leaking a FILE impossible.
-
-    It does not cover:
-    1. Content inside a named file. That takes a separate content rule.
-    2. Re-verification on a published release. The excluded-reference scan is a private build-time gate - it searches for held-back pipeline names, so it cannot ship publicly without publishing them.
-    3. Any push shape other than explicit release refspecs. The public release check does not see the history a push carries, so a mirror push publishes whatever the repository holds.
-    4. Release assets and release notes. They live outside the release tree, which is all the deny-by-default walk sees. Assets are verified against what was built and uploaded; release notes remain editable after publication and are not covered by any check.
-    """  # noqa: E501
-
-    source = Path(source_root).resolve()
-    output = Path(output_directory).resolve()
-    if output.is_relative_to(source):
-        raise BenchmarkReleaseError("release output must be outside the source tree")
-    if output.exists():
-        raise BenchmarkReleaseError(f"release output already exists: {output}")
-    manifest = load_benchmark_release_manifest(manifest_path)
-    source_commit = _clean_source_commit(source)
-    if source_commit != manifest["source_commit"]:
-        raise BenchmarkReleaseError("source HEAD does not match the frozen release commit")
-    output.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.", dir=output.parent))
-    try:
-        _copy_release_files(source, staging, manifest)
-        validate_benchmark_release(staging, manifest_path, require_git=False)
-        for gate in gates:
-            gate(staging, Path(manifest_path))
-        report = admit_release_tree(staging, manifest_path)
-        staging.replace(output)
-    except Exception:
-        shutil.rmtree(staging, ignore_errors=True)
-        raise
-    return BenchmarkReleaseCandidate(
-        directory=output,
-        manifest_id=cast(str, manifest["manifest_id"]),
-        public_tree_id=cast(str, report["public_tree_id"]),
     )
 
 
@@ -3496,7 +3227,9 @@ _DISPATCH_MODULES = (
     "src/taim/release_result_bundle.py",
 )
 _SYSTEM_NAMES = frozenset({"system", "system_id"})
-_EXTENSION_PREFIX = "src/taim/pipeline_extensions/"
+# A pipeline extension module: ``extension.py`` in a family of one release unit, else one
+# ``<unit>_extension.py`` per unit.
+_EXTENSION_MODULE = re.compile(r"src/taim/pipelines/[a-z0-9_]+/(?:[a-z0-9_]+_)?extension\.py")
 _CLI_SURFACE = r"""
 import argparse
 import json
@@ -3554,11 +3287,7 @@ def _extension_modules(relatives: Collection[str]) -> list[str]:
     """The pipeline extension modules among release paths."""
 
     return sorted(
-        relative
-        for relative in relatives
-        if relative.startswith(_EXTENSION_PREFIX)
-        and relative.endswith(".py")
-        and relative != _EXTENSION_PREFIX + "__init__.py"
+        relative for relative in relatives if _EXTENSION_MODULE.fullmatch(relative) is not None
     )
 
 
@@ -3915,16 +3644,19 @@ _CORE_PROTECTED_REFERENCE_PATHS = frozenset(
         "README.md",
         RELEASE_PROVENANCE_FILENAME,
         "THIRD_PARTY_NOTICES.md",
+        "docs/cli-reference.md",
         "docs/compatibility.md",
         "docs/method-contracts.md",
         "docs/paper-analysis-protocol-2026-08-29.md",
         "docs/paper-analysis-protocol-2026-08-31-v2.md",
         "docs/paper-analysis-protocol-2026-08-31-v3.md",
         "docs/paper-analysis-protocol-2026-08-31-v4.md",
+        "docs/paper-analysis-protocol-2026-09-28-v12.md",
         "docs/reporting-policy.md",
         "docs/trec-2022-acquisition.md",
         "docs/trec-2023-acquisition.md",
         "src/taim/benchmark_release.py",
+        "src/taim/cli_support.py",
         "src/taim/data/locks/trec-ct-2022.json",
         "src/taim/data/locks/trec-ct-2023.json",
         "src/taim/data/profiles/trec-ct-2022-judgment-union-v1.json",
@@ -4083,14 +3815,14 @@ def _validate_forbidden_content(
             )
 
 
-def _commit_parents(candidate: Path, revision: str) -> list[str]:
+def release_commit_parents(candidate: Path, revision: str) -> list[str]:
     """The parent lines of a commit object, read from the object itself.
 
     ``rev-list --parents`` shows no parent at a shallow clone's boundary, while the object keeps
     its parent lines, so a shallow clone of a chained release checks the same link.
     """
 
-    body = _git(candidate, ("cat-file", "commit", revision))
+    body = run_release_git(candidate, ("cat-file", "commit", revision))
     parents: list[str] = []
     for line in body.splitlines():
         if not line:
@@ -4119,18 +3851,18 @@ def _validate_git_history(
     project = cast(Mapping[str, object], manifest["project"])
     release_commit = cast(Mapping[str, object], project["release_commit"])
     previous = release_commit["previous_public_commit"]
-    if _commit_parents(candidate, "HEAD") != ([] if previous is None else [previous]):
+    if release_commit_parents(candidate, "HEAD") != ([] if previous is None else [previous]):
         raise BenchmarkReleaseError("public release commit parent does not match the manifest")
-    if _git(candidate, ("status", "--porcelain", "--untracked-files=all")):
+    if run_release_git(candidate, ("status", "--porcelain", "--untracked-files=all")):
         raise BenchmarkReleaseError("public release worktree is dirty")
-    tracked = set(_git(candidate, ("ls-files",)).splitlines())
+    tracked = set(run_release_git(candidate, ("ls-files",)).splitlines())
     if tracked != expected_files:
         raise BenchmarkReleaseError("public Git commit does not track the exact release tree")
-    details = _git(
+    details = run_release_git(
         candidate,
         ("show", "-s", "--format=%s%n%an%n%ae%n%aI%n%cn%n%ce%n%cI", "HEAD"),
     ).splitlines()
-    expected_timestamp = _aware_datetime(
+    expected_timestamp = parse_release_datetime(
         release_commit["timestamp"], role="release commit timestamp"
     )
     if len(details) != 7:
@@ -4157,7 +3889,7 @@ def _validate_git_history(
     )
     if actual_identity != expected_identity or not timestamps_match:
         raise BenchmarkReleaseError("public release commit metadata does not match the manifest")
-    return _git(candidate, ("rev-parse", "HEAD"))
+    return run_release_git(candidate, ("rev-parse", "HEAD"))
 
 
 def _admit_strict_tree(candidate: Path, manifest: Mapping[str, object]) -> None:
@@ -4211,23 +3943,23 @@ def admit_release_candidate(
     manifest = load_benchmark_release_manifest(manifest_path)
     report = validate_benchmark_release(candidate, manifest_path)
     _admit_strict_tree(candidate, manifest)
-    local_config = _git(candidate, ("config", "--local", "--list")).splitlines()
+    local_config = run_release_git(candidate, ("config", "--local", "--list")).splitlines()
     if any(line.startswith("remote.") for line in local_config):
         raise BenchmarkReleaseError("public release candidate must not create a remote")
     release_commit = cast(
         Mapping[str, object], cast(Mapping[str, object], manifest["project"])["release_commit"]
     )
     branch = cast(str, release_commit["branch"])
-    refs = set(_git(candidate, ("for-each-ref", "--format=%(refname)")).splitlines())
+    refs = set(run_release_git(candidate, ("for-each-ref", "--format=%(refname)")).splitlines())
     foreign = sorted(refs - {f"refs/heads/{branch}", *allowed_refs})
     if foreign:
         raise BenchmarkReleaseError(
             "public release candidate holds refs other than its release refs: " + ", ".join(foreign)
         )
-    if _git(candidate, ("branch", "--show-current")) != branch:
+    if run_release_git(candidate, ("branch", "--show-current")) != branch:
         raise BenchmarkReleaseError("public default branch does not match the manifest")
     ancestors = (
-        _git(candidate, ("rev-list", "HEAD^@")).splitlines()
+        run_release_git(candidate, ("rev-list", "HEAD^@")).splitlines()
         if release_commit["previous_public_commit"]
         else []
     )
@@ -4286,7 +4018,7 @@ def validate_benchmark_release(
         raise BenchmarkReleaseError("public tree identity does not match the release manifest")
     project = cast(Mapping[str, object], manifest["project"])
     _validate_package_metadata(candidate, project)
-    _validate_license_closure(actual_files, manifest)
+    validate_release_license_closure(actual_files, manifest)
     _validate_support_catalog(actual_files, manifest)
     _validate_catalogue_cli_dispatch(candidate, actual_files)
     _validate_public_import_closure(actual_files)
@@ -4346,9 +4078,21 @@ __all__ = [
     "BenchmarkReleasePackageArtifact",
     "admit_release_candidate",
     "admit_release_tree",
-    "build_benchmark_release",
-    "freeze_benchmark_release_manifest",
     "load_benchmark_release_manifest",
+    "parse_release_datetime",
+    "release_bytes_sha256",
+    "release_commit_parents",
+    "release_license_bindings",
+    "release_markdown_row_markers",
+    "release_markdown_sections",
+    "release_provenance_bytes",
+    "release_python_file_markers",
+    "release_synthetic_tasks",
+    "render_release_file",
+    "run_release_git",
+    "seal_release_manifest",
     "validate_benchmark_release",
+    "validate_release_definition",
+    "validate_release_license_closure",
     "validate_release_package_artifact",
 ]

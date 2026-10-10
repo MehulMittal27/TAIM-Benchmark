@@ -1,0 +1,110 @@
+{
+  "arms": [
+    {
+      "name": "bm25-folded",
+      "query_form": "folded",
+      "system_id": "bm25-folded"
+    },
+    {
+      "name": "qwen3-raw-no-template",
+      "query_form": "raw-no-template",
+      "system_id": "dense-qwen3-embedding-0.6b-no-template"
+    }
+  ],
+  "benchmark_profile_ids": [
+    "official-full",
+    "trec-ct-2021-external-fidelity-26149",
+    "trec-ct-2021-judgment-union"
+  ],
+  "component_depth": {
+    "value": 5000,
+    "basis": {
+      "kind": "measured",
+      "ref": "The pre-registered component-depth sweep (commits e50a5c9 to 51e3278) found depth 5,000 'distinguishable above D1000 on both pre-registered tests' and still climbing, with 'Points beyond 5,000 ... unmeasured': 5,000 is the deepest depth measured, not an optimum. The sweep measured the three-arm fusion panel with bge-m3-raw and no reranker; commit 6039db2 then recorded 'Depth 5,000 is now the operating configuration', and this two-arm pipeline carried it as a fixed condition without re-measuring it.",
+      "reviewed_by": "backfill from the project record; not owner-reviewed",
+      "reviewed_at": "2026-09-26"
+    }
+  },
+  "fusion": {
+    "constant": {
+      "value": 60,
+      "basis": {
+        "kind": "measured",
+        "ref": "Entered the plans (fee684d) and the code (079dc81) with no stated reason. The pre-registered k sweep (commits b35b335 to 92dbb8c) later found 'Nothing in the range beats k=60 distinguishably' over k in {10..100}, with k=10 and k=20 distinguishably worse and k=100 nominally better; it measured the three-arm panel at component depth 5,000 capped at 1,000 with no reranker, not this pipeline.",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
+    "implementation": "taim.baselines.rrf.fuse_rrf_n",
+    "output_depth": {
+      "value": 2000,
+      "basis": {
+        "kind": "derived",
+        "ref": "Equals reranker.scoring_depth by rule: the fused list is exactly the reranker's pool, and load_staged_pipeline refuses any other value ('staged pipeline fusion does not feed the exact reranker pool').",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
+    "raw_component_scores_used": false,
+    "tie_breaking": "RRF score descending, trial_id ascending"
+  },
+  "licensed_inputs": [
+    {
+      "acquisition": "user-supplied",
+      "input_id": "SNOMED-CT:user-supplied-release",
+      "output_policy": "source-topic-spans-only-no-concept-identifiers-or-descriptions",
+      "redistribution": "not-included",
+      "role": "folded-query-lexicon"
+    }
+  ],
+  "output_depth": {
+    "value": 1000,
+    "basis": {
+      "kind": "inherited",
+      "ref": "Inherited from the TREC run format, adopted as-is (owner ruling, 2026-09-26): TREC runs are scored to depth 1,000, and a TREC run allows at most 1,000 results per topic - taim.artifacts refuses a topic that 'exceeds the 1,000-result limit', a check present since commit 079dc81 ('TREC exports support at most 1,000 results per topic'). The frozen protocol of 2026-08-29 declares it as the official-full budget (docs/paper-analysis-protocol-2026-08-29.md, section 2: 'budget K=1,000').",
+      "reviewed_by": "owner ruling 2026-09-26; recorded from the project record",
+      "reviewed_at": "2026-09-26"
+    }
+  },
+  "pipeline_id": "staged-bm25-qwen3-rrf-rerank-v1",
+  "pipeline_version": "1.0",
+  "reranker": {
+    "attention_backend": "runtime-recorded",
+    "batch_size": {
+      "value": 16,
+      "basis": {
+        "kind": "control",
+        "ref": "Held fixed because float16 reranker scores are not batch-invariant: the cross-encoder full-run pre-registration (commits f82bf5b to 34cdd97) says 'Batch size is part of the recipe, not a free parameter. The bake-off measured float16 scores as not batch-invariant: at batch 32 and 64 against 16 the same 500 pairs moved by up to 0.141 log-odds and 27 of 500 positions reordered. Batch 16 is used and recorded.' No record says why 16 rather than another size; the bake-off scorer's own default was 32.",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
+    "dtype": "float16",
+    "format": "F-summary folded query",
+    "implementation": "taim.release_staged_pipeline.score_staged_pairs",
+    "max_length": {
+      "value": 2048,
+      "basis": {
+        "kind": "control",
+        "ref": "Held at 2,048 for every condition of the cross-encoder bake-off 'so the format comparison is not silently a truncation comparison' (bake-off pre-registration, commit abd6845). The magnitude was not chosen. The full run on the earlier three-arm configuration found 3.47% of scored pairs truncated at 2,048 - a truncation rate, not a measured effect on scores.",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
+    "model_id": "Qwen/Qwen3-Reranker-4B",
+    "model_revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+    "ordering": "score descending, fused rank ascending",
+    "scoring_depth": {
+      "value": 2000,
+      "basis": {
+        "kind": "measured",
+        "ref": "The pre-registered scoring-depth study (commits 15d6a56 to 56e8cb3, redirected to this two-arm configuration by amendment e8d0961 before anything was computed) found 2,000 not distinguishable from 4,000 on recall@1000 and distinguishably better on nDCG@10; 1,000 was distinguishably worse on recall@1000, though better on nDCG@10.",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
+    "tokenizer_revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5"
+  },
+  "system_id": "staged-bm25-qwen3-rrf-rerank",
+  "track": "trec-ct-2021"
+}

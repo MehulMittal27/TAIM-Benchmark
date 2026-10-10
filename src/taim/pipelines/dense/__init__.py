@@ -1,0 +1,1 @@
+"""dense pipeline implementation."""

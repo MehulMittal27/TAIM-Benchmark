@@ -1,13 +1,37 @@
 {
   "corpus_policy": "judgment_union",
   "evaluation": {
-    "cutoffs": [5, 10, 20],
+    "cutoffs": {
+      "value": [5, 10, 20],
+      "basis": {
+        "kind": "unknown",
+        "ref": "Introduced as the Profile cutoff set in commit 790efee (2026-07-21, 'Add auditable TREC evaluation profiles'), whose message lists 'nDCG and label-at-least-1 precision at cutoffs 5, 10, and 20' while 'preserving legacy metrics'. The earlier harness had one cutoff, METRIC_CUTOFF = 5 (commit fee684d), so only 5 has an earlier source; 10 was later named the primary endpoint (nDCG@10). Nothing records why 10 and 20 joined, or why recall is emitted only at these cutoffs when the frozen protocol of 2026-08-29 (section 7.2) requires judged eligible recall at 100, 500 and 1,000. Searched: git log -S across every branch for the value in each spelling, the introducing commits' messages, the ADRs, protocols, specs and reporting policy.",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
     "discount": "log2(rank + 1)",
-    "gain_mapping": {"0": 0, "1": 1, "2": 2},
+    "gain_mapping": {
+      "value": {"0": 0, "1": 1, "2": 2},
+      "basis": {
+        "kind": "decided",
+        "ref": "ADR 0002 (evaluation and comparison contract): 'NIST judgments retain their original meanings' and 'The primary reporting metric is macro-averaged graded nDCG@10 with linear gains 0, 1, and 2.' The gain function in taim.evaluation has carried the same rule since the first harness (commit fee684d): 'TREC Clinical Trials uses the judgment label directly as graded gain: eligible=2, condition-relevant-but-excluded=1, and not relevant=0.' The Profile schema admits no other mapping.",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
     "ideal_policy": "all_topic_qrels",
     "precision_denominator": "fixed_cutoff",
     "precision_metric": "eligible_precision",
-    "precision_relevance_minimum": 2,
+    "precision_relevance_minimum": {
+      "value": 2,
+      "basis": {
+        "kind": "derived",
+        "ref": "The confirmation-full semantics: docs/method-contracts.md, 'Their judgment-union Profiles preserve those query, label, and parsing contracts while changing only the effective trial membership'; docs/reporting-policy.md: 'The TREC 2022 and 2023 real Profiles report eligible precision, with only label 2 positive.'",
+        "reviewed_by": "backfill from the project record; not owner-reviewed",
+        "reviewed_at": "2026-09-26"
+      }
+    },
     "ranking_source": "primary",
     "topic_policy": "all_declared_topics",
     "unjudged_policy": "retain_as_zero_gain"

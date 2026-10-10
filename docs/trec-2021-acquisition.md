@@ -1,23 +1,23 @@
 # TREC Clinical Trials 2021 acquisition
 
-The repository does not download or redistribute official benchmark data. Obtain each file from
-its source, place the files together in a local directory, and verify the exact byte size and
-SHA-256 before preparation.
+The repository does not download or redistribute official benchmark data. Download each file from
+the official location its name links to, about 1.8 GB in total, place the files together in one
+local directory, and verify the exact byte size and SHA-256 before preparation.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `topics2021.xml` | 64,618 | `94bda921ce7c40a0353f251abb2ea938c77331759a9f83a36abd145ab5840aca` |
-| `qrels2021.txt` | 676,496 | `ba7a2cddc90285e75cd76adcd483394a6c9bacf7017113222058ba6537e6d8ac` |
-| `ClinicalTrials.2021-04-27.part1.zip` | 382,792,518 | `4caa9579290adaa974efae6f5be170c8964c0fb5d110c1bdb935b331d0bf3ec2` |
-| `ClinicalTrials.2021-04-27.part2.zip` | 378,478,271 | `6f4800b0c9e57af5bcef039c2d0661b2c5e844bb5025f959d7a940c03c2d902d` |
-| `ClinicalTrials.2021-04-27.part3.zip` | 375,998,752 | `1190a5bd629d011dc7011b42b92f94cb7ec0ec21522bafb7701aaee826a42fce` |
-| `ClinicalTrials.2021-04-27.part4.zip` | 360,825,058 | `d10ecad6993dea01e9f581e0104cdff6cd8120d0bc851de87d088cf799a7dd98` |
-| `ClinicalTrials.2021-04-27.part5.zip` | 296,625,845 | `17c773184de8fea9cfcac5cd0cca45c816f4c4ac7568d35d7b0873f63bfc1602` |
+| [`topics2021.xml`](https://trec.nist.gov/data/trials/topics2021.xml) | 64,618 | `94bda921ce7c40a0353f251abb2ea938c77331759a9f83a36abd145ab5840aca` |
+| [`qrels2021.txt`](https://trec.nist.gov/data/trials/qrels2021.txt) | 676,496 | `ba7a2cddc90285e75cd76adcd483394a6c9bacf7017113222058ba6537e6d8ac` |
+| [`ClinicalTrials.2021-04-27.part1.zip`](https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part1.zip) | 382,792,518 | `4caa9579290adaa974efae6f5be170c8964c0fb5d110c1bdb935b331d0bf3ec2` |
+| [`ClinicalTrials.2021-04-27.part2.zip`](https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part2.zip) | 378,478,271 | `6f4800b0c9e57af5bcef039c2d0661b2c5e844bb5025f959d7a940c03c2d902d` |
+| [`ClinicalTrials.2021-04-27.part3.zip`](https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part3.zip) | 375,998,752 | `1190a5bd629d011dc7011b42b92f94cb7ec0ec21522bafb7701aaee826a42fce` |
+| [`ClinicalTrials.2021-04-27.part4.zip`](https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part4.zip) | 360,825,058 | `d10ecad6993dea01e9f581e0104cdff6cd8120d0bc851de87d088cf799a7dd98` |
+| [`ClinicalTrials.2021-04-27.part5.zip`](https://www.trec-cds.org/2021_data/ClinicalTrials.2021-04-27.part5.zip) | 296,625,845 | `17c773184de8fea9cfcac5cd0cca45c816f4c4ac7568d35d7b0873f63bfc1602` |
 
-The official locations are recorded in `src/taim/data/locks/trec-ct-2021.json`. The lock also records
-the acquisition and redistribution notes used by the preparer. Preparation fails if a filename,
-size, or digest differs. The public CLI always uses this packaged lock; it intentionally has no
-source-lock override for real release preparation or execution.
+The links, sizes and digests are those recorded in `src/taim/data/locks/trec-ct-2021.json`. The
+lock also records the acquisition and redistribution notes used by the preparer. Preparation fails
+if a filename, size, or digest differs. The public CLI always uses this packaged lock; it
+intentionally has no source-lock override for real release preparation or execution.
 
 ```console
 uv run trial-benchmark data prepare \

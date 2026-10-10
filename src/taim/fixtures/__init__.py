@@ -18,7 +18,7 @@ from taim.snapshot import (
     CAPABILITY_CANONICAL_TRIAL_TEXT,
     BenchmarkSnapshot,
     BenchmarkTopic,
-    TrialDocument,
+    Trial,
 )
 from taim.source import SourceArtifact, SourceBundle
 
@@ -77,7 +77,7 @@ def load_fixture() -> PreparedBenchmark:
     )
     trials = tuple(
         sorted(
-            (TrialDocument.from_dict(row) for row in _records(trial_resource)),
+            (Trial.from_dict(row) for row in _records(trial_resource)),
             key=lambda item: item.trial_id,
         )
     )

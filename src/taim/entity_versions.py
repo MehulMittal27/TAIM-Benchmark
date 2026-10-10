@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, time
 from typing import Literal, cast
 
@@ -29,7 +29,7 @@ from taim.snapshot import (
     BenchmarkTopic,
     DerivedView,
     PatientEvidenceItem,
-    TrialDocument,
+    Trial,
     TypedPatientCore,
     freeze_system_input_options,
 )
@@ -349,84 +349,6 @@ class PatientEntityVersion:
         return version
 
 
-@dataclass(frozen=True, slots=True)
-class TrialVersion:
-    """One content-addressed trial projection used by either task direction."""
-
-    trial_id: str
-    trial: TrialDocument
-    derived_evidence: Mapping[str, JsonValue] = field(default_factory=dict)
-    trial_version_id: str = field(init=False)
-
-    schema_version = ENTITY_VERSION_SCHEMA_VERSION
-
-    def __post_init__(self) -> None:
-        require_non_empty(self.trial_id, "trial_id")
-        if not isinstance(self.trial, TrialDocument):
-            raise SchemaValidationError("TrialVersion trial must be a TrialDocument")
-        if self.trial_id != self.trial.trial_id:
-            raise SchemaValidationError("trial_id must match TrialDocument.trial_id")
-        if not isinstance(self.derived_evidence, Mapping):
-            raise SchemaValidationError("trial derived_evidence must be an object")
-        safe_derived_evidence = freeze_system_input_options(
-            self.derived_evidence,
-            path="trial derived_evidence",
-        )
-        derived_evidence = freeze_json_mapping(
-            cast(Mapping[str, JsonValue], safe_derived_evidence),
-            path="trial derived_evidence",
-        )
-        object.__setattr__(self, "derived_evidence", derived_evidence)
-        object.__setattr__(self, "trial_version_id", content_sha256(self._identity_payload()))
-
-    def _identity_payload(self) -> dict[str, JsonValue]:
-        return {
-            "schema_version": self.schema_version,
-            "entity_type": "trial",
-            "trial_id": self.trial_id,
-            "trial": self.trial.to_dict(),
-            "derived_evidence": json_value_to_builtins(self.derived_evidence),
-        }
-
-    def to_dict(self) -> dict[str, JsonValue]:
-        return {**self._identity_payload(), "trial_version_id": self.trial_version_id}
-
-    def to_json(self) -> str:
-        return canonical_json(self.to_dict())
-
-    @classmethod
-    def from_dict(cls, payload: Mapping[str, object]) -> TrialVersion:
-        require_exact_keys(
-            payload,
-            {
-                "schema_version",
-                "entity_type",
-                "trial_id",
-                "trial",
-                "derived_evidence",
-                "trial_version_id",
-            },
-            role="TrialVersion",
-        )
-        if payload["schema_version"] != cls.schema_version:
-            raise SchemaValidationError("unsupported TrialVersion schema_version")
-        if payload["entity_type"] != "trial":
-            raise SchemaValidationError("TrialVersion entity_type must be 'trial'")
-        trial_payload = payload["trial"]
-        derived_evidence = payload["derived_evidence"]
-        if not isinstance(trial_payload, Mapping) or not isinstance(derived_evidence, Mapping):
-            raise SchemaValidationError("TrialVersion nested fields must be objects")
-        version = cls(
-            trial_id=cast(str, payload["trial_id"]),
-            trial=TrialDocument.from_dict(cast(Mapping[str, object], trial_payload)),
-            derived_evidence=cast(Mapping[str, JsonValue], derived_evidence),
-        )
-        require_sha256(payload["trial_version_id"], "trial_version_id")
-        if payload["trial_version_id"] != version.trial_version_id:
-            raise SchemaValidationError("trial_version_id does not match entity content")
-        return version
-
-
 def version_patients(
     topics: tuple[BenchmarkTopic, ...],
     profile: PatientEvidenceProfile,
@@ -674,22 +596,17 @@ def _project_patient_canonical_text(
 
 
 def version_trials(
-    trials: Sequence[TrialDocument],
+    trials: Sequence[Trial],
     *,
     derived_views: tuple[DerivedView, ...] = (),
-) -> tuple[TrialVersion, ...]:
+) -> tuple[Trial, ...]:
     projected_evidence = _project_derived_evidence(
         derived_views,
         tuple(trial.trial_id for trial in trials),
         entity_kind="trial",
     )
     return tuple(
-        TrialVersion(
-            trial.trial_id,
-            trial,
-            projected_evidence[trial.trial_id],
-        )
-        for trial in trials
+        replace(trial, derived_evidence=projected_evidence[trial.trial_id]) for trial in trials
     )
 
 
@@ -697,7 +614,7 @@ def resolve_task_derived_views(
     views: tuple[DerivedView, ...],
     *,
     topics: tuple[BenchmarkTopic, ...],
-    trials: tuple[TrialDocument, ...],
+    trials: tuple[Trial, ...],
     profile: PatientEvidenceProfile,
     clinical_as_of: datetime,
 ) -> tuple[DerivedView, ...]:
@@ -887,7 +804,7 @@ __all__ = [
     "ENTITY_VERSION_SCHEMA_VERSION",
     "PatientEntityVersion",
     "PatientEvidenceProfile",
-    "TrialVersion",
+    "Trial",
     "clinical_as_of_text",
     "parse_clinical_as_of",
     "resolve_task_derived_views",

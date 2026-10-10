@@ -14,33 +14,37 @@ from typing import cast
 from taim.artifacts import sha256_file
 from taim.benchmark_release import validate_release_package_artifact
 from taim.contracts import require_sha256
-from taim.data import load_prepared_benchmark
-from taim.eligibility import find_eligibility_criterion_view
+from taim.data import PREPARED_MANIFEST_FILENAME, load_prepared_benchmark
 from taim.entity_versions import parse_clinical_as_of, source_grounded_patient_evidence_profile
-from taim.release_profiles import (
-    resolve_benchmark_profile,
-)
-from taim.schemas import JsonValue
-from taim.system_contracts import SystemRunRequest
-from taim.trialgpt_paper import trial_view
-from taim.trialgpt_publication import (
+from taim.patient_to_trial import PatientToTrialRunRequest
+from taim.pipelines.trialgpt.paper import trial_view
+from taim.pipelines.trialgpt.publication import (
     load_frozen_trialgpt_retrieval,
     validate_frozen_retrieval_for_snapshot,
     validate_frozen_retrieval_for_task_input,
 )
-from taim.trialgpt_retrieval_backends import (
+from taim.pipelines.trialgpt.retrieval_backends import (
     TaimControlledBM25,
     TorchMedCPT,
     controlled_bm25_provenance,
 )
-from taim.trialgpt_retrieval_producer import (
+from taim.pipelines.trialgpt.retrieval_producer import (
+    FROZEN_TRIALGPT_RETRIEVAL_PROTOCOL_SHA256,
     FrozenRetrievalBinding,
     load_generated_arm_queries,
+    require_query_plan_receipt,
+    require_query_plan_receipt_identity,
+    require_trialgpt_capabilities,
     resolve_trialgpt_retrieval_target,
     retrieve_three_luna_queries,
     validate_fresh_retrieval_producer_contract,
     write_frozen_three_luna_retrieval,
 )
+from taim.pipelines.trialgpt.system import TrialGPTTAIMLunaV1System
+from taim.release_profiles import (
+    resolve_benchmark_profile,
+)
+from taim.schemas import JsonValue
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -62,6 +66,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--package-artifact", type=Path, required=True)
     parser.add_argument("--clinical-as-of", type=parse_clinical_as_of, required=True)
     parser.add_argument("--query-plans", type=Path, required=True)
+    # Not required by argparse: a missing receipt is refused with the reason and the route.
+    parser.add_argument(
+        "--query-plan-receipt",
+        type=Path,
+        help="the receipt recording --query-plans for this run, as protocol v11 defines it",
+    )
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -124,6 +134,20 @@ def main() -> int:
         raise ValueError(f"Profile {target.profile!r} {requirement} --pool-file")
     for name in ("pool_ids_sha256", "pool_receipt_id", "protocol_approval_id"):
         require_sha256(getattr(args, name), name.replace("_", " "))
+    # Before the clean-tree check, the package load and the embedding pass: plans without a receipt
+    # can never produce an admissible retrieval, so nothing is computed for them.
+    if args.protocol_approval_id != FROZEN_TRIALGPT_RETRIEVAL_PROTOCOL_SHA256:
+        raise ValueError(
+            "--protocol-approval-id must be protocol v11's digest: "
+            f"{FROZEN_TRIALGPT_RETRIEVAL_PROTOCOL_SHA256}"
+        )
+    receipt, receipt_sha256 = require_query_plan_receipt(
+        args.query_plan_receipt,
+        target=target,
+        run_id=args.run_id,
+        query_plans=args.query_plans,
+    )
+    require_trialgpt_capabilities(args.data_dir / PREPARED_MANIFEST_FILENAME)
     producer_commit = _clean_git_commit()
     release_identity = validate_release_package_artifact(
         args.release_manifest,
@@ -137,6 +161,11 @@ def main() -> int:
         or len(prepared.topics) != target.topic_count
     ):
         raise ValueError("prepared benchmark does not match the admitted Track/Profile target")
+    require_query_plan_receipt_identity(
+        receipt,
+        release_identity=release_identity,
+        prepared_snapshot_id=prepared.snapshot.snapshot_id,
+    )
     benchmark = resolve_benchmark_profile(
         prepared,
         profile_id=target.profile,
@@ -145,7 +174,7 @@ def main() -> int:
         expected_pool_receipt_id=args.pool_receipt_id,
         supplied_pool_ids=_pool_ids(args.pool_file) if args.pool_file is not None else None,
     )
-    request = SystemRunRequest.for_benchmark(
+    request = PatientToTrialRunRequest.for_benchmark(
         benchmark,
         run_id=args.run_id,
         top_k=1_000,
@@ -153,7 +182,8 @@ def main() -> int:
         options={},
         clinical_as_of=args.clinical_as_of,
         patient_evidence_profile=source_grounded_patient_evidence_profile(),
-        identity_version="2.0",
+        required_capabilities=TrialGPTTAIMLunaV1System.required_capabilities,
+        optional_capabilities=TrialGPTTAIMLunaV1System.optional_capabilities,
     )
     queries = load_generated_arm_queries(args.query_plans)
     topic_hashes = {
@@ -164,10 +194,7 @@ def main() -> int:
     }:
         raise ValueError("query plans do not match the prepared Snapshot topic text")
 
-    eligibility_view = find_eligibility_criterion_view(prepared.snapshot.derived_views)
-    views = tuple(
-        trial_view(trial, eligibility_criterion_view=eligibility_view) for trial in benchmark.trials
-    )
+    views = tuple(trial_view(trial) for trial in benchmark.trials)
     lexical = TaimControlledBM25(views)
     dense = TorchMedCPT(
         workspace=args.workspace,
@@ -210,6 +237,8 @@ def main() -> int:
             release_manifest_id=release_identity["release_manifest_id"],
             public_tree_id=release_identity["public_tree_id"],
             package_artifact_id=release_identity["package_artifact_id"],
+            query_plan_receipt=receipt,
+            query_plan_receipt_sha256=receipt_sha256,
         ),
         retrieval_implementation=retrieval_implementation,
         output_directory=args.output_dir,
@@ -240,6 +269,7 @@ def main() -> int:
                 "lock_sha256": sha256_file(written.lock_path),
                 "provider_calls_during_freeze": 0,
                 "profile": target.profile,
+                "query_plan_receipt_sha256": receipt_sha256,
                 "release_identity": release_identity,
                 "retrieval": str(written.retrieval_path),
                 "retrieval_sha256": sha256_file(written.retrieval_path),

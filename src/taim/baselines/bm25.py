@@ -348,7 +348,7 @@ class StreamingBM25Index:
     The ranking is :class:`BM25Retriever`'s, not an approximation of it: same IDF,
     same length normalisation, same term contribution, same
     ``(-score, document_id)`` tie-break, same zero-score fill.
-    ``tests/test_bm25.py`` pins the two against each other on a shared corpus.
+    ``tests/bm25/test_bm25.py`` pins the two against each other on a shared corpus.
     """
 
     def __init__(

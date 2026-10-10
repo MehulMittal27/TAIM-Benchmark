@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "v091": {
+    "directory": "external/trialmatchai-upstream-v091",
+    "repository": "https://github.com/cbib/TrialMatchAI.git",
+    "commit": "3bc0e5f44d742ef069f8ef73bbc4187573d9db6a",
+    "git_tree": "e02e659c45513387e3b235e4c1bdafadea16e701",
+    "source_manifest_sha256": "sha256:472dcf0c41d9ed5bbd2f6ca645511cff1923b00c3cab8dfba598a5885b2baf87",
+    "verify_remote": true,
+    "detached": true,
+    "release": "v0.9.1",
+    "license": {
+      "expression": "MIT",
+      "path": "LICENSE",
+      "git_blob": "0a521cf528cd39dcb341c5bd2fb33eae10190230",
+      "sha256": "sha256:0145278d2aaf6f87db7fa367ed47e84f377f54f62e41cf3f8a47d95eb699f8f1"
+    }
+  }
+}

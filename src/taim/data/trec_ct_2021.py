@@ -23,7 +23,13 @@ from taim import safe_xml
 from taim.data.prepared import PreparationResult, write_prepared_benchmark
 from taim.evaluation_package import ConnectorDiagnostic, EvaluationPackage
 from taim.file_hash import sha256_file
-from taim.schemas import JsonValue, RelevanceJudgment, SchemaValidationError
+from taim.schemas import (
+    JsonValue,
+    RelevanceJudgment,
+    SchemaValidationError,
+    freeze_json_value,
+    json_value_to_builtins,
+)
 from taim.snapshot import (
     CAPABILITY_CANONICAL_PATIENT_TEXT,
     CAPABILITY_CANONICAL_TRIAL_TEXT,
@@ -44,7 +50,7 @@ from taim.snapshot import (
     SemanticTextSection,
     SexEligibility,
     SourceRecordIdentity,
-    TrialDocument,
+    Trial,
     TypedClinicalCore,
 )
 from taim.source import SourceArtifact, SourceBundle
@@ -150,122 +156,143 @@ def _field_disposition(
     }
 
 
-FIELD_DISPOSITION_TABLE: tuple[dict[str, JsonValue], ...] = (
-    {
-        "source": "topics/topic",
-        "disposition": "patient_evidence",
-        "target": "narrative",
-        "normalization_rule": "trec-topic-narrative-whitespace-v1",
-    },
-    *(
-        _field_disposition(source, target, disposition, rule)
-        for source, target, disposition, rule in (
-            *_EXECUTED_SECTION_MAPPINGS,
-            *_EXECUTED_TYPED_MAPPINGS,
+FIELD_DISPOSITION_TABLE: tuple[Mapping[str, JsonValue], ...] = cast(
+    tuple[Mapping[str, JsonValue], ...],
+    freeze_json_value(
+        (
+            {
+                "source": "topics/topic",
+                "disposition": "patient_evidence",
+                "target": "narrative",
+                "normalization_rule": "trec-topic-narrative-whitespace-v1",
+            },
+            *(
+                _field_disposition(source, target, disposition, rule)
+                for source, target, disposition, rule in (
+                    *_EXECUTED_SECTION_MAPPINGS,
+                    *_EXECUTED_TYPED_MAPPINGS,
+                )
+            ),
+            {
+                "source": "clinical_study/* (all other fields)",
+                "disposition": "intentionally_ignored",
+                "rationale": "outside the conservative Snapshot shared core",
+            },
         )
     ),
-    {
-        "source": "clinical_study/* (all other fields)",
-        "disposition": "intentionally_ignored",
-        "rationale": "outside the conservative Snapshot shared core",
-    },
 )
 
-CANONICAL_TEXT_RECIPE: dict[str, JsonValue] = {
-    "id": "trec-ct-2021-canonical-trial-text-v1",
-    "whitespace": "collapse Unicode whitespace to one ASCII space and strip",
-    "unicode_normalization": "none; preserve source code points",
-    "source_markup": "exclude XML markup; retain decoded text content",
-    "section_order": [
-        "brief_title",
-        "official_title",
-        "summary",
-        "condition",
-        "intervention",
-        "eligibility",
-    ],
-    "section_labels": {
-        "brief_title": "[BRIEF_TITLE]",
-        "official_title": "[OFFICIAL_TITLE]",
-        "summary": "[SUMMARY]",
-        "condition": "[CONDITION]",
-        "intervention": "[INTERVENTION]",
-        "eligibility": "[ELIGIBILITY]",
-    },
-    "typed_field_order": ["minimum_age", "maximum_age", "sex", "healthy_volunteers"],
-    "typed_labels": {
-        "minimum_age": "[MINIMUM_AGE]",
-        "maximum_age": "[MAXIMUM_AGE]",
-        "sex": "[SEX]",
-        "healthy_volunteers": "[HEALTHY_VOLUNTEERS]",
-    },
-    "separator": "LF",
-    "repetition": "preserve every non-empty source item in source order within role",
-    "omission": "omit absent sections and typed fields without defaults",
-    "unbounded_token": "unbounded",
-    "boolean_tokens": {"true": "true", "false": "false"},
-}
+CANONICAL_TEXT_RECIPE: Mapping[str, JsonValue] = cast(
+    Mapping[str, JsonValue],
+    freeze_json_value(
+        {
+            "id": "trec-ct-2021-canonical-trial-text-v1",
+            "whitespace": "collapse Unicode whitespace to one ASCII space and strip",
+            "unicode_normalization": "none; preserve source code points",
+            "source_markup": "exclude XML markup; retain decoded text content",
+            "section_order": [
+                "brief_title",
+                "official_title",
+                "summary",
+                "condition",
+                "intervention",
+                "eligibility",
+            ],
+            "section_labels": {
+                "brief_title": "[BRIEF_TITLE]",
+                "official_title": "[OFFICIAL_TITLE]",
+                "summary": "[SUMMARY]",
+                "condition": "[CONDITION]",
+                "intervention": "[INTERVENTION]",
+                "eligibility": "[ELIGIBILITY]",
+            },
+            "typed_field_order": ["minimum_age", "maximum_age", "sex", "healthy_volunteers"],
+            "typed_labels": {
+                "minimum_age": "[MINIMUM_AGE]",
+                "maximum_age": "[MAXIMUM_AGE]",
+                "sex": "[SEX]",
+                "healthy_volunteers": "[HEALTHY_VOLUNTEERS]",
+            },
+            "separator": "LF",
+            "repetition": "preserve every non-empty source item in source order within role",
+            "omission": "omit absent sections and typed fields without defaults",
+            "unbounded_token": "unbounded",
+            "boolean_tokens": {"true": "true", "false": "false"},
+        }
+    ),
+)
 
-CANONICAL_PATIENT_TEXT_RECIPE: dict[str, JsonValue] = {
-    "id": "trec-ct-2021-canonical-patient-text-v1",
-    "source_evidence_kind": "narrative",
-    "whitespace": "collapse Unicode whitespace to one ASCII space and strip",
-    "unicode_normalization": "none; preserve source code points",
-    "separator": "LF",
-    "omission": "narrative is required; do not extract typed patient facts",
-}
+CANONICAL_PATIENT_TEXT_RECIPE: Mapping[str, JsonValue] = cast(
+    Mapping[str, JsonValue],
+    freeze_json_value(
+        {
+            "id": "trec-ct-2021-canonical-patient-text-v1",
+            "source_evidence_kind": "narrative",
+            "whitespace": "collapse Unicode whitespace to one ASCII space and strip",
+            "unicode_normalization": "none; preserve source code points",
+            "separator": "LF",
+            "omission": "narrative is required; do not extract typed patient facts",
+        }
+    ),
+)
 
-SOURCE_RECIPE: dict[str, JsonValue] = {
-    "recipe_id": SOURCE_RECIPE_ID,
-    "snapshot_contract_version": "2.0",
-    "benchmark_lineage": BENCHMARK_LINEAGE,
-    "allowed_source_roles": [
-        "topics",
-        "qrels",
-        "trials_part_1",
-        "trials_part_2",
-        "trials_part_3",
-        "trials_part_4",
-        "trials_part_5",
-    ],
-    "allowed_artifact_ids": [
-        "topics",
-        "qrels",
-        "trials_part_1",
-        "trials_part_2",
-        "trials_part_3",
-        "trials_part_4",
-        "trials_part_5",
-    ],
-    "system_input_artifact_ids": [
-        "topics",
-        "trials_part_1",
-        "trials_part_2",
-        "trials_part_3",
-        "trials_part_4",
-        "trials_part_5",
-    ],
-    "connector": {"name": CONNECTOR_NAME, "version": CONNECTOR_VERSION},
-    "parsers": {
-        "topics": "trec-ct-2021-topics-xml-v1",
-        "trials": "clinicaltrials-gov-historical-xml-v1",
-        "archives": "zip-member-order-by-name-v1",
-    },
-    "field_disposition_table": list(FIELD_DISPOSITION_TABLE),
-    "canonical_patient_text_recipe": CANONICAL_PATIENT_TEXT_RECIPE,
-    "canonical_trial_text_recipe": CANONICAL_TEXT_RECIPE,
-    "diagnostic_policy": {
-        "version": "trec-ct-2021-snapshot-diagnostics-v1",
-        "field_invalidity": "omit typed value and emit field_nonfatal diagnostic",
-        "record_invalidity": "skip record and emit record_fatal diagnostic",
-        "conflict": (
-            "omit the known typed value, preserve normalized assertions as a System-visible "
-            "Core Field Conflict, and emit a field_nonfatal diagnostic"
-        ),
-        "order": "source artifact, record, then frozen core field mapping order",
-    },
-    "external_enrichment": "forbidden",
-}
+SOURCE_RECIPE: Mapping[str, JsonValue] = cast(
+    Mapping[str, JsonValue],
+    freeze_json_value(
+        {
+            "recipe_id": SOURCE_RECIPE_ID,
+            "snapshot_contract_version": "2.0",
+            "benchmark_lineage": BENCHMARK_LINEAGE,
+            "allowed_source_roles": [
+                "topics",
+                "qrels",
+                "trials_part_1",
+                "trials_part_2",
+                "trials_part_3",
+                "trials_part_4",
+                "trials_part_5",
+            ],
+            "allowed_artifact_ids": [
+                "topics",
+                "qrels",
+                "trials_part_1",
+                "trials_part_2",
+                "trials_part_3",
+                "trials_part_4",
+                "trials_part_5",
+            ],
+            "system_input_artifact_ids": [
+                "topics",
+                "trials_part_1",
+                "trials_part_2",
+                "trials_part_3",
+                "trials_part_4",
+                "trials_part_5",
+            ],
+            "connector": {"name": CONNECTOR_NAME, "version": CONNECTOR_VERSION},
+            "parsers": {
+                "topics": "trec-ct-2021-topics-xml-v1",
+                "trials": "clinicaltrials-gov-historical-xml-v1",
+                "archives": "zip-member-order-by-name-v1",
+            },
+            "field_disposition_table": list(FIELD_DISPOSITION_TABLE),
+            "canonical_patient_text_recipe": CANONICAL_PATIENT_TEXT_RECIPE,
+            "canonical_trial_text_recipe": CANONICAL_TEXT_RECIPE,
+            "diagnostic_policy": {
+                "version": "trec-ct-2021-snapshot-diagnostics-v1",
+                "field_invalidity": "omit typed value and emit field_nonfatal diagnostic",
+                "record_invalidity": "skip record and emit record_fatal diagnostic",
+                "conflict": (
+                    "omit the known typed value, preserve normalized assertions as a "
+                    "System-visible "
+                    "Core Field Conflict, and emit a field_nonfatal diagnostic"
+                ),
+                "order": "source artifact, record, then frozen core field mapping order",
+            },
+            "external_enrichment": "forbidden",
+        }
+    ),
+)
 
 _NCT_ID = re.compile(r"NCT[0-9]{8}\Z")
 _TOPIC_ID = re.compile(r"[1-9][0-9]*\Z")
@@ -1017,7 +1044,7 @@ def _recipe_trial_text_mapping(
     recipe: Mapping[str, JsonValue], source: str
 ) -> Mapping[str, JsonValue]:
     dispositions = recipe["field_disposition_table"]
-    if not isinstance(dispositions, list):
+    if not isinstance(dispositions, list | tuple):
         raise SchemaValidationError("frozen Source Recipe field dispositions are invalid")
     for disposition in dispositions:
         if isinstance(disposition, Mapping) and disposition.get("source") == source:
@@ -1037,7 +1064,9 @@ def validate_trec_ct_2021_recipe_parity(
 ) -> None:
     """Reject a recipe that no longer attests the connector's executed mapping."""
 
-    recipe_definition = SOURCE_RECIPE if recipe is None else recipe
+    recipe_definition = cast(
+        Mapping[str, JsonValue], json_value_to_builtins(SOURCE_RECIPE if recipe is None else recipe)
+    )
     expected_patient_rendering = {
         "id": "trec-ct-2021-canonical-patient-text-v1",
         "source_evidence_kind": "narrative",
@@ -1535,7 +1564,7 @@ def _parse_trial_xml_with_aliases(
     artifact: SourceArtifact,
     member_name: str,
     include_complete_eligibility_text: bool = False,
-) -> tuple[TrialDocument, tuple[ConnectorDiagnostic, ...], tuple[str, ...]]:
+) -> tuple[Trial, tuple[ConnectorDiagnostic, ...], tuple[str, ...]]:
     fallback_trial_id = _source_trial_id(member_name)
     try:
         root = safe_xml.fromstring(serialized)
@@ -1577,7 +1606,7 @@ def _parse_trial_xml_with_aliases(
     canonical_text = render_canonical_trial_text(sections, core)
     if not canonical_text:
         raise MalformedTrialError("trial has no canonical input text", trial_id=trial_id)
-    trial = TrialDocument(
+    trial = Trial(
         trial_id=trial_id,
         source_identity=SourceRecordIdentity(
             namespace="clinicaltrials.gov",
@@ -1596,7 +1625,7 @@ def parse_trial_xml(
     artifact: SourceArtifact,
     member_name: str,
     include_complete_eligibility_text: bool = False,
-) -> tuple[TrialDocument, tuple[ConnectorDiagnostic, ...]]:
+) -> tuple[Trial, tuple[ConnectorDiagnostic, ...]]:
     trial, diagnostics, _aliases = _parse_trial_xml_with_aliases(
         serialized,
         artifact=artifact,
@@ -1636,8 +1665,8 @@ def _parse_trials(
     source_directory: Path,
     *,
     source_bundle: SourceBundle,
-) -> tuple[tuple[TrialDocument, ...], tuple[ConnectorDiagnostic, ...]]:
-    trials: dict[str, TrialDocument] = {}
+) -> tuple[tuple[Trial, ...], tuple[ConnectorDiagnostic, ...]]:
+    trials: dict[str, Trial] = {}
     diagnostics: list[ConnectorDiagnostic] = []
     for artifact in source_bundle.artifacts:
         if not artifact.role.startswith("trials_part_"):
@@ -1679,7 +1708,7 @@ def _parse_trials(
 
 def _validate_relations(
     topics: tuple[BenchmarkTopic, ...],
-    trials: tuple[TrialDocument, ...],
+    trials: tuple[Trial, ...],
     judgments: tuple[RelevanceJudgment, ...],
 ) -> None:
     topic_ids = {item.topic_id for item in topics}

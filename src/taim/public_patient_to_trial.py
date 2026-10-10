@@ -9,7 +9,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from taim.contracts import require_sha256
 from taim.evaluation import evaluate_scheme_run
@@ -32,6 +32,9 @@ from taim.release_support import (
     validate_release_source_identity,
 )
 from taim.schemas import Candidate, RunManifest, SchemaValidationError, StageRanking
+
+if TYPE_CHECKING:
+    from taim.patient_to_trial import PatientToTrialTaskInput
 
 PATIENT_TO_TRIAL_TASK = "patient_to_trial"
 
@@ -362,6 +365,8 @@ def write_public_patient_to_trial_run(
 
 def load_public_patient_to_trial_run(
     directory: str | Path,
+    *,
+    source_snapshot: PatientToTrialTaskInput | None = None,
 ) -> StoredPublicPatientToTrialRun:
     root = Path(directory)
     if not root.is_dir() or root.is_symlink():
@@ -386,6 +391,8 @@ def load_public_patient_to_trial_run(
     }
     if names != expected_files:
         raise SchemaValidationError("patient-to-trial Local Run tree is incomplete or has extras")
+    if source_snapshot is not None:
+        manifest.resolve_task_input(source_snapshot)
     _validate_configuration(manifest)
     candidate_path = root / "candidates.jsonl"
     try:

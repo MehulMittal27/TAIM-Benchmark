@@ -7,9 +7,9 @@ import json
 import math
 import re
 from collections.abc import Iterable, Iterator, Mapping
-from dataclasses import fields, is_dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from pathlib import PurePath
-from typing import cast
+from typing import Any, cast
 
 from taim.schemas import JsonValue, SchemaValidationError, freeze_json_value, json_value_to_builtins
 
@@ -85,6 +85,167 @@ def require_exact_keys(
         raise SchemaValidationError(
             f"{role} fields mismatch; missing={sorted(missing)}, unexpected={sorted(unexpected)}"
         )
+
+
+#: Why a declared number is that number. A recorded reason is one of the first six kinds; the last
+#: two record its absence, and they differ on purpose:
+#:
+#: - ``decided``: someone chose this value and a record argues for it; ``ref`` cites the record.
+#: - ``derived``: the value follows from other values by a stated rule; ``ref`` states the rule.
+#: - ``measured``: a measurement chose or confirmed this value; ``ref`` cites the evidence.
+#: - ``inherited``: the value came from elsewhere without a decision as that number; ``ref`` names
+#:   the source, such as an upstream ``source@commit`` or an earlier script.
+#: - ``control``: the value is held fixed so a comparison is not confounded, and its magnitude was
+#:   not chosen; ``ref`` names the comparison.
+#: - ``fact``: the number is a property of an artefact - a byte size, a count, a model's output
+#:   dimension, a reported result - not a choice; ``ref`` names what it is re-derivable from.
+#: - ``unknown``: the record was searched and cannot say; ``ref`` states what was searched.
+#: - ``unwritten``: nobody has written the reason down, and only its owner can; ``ref`` states what
+#:   is established and the question that would settle it. A basis check counts it as missing.
+PARAMETER_BASIS_KINDS = (
+    "decided",
+    "derived",
+    "measured",
+    "inherited",
+    "control",
+    "fact",
+    "unknown",
+    "unwritten",
+)
+_PARAMETER_BASIS_FIELDS = frozenset({"kind", "ref", "reviewed_by", "reviewed_at"})
+_PARAMETER_RECORD_FIELDS = frozenset({"value", "basis"})
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
+
+
+@dataclass(frozen=True, slots=True)
+class ParameterBasis:
+    """Why one declared number is that number: recorded beside the value, never hashed with it."""
+
+    kind: str
+    ref: str
+    reviewed_by: str
+    reviewed_at: str
+
+    def __post_init__(self) -> None:
+        if self.kind not in PARAMETER_BASIS_KINDS:
+            raise SchemaValidationError(
+                f"parameter basis kind must be one of {', '.join(PARAMETER_BASIS_KINDS)}"
+            )
+        require_non_empty(self.ref, "parameter basis ref")
+        require_non_empty(self.reviewed_by, "parameter basis reviewed_by")
+        if not isinstance(self.reviewed_at, str) or _DATE.fullmatch(self.reviewed_at) is None:
+            raise SchemaValidationError("parameter basis reviewed_at must be a YYYY-MM-DD date")
+
+    def to_dict(self) -> dict[str, JsonValue]:
+        return {
+            "kind": self.kind,
+            "ref": self.ref,
+            "reviewed_by": self.reviewed_by,
+            "reviewed_at": self.reviewed_at,
+        }
+
+
+def parameter_basis(raw: object, *, path: str) -> ParameterBasis:
+    """Read one serialized basis, refusing any shape but its exact four fields."""
+
+    if isinstance(raw, ParameterBasis):
+        return raw
+    if not isinstance(raw, Mapping) or set(raw) != _PARAMETER_BASIS_FIELDS:
+        raise SchemaValidationError(
+            f"{path} basis must be an object with exactly {sorted(_PARAMETER_BASIS_FIELDS)}"
+        )
+    try:
+        return ParameterBasis(
+            kind=raw["kind"],
+            ref=raw["ref"],
+            reviewed_by=raw["reviewed_by"],
+            reviewed_at=raw["reviewed_at"],
+        )
+    except SchemaValidationError as exc:
+        raise SchemaValidationError(f"{path}: {exc}") from exc
+
+
+def _pointer_token(token: str) -> str:
+    return token.replace("~", "~0").replace("/", "~1")
+
+
+def _is_number(value: object) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)
+
+
+def is_parameter_record(value: object) -> bool:
+    """A parameter record is an object whose ``basis`` is itself an object.
+
+    An ordinary object may carry a prose field that happens to be named ``basis`` - a string - and
+    is not a record; a number inside it is still refused as a bare number.
+    """
+
+    return isinstance(value, Mapping) and isinstance(value.get("basis"), Mapping)
+
+
+def split_parameter_records(
+    payload: object, *, role: str
+) -> tuple[JsonValue, dict[str, tuple[JsonValue, ParameterBasis]]]:
+    """Split a method declaration into its hashed projection and the basis of every parameter.
+
+    A method declaration writes every number as a parameter record ``{"value": ..., "basis":
+    {...}}``. The projection replaces each record with its value, so it is byte for byte the
+    declaration as it was before any basis was recorded: identities hash the projection, and
+    writing or amending a basis moves none of them. The bases come back keyed by the record's JSON
+    pointer. A bare number anywhere outside a record is refused - the schema has a slot for its
+    reason, and an unrecorded reason is written ``unwritten``, never left out.
+    """
+
+    bases: dict[str, tuple[JsonValue, ParameterBasis]] = {}
+
+    def refuse_nested_numbers(value: object, pointer: str) -> None:
+        if is_parameter_record(value):
+            raise SchemaValidationError(f"{role} {pointer}: parameter records may not nest")
+        if isinstance(value, Mapping):
+            for name, item in value.items():
+                refuse_nested_numbers(item, f"{pointer}/{_pointer_token(str(name))}")
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                refuse_nested_numbers(item, f"{pointer}/{index}")
+
+    def project(value: object, pointer: str) -> JsonValue:
+        if is_parameter_record(value):
+            record = cast(Mapping[str, object], value)
+            if set(record) != _PARAMETER_RECORD_FIELDS:
+                raise SchemaValidationError(
+                    f"{role} {pointer}: a parameter record has exactly the fields value and basis"
+                )
+            refuse_nested_numbers(record["value"], f"{pointer}/value")
+            bases[pointer] = (
+                cast(JsonValue, record["value"]),
+                parameter_basis(record["basis"], path=f"{role} {pointer}"),
+            )
+            return cast(JsonValue, record["value"])
+        if isinstance(value, Mapping):
+            return {
+                str(name): project(item, f"{pointer}/{_pointer_token(str(name))}")
+                for name, item in value.items()
+            }
+        if isinstance(value, list):
+            return [project(item, f"{pointer}/{index}") for index, item in enumerate(value)]
+        if _is_number(value):
+            raise SchemaValidationError(
+                f"{role} {pointer or '/'}: a number in a method declaration must be a "
+                '{"value", "basis"} parameter record'
+            )
+        return cast(JsonValue, value)
+
+    return project(payload, ""), bases
+
+
+def parameter_values(payload: object, *, role: str) -> Any:
+    """A method declaration's hashed projection: each parameter record replaced by its value.
+
+    It is typed as ``json.loads`` is, because it is what ``json.loads`` returned for the
+    declaration before any basis was recorded, and loaders validate it exactly as they did then.
+    """
+
+    return split_parameter_records(payload, role=role)[0]
 
 
 def system_input_identity_value(value: object, *, path: str) -> JsonValue:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "taim-benchmark"
-version = "0.1.2"
+version = "0.2.0"
 description = "Auditable, executable multi-track benchmark for clinical trial matching"
 authors = [
   { name = "Hannes Ill", email = "hannes.ill@tum.de" },
@@ -16,7 +16,8 @@ license = "Apache-2.0"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["mypy>=2.3,<3", "numpy>=1.26,<3", "pytest>=8,<9", "ruff>=0.5,<1"]
+http = ["httpx>=0.28,<0.29"]
+dev = ["httpx>=0.28,<0.29", "mypy>=2.3,<3", "numpy>=1.26,<3", "pytest>=8,<10", "ruff>=0.5,<1"]
 dense = [
   "huggingface-hub>=0.27,<2",
   "numpy>=1.26,<3",
@@ -34,6 +35,7 @@ staged = [
   "torch>=2.1,<3",
   "transformers>=4.51,<6",
 ]
+trialgpt2 = ["openai>=3.26,<4", "tqdm>=4.70,<5"]
 
 [project.scripts]
 trial-benchmark = "taim.release_cli:main"
@@ -45,7 +47,7 @@ Repository = "https://github.com/MehulMittal27/TAIM-Benchmark"
 where = ["src"]
 
 [tool.setuptools.package-data]
-taim = ["py.typed", "fixtures/**/*.jsonl", "fixtures/**/*.md", "data/external-system-dependencies-v1.json", "data/locks/*.json", "data/pipelines/*.json", "data/profiles/*.json", "data/release-support-v0.1.json"]
+taim = ["py.typed", "fixtures/**/*.jsonl", "fixtures/**/*.md", "data/external-system-dependencies-v1.json", "data/locks/*.json", "data/profiles/*.json", "data/release-support-v0.1.json", "pipelines/*/data/*.json"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
@@ -68,5 +70,5 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "S"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/test_trialgpt_retrieval_producer.py" = ["S101"]
+"tests/trialgpt/test_trialgpt_retrieval_producer.py" = ["S101"]
 "tests/**" = ["S603", "S607"]

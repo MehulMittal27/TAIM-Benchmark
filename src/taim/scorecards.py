@@ -1336,6 +1336,7 @@ def evaluate_filtering_scorecard(
 
 _SCORECARD_FIELDS = {
     "schema_version",
+    "evaluator_artifacts",
     "artifact_type",
     "artifact_version",
     "scorecard_profile",
@@ -1618,9 +1619,7 @@ def _reconcile_effectiveness(effectiveness: Mapping[str, object]) -> None:
 def validate_scorecard_artifact(payload: Mapping[str, object]) -> None:
     """Fail closed on version, identity, policy, and aggregate drift."""
 
-    fields = set(payload)
-    if fields not in (_SCORECARD_FIELDS, _SCORECARD_FIELDS | {"evaluator_artifacts"}):
-        require_exact_keys(payload, _SCORECARD_FIELDS, role="final scorecard")
+    require_exact_keys(payload, _SCORECARD_FIELDS, role="final scorecard")
     if payload.get("schema_version") != SCORECARD_SCHEMA_VERSION:
         raise SchemaValidationError("unsupported final scorecard schema_version")
     if payload.get("artifact_type") != "taim-final-scorecard":
@@ -1631,20 +1630,19 @@ def validate_scorecard_artifact(payload: Mapping[str, object]) -> None:
         raise SchemaValidationError("unsupported final scorecard evaluator_version")
     if payload.get("scorecard_profile") != shared_scorecard_profile():
         raise SchemaValidationError("final scorecard profile identity or definition is unsupported")
-    if "evaluator_artifacts" in payload:
-        evaluator_artifacts = payload["evaluator_artifacts"]
-        if not isinstance(evaluator_artifacts, Mapping):
-            raise SchemaValidationError("scorecard evaluator_artifacts must be an object")
-        require_exact_keys(
-            evaluator_artifacts,
-            _EVALUATOR_ARTIFACT_FIELDS,
-            role="scorecard evaluator artifacts",
+    evaluator_artifacts = payload["evaluator_artifacts"]
+    if not isinstance(evaluator_artifacts, Mapping):
+        raise SchemaValidationError("scorecard evaluator_artifacts must be an object")
+    require_exact_keys(
+        evaluator_artifacts,
+        _EVALUATOR_ARTIFACT_FIELDS,
+        role="scorecard evaluator artifacts",
+    )
+    for field_name in sorted(_EVALUATOR_ARTIFACT_FIELDS):
+        require_sha256(
+            evaluator_artifacts.get(field_name),
+            f"evaluator_artifacts.{field_name}",
         )
-        for field_name in sorted(_EVALUATOR_ARTIFACT_FIELDS):
-            require_sha256(
-                evaluator_artifacts.get(field_name),
-                f"evaluator_artifacts.{field_name}",
-            )
     for field_name in ("run_id", "system_id", "benchmark_lineage"):
         require_non_empty(payload.get(field_name), field_name)
     for field_name in (
@@ -1739,7 +1737,7 @@ def build_final_scorecard_artifact(
     pipeline_depth: str,
     budget_k: int,
     runtime_seconds: float,
-    evaluator_artifacts: Mapping[str, str] | None = None,
+    evaluator_artifacts: Mapping[str, str],
     bootstrap_samples: int = 2_000,
 ) -> dict[str, object]:
     """Build the bound machine-readable final scorecard for one closed run."""
@@ -1757,13 +1755,11 @@ def build_final_scorecard_artifact(
         or runtime_seconds < 0
     ):
         raise ValueError("runtime_seconds must be a finite non-negative number")
-    bound_evaluator_artifacts: dict[str, str] | None = None
-    if evaluator_artifacts is not None:
-        if set(evaluator_artifacts) != _EVALUATOR_ARTIFACT_FIELDS:
-            raise ValueError("evaluator_artifacts must contain the exact metric hash fields")
-        bound_evaluator_artifacts = dict(evaluator_artifacts)
-        for field_name, digest in bound_evaluator_artifacts.items():
-            require_sha256(digest, f"evaluator_artifacts.{field_name}")
+    if set(evaluator_artifacts) != _EVALUATOR_ARTIFACT_FIELDS:
+        raise ValueError("evaluator_artifacts must contain the exact metric hash fields")
+    bound_evaluator_artifacts = dict(evaluator_artifacts)
+    for field_name, digest in bound_evaluator_artifacts.items():
+        require_sha256(digest, f"evaluator_artifacts.{field_name}")
     candidate_rows = _bound_candidate_rows(
         candidates,
         identity=identity,
@@ -1799,9 +1795,8 @@ def build_final_scorecard_artifact(
         "deployment_diagnostics": _closed_deployment_diagnostics(),
         "operational_reliability": _partial_operational_reliability(float(runtime_seconds)),
         "trec_eval_parity": _closed_trec_eval_parity(),
+        "evaluator_artifacts": bound_evaluator_artifacts,
     }
-    if bound_evaluator_artifacts is not None:
-        artifact["evaluator_artifacts"] = bound_evaluator_artifacts
     validate_scorecard_artifact(artifact)
     return artifact
 

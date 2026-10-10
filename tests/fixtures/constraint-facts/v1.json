@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0",
+  "extractor": {
+    "id": "taim-rule-constraint-facts",
+    "version": "1.0"
+  },
+  "qualification": {
+    "source_level": "synthetic authored text references",
+    "ranking_qrels_used": false,
+    "failure_envelope": [
+      "ages above the declared 130-year unit-specific ceiling",
+      "former or social lifestyle states",
+      "wording outside the pinned expressions"
+    ]
+  },
+  "references": [
+    {
+      "id": "age-minutes",
+      "record_kind": "topic",
+      "text": "A 1-minute-old infant.",
+      "expected": [{"fact_name": "age", "value": {"amount": "1", "unit": "minutes"}, "text": "1-minute-old"}]
+    },
+    {
+      "id": "age-hours",
+      "record_kind": "topic",
+      "text": "A 2-hour-old infant.",
+      "expected": [{"fact_name": "age", "value": {"amount": "2", "unit": "hours"}, "text": "2-hour-old"}]
+    },
+    {
+      "id": "age-days",
+      "record_kind": "topic",
+      "text": "A 3-day-old infant.",
+      "expected": [{"fact_name": "age", "value": {"amount": "3", "unit": "days"}, "text": "3-day-old"}]
+    },
+    {
+      "id": "age-weeks",
+      "record_kind": "topic",
+      "text": "A 4-week-old infant.",
+      "expected": [{"fact_name": "age", "value": {"amount": "4", "unit": "weeks"}, "text": "4-week-old"}]
+    },
+    {
+      "id": "age-months",
+      "record_kind": "topic",
+      "text": "A 5-month-old infant.",
+      "expected": [{"fact_name": "age", "value": {"amount": "5", "unit": "months"}, "text": "5-month-old"}]
+    },
+    {
+      "id": "age-upper-bound",
+      "record_kind": "topic",
+      "text": "A 130-year-old adult.",
+      "expected": [{"fact_name": "age", "value": {"amount": "130", "unit": "years"}, "text": "130-year-old"}]
+    },
+    {
+      "id": "age-above-bound",
+      "record_kind": "topic",
+      "text": "A 131-year-old adult.",
+      "expected": []
+    },
+    {
+      "id": "trial-age-range",
+      "record_kind": "trial",
+      "text": "Participants aged 18 to 65 years are eligible.",
+      "expected": [
+        {"fact_name": "minimum_age", "value": {"amount": "18", "unit": "years"}, "text": "aged 18 to 65 years"},
+        {"fact_name": "maximum_age", "value": {"amount": "65", "unit": "years"}, "text": "aged 18 to 65 years"}
+      ]
+    },
+    {
+      "id": "sex-conflict",
+      "record_kind": "topic",
+      "text": "Female patient and male patient.",
+      "expected": [
+        {"fact_name": "sex", "value": "female", "text": "Female patient"},
+        {"fact_name": "sex", "value": "male", "text": "male patient"}
+      ]
+    },
+    {
+      "id": "healthy-negated",
+      "record_kind": "topic",
+      "text": "Not a healthy volunteer.",
+      "expected": [{"fact_name": "healthy_volunteer", "value": false, "text": "Not a healthy volunteer"}]
+    },
+    {
+      "id": "topic-sex-negated",
+      "record_kind": "topic",
+      "text": "This is not a male patient.",
+      "expected": []
+    },
+    {
+      "id": "trial-healthy-no",
+      "record_kind": "trial",
+      "text": "Healthy Volunteers: No.",
+      "expected": [{"fact_name": "healthy_volunteer", "value": false, "text": "Healthy Volunteers: No"}]
+    },
+    {
+      "id": "trial-unqualified-lifestyle-mentions",
+      "record_kind": "trial",
+      "text": "Smoking cessation intervention. Alcohol use is a secondary outcome.",
+      "expected": []
+    },
+    {
+      "id": "trial-rejected-sex",
+      "record_kind": "trial",
+      "text": "This trial does not enroll male participants.",
+      "expected": []
+    },
+    {
+      "id": "trial-qualified-non-lifestyle",
+      "record_kind": "trial",
+      "text": "Non-smokers are eligible. Non-drinkers are eligible.",
+      "expected": [
+        {"fact_name": "smoking", "value": false, "text": "Non-smokers are eligible"},
+        {"fact_name": "alcohol", "value": false, "text": "Non-drinkers are eligible"}
+      ]
+    },
+    {
+      "id": "topic-qualified-lifestyle-affirmation",
+      "record_kind": "topic",
+      "text": "The patient currently smokes and the patient drinks alcohol.",
+      "expected": [
+        {"fact_name": "smoking", "value": true, "text": "patient currently smokes"},
+        {"fact_name": "alcohol", "value": true, "text": "patient drinks alcohol"}
+      ]
+    },
+    {
+      "id": "topic-unsupported-lifestyle-context",
+      "record_kind": "topic",
+      "text": "Patient is not currently smoking. Patient quit smoking. Alcohol use was discontinued.",
+      "expected": []
+    },
+    {
+      "id": "lifestyle-negated",
+      "record_kind": "topic",
+      "text": "Does not smoke and does not drink alcohol.",
+      "expected": [
+        {"fact_name": "smoking", "value": false, "text": "Does not smoke"},
+        {"fact_name": "alcohol", "value": false, "text": "does not drink alcohol"}
+      ]
+    },
+    {
+      "id": "lifestyle-unsupported",
+      "record_kind": "topic",
+      "text": "Former smoker with social alcohol intake.",
+      "expected": [
+        {"fact_name": "smoking", "value": null, "text": "Former smoker"},
+        {"fact_name": "alcohol", "value": null, "text": "social alcohol intake"}
+      ]
+    }
+  ]
+}

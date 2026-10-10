@@ -29,12 +29,52 @@ Run and evaluate the patient-to-trial fixture:
 trial-benchmark patient-to-trial fixture run \
   --track trec-ct-2021 \
   --run-id quick-start-patient-to-trial \
-  --output-dir runs \
-  --top-k 8
+  --output-dir runs
 trial-benchmark patient-to-trial run validate \
   --run-dir runs/quick-start-patient-to-trial
 trial-benchmark patient-to-trial run evaluate \
   --run-dir runs/quick-start-patient-to-trial
+```
+
+Run the BGE-M3 dense System on the same fixture. It needs the `dense` extra, downloads the pinned
+model (about 2.3 GB) on first use, and encodes the fixture on the CPU:
+
+```console
+uv sync --locked --extra dense
+trial-benchmark patient-to-trial fixture run \
+  --track trec-ct-2021 \
+  --system dense-bge-m3 \
+  --index-dir indexes/quick-start-dense-bge-m3 \
+  --run-id quick-start-dense-bge-m3 \
+  --output-dir runs
+```
+
+Run the Qwen3 embedding System the same way. It needs the same `dense` extra, downloads its pinned
+model (about 1.2 GB) on first use, and encodes the fixture on the CPU:
+
+```console
+uv sync --locked --extra dense
+trial-benchmark patient-to-trial fixture run \
+  --track trec-ct-2021 \
+  --system dense-qwen3-embedding-0.6b \
+  --index-dir indexes/quick-start-dense-qwen3-embedding-0.6b \
+  --run-id quick-start-dense-qwen3-embedding-0.6b \
+  --output-dir runs
+```
+
+Fuse the BM25 and BGE-M3 runs with RRF. Each component must rank to the default depth of 1,000,
+which is why the BM25 command above sets no `--top-k`:
+
+```console
+trial-benchmark patient-to-trial fixture run \
+  --track trec-ct-2021 \
+  --system rrf \
+  --bm25-run runs/quick-start-patient-to-trial \
+  --dense-run runs/quick-start-dense-bge-m3 \
+  --run-id quick-start-rrf \
+  --output-dir runs
+trial-benchmark patient-to-trial run evaluate \
+  --run-dir runs/quick-start-rrf
 ```
 
 Run the separate trial-to-patient fixture:
@@ -56,6 +96,25 @@ Profile, System, Prepared Snapshot ID, Task Input ID, System Input ID, and Evalu
 
 The packaged fixture records are invented. They cover eligible, excluded, irrelevant, unknown, and
 mixed-direction failure behavior. Their scores are conformance evidence, not effectiveness results.
+
+### Licensed inputs you supply
+
+Some Systems need licensed terminology that this repository cannot ship. You need your own licence
+and your own copy. TAIM never downloads, bundles or accepts a licence for you.
+
+| System | Licensed input | Required? | Without it |
+| --- | --- | --- | --- |
+| `bm25-folded` | SNOMED CT RF2 release, International Edition 2026-08-01; another edition is refused | Required | `queries prepare` refuses |
+| `staged-bm25-qwen3-rrf-rerank` | the same, through `bm25-folded`'s query bundle | Required | cannot be assembled |
+| TrialMatchAI L4 Systems (`trialmatchai-current-cuda-l4-*-v4`) | OMOP vocabulary files (`CONCEPT.csv`, `CONCEPT_SYNONYM.csv`); the qualified concept store includes SNOMED CT | Required | the run refuses without a registered concept store |
+
+The other Systems need no licensed terminology.
+
+**Getting SNOMED CT.** In a SNOMED International Member country, apply to your National Release
+Centre. Elsewhere, apply to SNOMED International as an Affiliate through its Member Licensing and
+Distribution Service (MLDS). Terms, fees and permitted territory depend on where you are. A
+SNOMED CT download from OHDSI Athena does **not** by itself give you the right to use SNOMED CT
+outside OHDSI's own tools; you still need your own licence.
 
 ## Real tracks
 
@@ -119,7 +178,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25 \
   --run-id bm25-trec-2021-judgment-union \
@@ -191,7 +250,7 @@ trial-benchmark patient-to-trial queries prepare \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --snomed-release /path/to/licensed/SnomedCT_InternationalRF2 \
   --output derived/trec-2021-folded-queries.json
@@ -208,7 +267,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25-folded --top-k 5000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -226,7 +285,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system dense-qwen3-embedding-0.6b-no-template --top-k 5000 \
   --index-dir indexes/qwen3-no-template \
@@ -245,7 +304,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system staged-bm25-qwen3-rrf-rerank --top-k 1000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -273,13 +332,10 @@ trial-benchmark patient-to-trial run evaluate \
 ```
 
 A stage scorecard is marked `stage_diagnostic`; it does not replace the declared Primary Ranking.
-Judgment-union commands require the receipt's `--pool-count`, `--pool-ids-sha256`, and
-`--pool-receipt-id` plus `--release-manifest`, `--package-artifact`, and `--dependency-lock` before
-they can produce queries or scores. The component and fusion producers must resolve to the same
-immutable release and lock identity. The dated paper protocols ship in this repository. The CLI
-accepts only the SHA-256 of those exact protocol bytes. Their Track and method choices are frozen,
-but each locally derived pool receipt and the eventual immutable release identities must still be
-recorded before paper execution.
+The component and fusion producers must resolve to the same immutable release and lock identity.
+The dated paper protocols ship in this repository. The CLI accepts only the SHA-256 of those exact
+protocol bytes. Their Track and method choices are frozen, but each locally derived pool receipt and
+the eventual immutable release identities must still be recorded before paper execution.
 
 ## External baseline strata
 
@@ -295,19 +351,23 @@ rejects historical or identity-mismatched artifacts. It ships no external checko
 bytes, provider outputs, model weights, concept store, or index.
 For TrialGPT, it also preflights fresh inputs. Its commands and runtime prerequisites are in the
 [TrialGPT external baseline guide](docs/trialgpt-external-baseline.md).
-For TrialMatchAI, it also executes the selected adapter. Its commands, runtime prerequisites, and
-license boundaries are in the
+For the TrialMatchAI L4 Systems, it also executes the selected adapter. Their commands, runtime
+prerequisites, and license boundaries are in the
 [TrialMatchAI external baseline guide](docs/trialmatchai-external-baseline.md).
+For TrialMatchAI v0.9.1, the authors' release run unchanged, it also executes the pinned upstream
+tag. Its commands, hardware, model staging, concept store download, and license boundaries are in
+the [TrialMatchAI v0.9.1 external baseline guide](docs/trialmatchai-v091-external-baseline.md).
 The strata and their reporting boundary are in the
 [external baseline guide](docs/external-baselines.md).
 
 The release includes the memory-bounded prepared-package loader.
 For TrialGPT, the release includes the complete, pinned retrieval producer. Its admitted targets,
-reusable query-generation calls, MedCPT revisions, execution command, and evidence boundary are in the
-[TrialGPT retrieval producer guide](docs/trialgpt-retrieval-producer.md). Protocol v7 binds fresh
-retrieval and System artifacts to this release while retaining the exact completed query plans.
-The frozen v5 through v7 producer protocols are additive to v4; they do not add a TREC 2023
-TrialGPT row.
+query-plan receipts, MedCPT revisions, execution command, and evidence boundary are in the
+[TrialGPT retrieval producer guide](docs/trialgpt-retrieval-producer.md). Fresh retrieval and System
+artifacts bind this release. The four query-plan files protocol v6 admits are not available, so
+query plans are generated per run and recorded by receipt, as protocol v11 defines it.
+The frozen v5 through v7 and v11 producer protocols are additive to v4; they do not add a TREC
+2023 TrialGPT row.
 
 The repository owner froze the v4 amendment before outcome inspection. The runtime binds its exact
 digest to the external-fidelity Profile and the external baseline Systems, and refuses any other
@@ -331,10 +391,8 @@ Prepared Snapshot ID and Evaluation Package ID. It is not a general reverse TREC
 The other Tracks expose only the reverse contract and synthetic fixture until a later protocol
 freezes an exhaustive denominator.
 
-For TREC 2022 or 2023, both preparation and the real benchmark command require
-`--protocol-approval-id sha256:<digest>`. The digest is the v3 protocol's, the `PROTOCOL_ID` above,
-and the CLI accepts no other there; it stores it in every confirmation run and later Result Bundle.
-Synthetic fixtures never accept a protocol approval identity.
+A TREC 2022 or 2023 confirmation run stores the v3 digest it was given, as does any Result Bundle
+made from it.
 
 Acquisition guides: [TREC 2021](docs/trec-2021-acquisition.md),
 [TREC 2022](docs/trec-2022-acquisition.md), [TREC 2023](docs/trec-2023-acquisition.md), and
@@ -358,10 +416,13 @@ judgment-union Profiles.
 The executable catalog, not a Cartesian-product assumption, decides which Track, Task, Profile,
 and System combinations are supported.
 Dense Systems require the `dense` extra; the run builds its
-own index under `--index-dir`.
+own index under `--index-dir`. On CUDA they need compute capability 7.5 or newer, so not a V100; each
+System's hardware is stated with its [method contract](docs/method-contracts.md).
 RRF consumes same-direction BM25 and BGE-M3 component runs with identical benchmark identities.
 Bundle-eligible RRF also requires both components to come from clean producers of the same frozen
 release; their lock-bound dependency-environment identities are retained by the fusion run.
+Every command and option is described in the [command reference](docs/cli-reference.md), which is
+generated from the CLI's own help text.
 The supported Python and artifact versions are listed in [compatibility](docs/compatibility.md).
 Development and confirmatory claim rules, including judged-recall terminology, are in the
 [reporting policy](docs/reporting-policy.md).
@@ -373,19 +434,5 @@ Contribution and disclosure processes are in [CONTRIBUTING.md](CONTRIBUTING.md) 
 Results produced here measure reference implementations under the stated benchmark protocol. They
 do not establish clinical validity, deployment readiness, or equivalence to another implementation.
 
-To make any run eligible for later Result Bundle admission, pass all three producer inputs:
-`--release-manifest`, `--package-artifact`, and `--dependency-lock`. The dependency lock must be the
-exact `uv.lock` recorded by the manifest. Synthetic and full-corpus runs may omit all three, but
-cannot be admitted to a Published Result Bundle. Judgment-union and external-fidelity runs, and
-their staged query preparation, never permit that omission.
-
 A Result Bundle refuses any published string that is itself an absolute filesystem path, and names
 each file and JSON location where it found one.
-To bundle a TrialGPT run, pass a bare executable
-name such as the default `--codex-executable codex`, not an absolute location.
-TrialMatchAI L4
-runs bundle with a location-free System Input: the release gives the TrialMatchAI checkout,
-workspace, prepared corpus folders, search database, and timeout to the System beside it, and the
-System Input binds the prepared corpus by its preparation receipt instead. A run is refused before
-it starts when a token of its command is an absolute location, so name the executable bare in
-`--trialmatchai-command`.

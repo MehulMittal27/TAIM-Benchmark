@@ -24,7 +24,7 @@ from taim.contracts import (
 )
 from taim.entity_versions import (
     PatientEntityVersion,
-    TrialVersion,
+    Trial,
     clinical_as_of_text,
     parse_clinical_as_of,
     validate_clinical_as_of,
@@ -250,7 +250,7 @@ class PairAssessmentInput:
     """Exact pair-local evidence visible to an assessor, independent of ranking direction."""
 
     patient_version: PatientEntityVersion
-    trial_version: TrialVersion
+    trial_version: Trial
     clinical_as_of: datetime
     assessment_profile: PairAssessmentProfile
     visible_pair_evidence: Mapping[str, JsonValue]
@@ -261,8 +261,8 @@ class PairAssessmentInput:
     def __post_init__(self) -> None:
         if not isinstance(self.patient_version, PatientEntityVersion):
             raise SchemaValidationError("patient_version must be a PatientEntityVersion")
-        if not isinstance(self.trial_version, TrialVersion):
-            raise SchemaValidationError("trial_version must be a TrialVersion")
+        if not isinstance(self.trial_version, Trial):
+            raise SchemaValidationError("trial_version must be a Trial")
         if not isinstance(self.assessment_profile, PairAssessmentProfile):
             raise SchemaValidationError("assessment_profile must be a PairAssessmentProfile")
         if not isinstance(self.visible_pair_evidence, Mapping):
@@ -292,7 +292,7 @@ class PairAssessmentInput:
         return {
             "schema_version": self.schema_version,
             "patient_version": self.patient_version.to_dict(),
-            "trial_version": self.trial_version.to_dict(),
+            "trial_version": self.trial_version.to_version_dict(),
             "clinical_as_of": clinical_as_of_text(self.clinical_as_of),
             "assessment_profile": self.assessment_profile.to_dict(),
             "visible_pair_evidence": json_value_to_builtins(self.visible_pair_evidence),
@@ -329,7 +329,7 @@ class PairAssessmentInput:
             raise SchemaValidationError("PairAssessmentInput nested fields must be objects")
         pair_input = cls(
             patient_version=PatientEntityVersion.from_dict(cast(Mapping[str, object], patient)),
-            trial_version=TrialVersion.from_dict(cast(Mapping[str, object], trial)),
+            trial_version=Trial.from_version_dict(cast(Mapping[str, object], trial)),
             clinical_as_of=parse_clinical_as_of(payload["clinical_as_of"]),
             assessment_profile=PairAssessmentProfile.from_dict(cast(Mapping[str, object], profile)),
             visible_pair_evidence=cast(Mapping[str, JsonValue], evidence),

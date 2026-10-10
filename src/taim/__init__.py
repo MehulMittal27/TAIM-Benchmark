@@ -1,11 +1,11 @@
 """Deliberate public interface for TAIM benchmark contracts."""
 
-from taim.system_contracts import (
+from taim.patient_to_trial import (
+    PatientToTrialRunRequest,
+    PatientToTrialRunResult,
+    PatientToTrialSystem,
+    PatientToTrialTaskInput,
     StrictSystemOptions,
-    System,
-    SystemBenchmarkSnapshot,
-    SystemRunRequest,
-    SystemRunResult,
 )
 from taim.trial_to_patient import (
     ResolvedTrialToPatientBenchmark,
@@ -19,16 +19,16 @@ from taim.trial_to_patient import (
     load_trial_to_patient_run,
 )
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 __all__ = [
+    "PatientToTrialRunRequest",
+    "PatientToTrialRunResult",
+    "PatientToTrialSystem",
+    "PatientToTrialTaskInput",
     "ResolvedTrialToPatientBenchmark",
     "StoredTrialToPatientRun",
     "StrictSystemOptions",
-    "System",
-    "SystemBenchmarkSnapshot",
-    "SystemRunRequest",
-    "SystemRunResult",
     "TrialToPatientBenchmarkProfile",
     "TrialToPatientEvaluationPackage",
     "TrialToPatientRunManifest",

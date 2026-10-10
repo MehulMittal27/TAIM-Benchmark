@@ -1,0 +1,110 @@
+# Known issues
+
+## nltk 3.10.3: CVE-2026-81726 (GHSA-8mgp-746c-j5xp)
+
+**In short.** `uv.lock` pins nltk 3.10.3, as releases 0.1.0, 0.1.1 and 0.1.2 also do. The
+advisory covers every nltk up to and including 3.10.3. When this was checked on 2026-10-08, no
+fixed nltk existed: the advisory lists no patched version, and 3.10.3 is the latest nltk on PyPI.
+
+nltk is installed only with the optional `folding` extra, and only as an indirect dependency. This
+package never calls the six affected functions, so they cannot be reached from it. We will move to
+a fixed nltk once one is published. The evidence follows.
+
+### Who has nltk installed
+
+- **Only `folding` installs it.** nltk is installed only by `uv sync --locked --extra folding`, on
+  CPython below 3.13. No other extra and no base install includes it.
+- **The chain is indirect.** The `folding` extra pins medspacy 1.3.1. medspacy requires
+  medspacy-quickumls 3.2, and medspacy-quickumls requires nltk.
+- **No direct dependency.** This package declares no dependency on nltk.
+
+### What the advisory covers
+
+The advisory ([GHSA-8mgp-746c-j5xp](https://github.com/advisories/GHSA-8mgp-746c-j5xp), rated high)
+concerns six of nltk's model-file functions:
+- `TransitionParser.train` and `TransitionParser.parse`;
+- `AveragedPerceptron.save` and `AveragedPerceptron.load`;
+- `PerceptronTagger.save_to_json`;
+- `save_maxent_params`.
+
+These functions open caller-supplied paths with plain file APIs. They therefore bypass nltk's
+opt-in path sandbox (`nltk.pathsec`). An application at risk is one that turns that sandbox on and
+lets an untrusted caller choose a model path.
+
+### Why the affected functions are not reachable
+
+**The call path.** Line numbers are those of the files in this repository and of the locked
+medspacy 1.3.1, medspacy-quickumls 3.2 and nltk 3.10.3.
+
+- The package builds folded queries in one place. `trial-benchmark patient-to-trial queries
+  prepare` is handled by `_prepare_folded_queries` (`src/taim/pipelines/bm25/folded_extension.py:49`).
+  That handler calls `build_folded_query_bundle` at `:130`, which is defined at
+  `src/taim/folded_query_bundle.py:138`.
+- The package imports medspacy in one place too: `build_context_pipeline`
+  (`src/taim/query_folding.py:466`).
+  - It runs `import medspacy` (`:478`).
+  - It runs `medspacy.load(medspacy_enable=["medspacy_pyrush", "medspacy_context"])` (`:481`).
+    These are the sentence splitter and the ConText assertion component.
+  - `build_extraction` (`:604`) then reaches `assert_terms` (`:512`), which runs the pipeline with
+    `nlp(text)` (`:518`).
+- **How nltk gets imported.**
+  - `medspacy/__init__.py:4` imports `medspacy/util.py`.
+  - Line 14 of `medspacy/util.py` runs `from quickumls import spacy_component`.
+  - `quickumls/__init__.py:1` imports `quickumls/core.py`.
+  - Line 13 of `quickumls/core.py` runs `import nltk`.
+- **When quickumls calls nltk.** Its only nltk calls are `nltk.corpus.stopwords` and
+  `nltk.download`, at `quickumls/core.py:109-126`. Both sit in `QuickUMLS.__init__`. That
+  constructor runs only when the `medspacy_quickumls` component is enabled, and folding does not
+  enable it.
+- **Nothing else calls the six functions.** A search of the installed `folding` environment,
+  outside `nltk/` itself, finds none of the six names. The only other modules that import nltk are
+  the top-level `benchmarks/` scripts of pysbd's wheel, which nothing imports.
+- **The System that scores folded queries does not load nltk.** Its run,
+  `ReleaseFoldedBM25System.run` (`src/taim/pipelines/bm25/folded.py:29`), imports only the BM25
+  retriever and `validate_folded_query_bundle`. Importing its modules leaves `nltk`, `medspacy` and
+  `quickumls` out of `sys.modules`.
+
+**The runtime check, 2026-10-08.**
+
+The setup:
+- CPython 3.12.13 on macOS (arm64), in a fresh environment installed from `uv.lock` with the
+  `folding` extra: nltk 3.10.3, medspacy 1.3.1, medspacy-quickumls 3.2 and spaCy 3.8.16.
+- The run called `build_folded_query_bundle` on two sets of topics:
+  - the three topics of the `trec-mini` fixture;
+  - three sentences that exercise ConText, with affirmed, negated and historical mentions.
+- The SNOMED CT input was a synthetic RF2-format release of seven invented concept IDs. It holds
+  no SNOMED CT content.
+- **What was recorded:**
+  - a profile hook recorded every Python call into nltk;
+  - an audit hook recorded every file open and refused every network call.
+
+The results:
+
+| Phase | Calls into nltk | Calls to the six functions | Files opened under `nltk_data` |
+| --- | ---: | ---: | ---: |
+| `import medspacy` | 1,604 | 0 | 0 |
+| Building the folded queries | 0 | 0 | 0 |
+
+- **What nltk read.** Apart from its own compiled modules, nltk read only its `VERSION` file.
+- **The one refused network call** was urllib3's import-time IPv6 probe, a loopback bind at
+  `urllib3/util/connection.py:127`. Nothing tried to connect anywhere.
+- **The hook works.** As a positive control, `AveragedPerceptron.save` was called directly after
+  the run, and the hook recorded it.
+
+**Earlier releases.** The same `import medspacy` and `medspacy.load` lines are in
+`src/taim/query_folding.py` at the tags `v0.1.0`, `v0.1.1` and `v0.1.2`. The `uv.lock` of each tag
+pins nltk 3.10.3.
+
+### Why nltk is not simply removed
+
+Folding cannot drop nltk on its own:
+- `import medspacy` imports quickumls when it loads, and quickumls imports nltk when it loads, so
+  removing nltk breaks `import medspacy`.
+- Removing nltk would mean a different medspacy or a different assertion library. Either would
+  change the assertion step whose medspaCy version and rules every folded query bundle records.
+
+Neither change is needed while the six functions are unreachable.
+
+### When a fixed nltk is published
+
+`uv.lock` moves to the fixed nltk, and this section is updated.

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from taim.trial_to_patient import TrialToPatientRunManifest
 
 RELEASE_SUPPORT_SCHEMA_VERSION = "1.0"
-RELEASE_VERSION = "0.1.2"
+RELEASE_VERSION = "0.2.0"
 RELEASE_SUPPORT_RESOURCE = "release-support-v0.1.json"
 FROZEN_PAPER_PROTOCOL_SHA256 = (
     "sha256:18a9c9bd3c76455038d01458a5cb2d933059d1e72924285e26500a8aaab1baf6"
@@ -60,6 +60,28 @@ _REAL_PREPARATION_RECORD_COUNTS: Mapping[tuple[str, str], Mapping[str, int]] = {
     },
     ("trec-ct-2022", "confirmation-full"): {"topics": 50, "trials": 375_580},
     ("trec-ct-2023", "confirmation-full"): {"topics": 40, "trials": 451_538},
+}
+
+# Profiles whose runs may read the pool trials with complete eligibility text: a package written
+# by taim.data.complete_eligibility from the stratum's own package and Source Bundle. Its recipe
+# hash binds that stratum's Prepared Snapshot, Profile and pool receipt.
+_COMPLETE_ELIGIBILITY_PREPARATIONS: Mapping[tuple[str, str], tuple[str, Mapping[str, int]]] = {
+    ("sigir-ct-2016", "sigir-ct-2016-description-judgment-union"): (
+        "sha256:0efd6c78cf96ca7c4db9d68626c4604bea6a8af7290cabdf51a55ae458e4a082",
+        {"topics": 60, "trials": 3_626},
+    ),
+    ("sigir-ct-2016", "sigir-ct-2016-summary-judgment-union"): (
+        "sha256:76ffcaba7253fe5cc6f8811284390e9e360ffa7852f72e7b61380790f8767253",
+        {"topics": 60, "trials": 3_626},
+    ),
+    ("trec-ct-2021", EXTERNAL_FIDELITY_PROFILE): (
+        "sha256:01c577d445c541f03eff7ce6d49087be86346f2d9fafe20aaa931007831936c0",
+        {"topics": 75, "trials": 26_149},
+    ),
+    ("trec-ct-2022", "trec-ct-2022-judgment-union"): (
+        "sha256:c468546653876399cb7544e23be75a9ded0f35565ed1fa5fca428b5fdc9d1610",
+        {"topics": 50, "trials": 26_585},
+    ),
 }
 
 SUPPORTED_TRACKS = (
@@ -511,6 +533,24 @@ def _expected_record_counts(track: str, profile: str) -> dict[str, int]:
         ) from exc
 
 
+def _expected_preparation_contract(
+    track: str,
+    profile: str,
+    source_recipe_id: object,
+) -> tuple[str, str, str, SourceBundle, dict[str, int]]:
+    """The prepared recipe, Source Bundle and record counts a run of ``profile`` must record."""
+
+    from taim.data.complete_eligibility import profile_complete_eligibility_recipe_id
+
+    dataset_id, recipe_id, recipe_sha256, bundle = _expected_preparation_identity(track, profile)
+    complete = _COMPLETE_ELIGIBILITY_PREPARATIONS.get((track, profile))
+    complete_recipe_id = profile_complete_eligibility_recipe_id(dataset_id)
+    if complete is not None and source_recipe_id == complete_recipe_id:
+        complete_recipe_sha256, counts = complete
+        return dataset_id, complete_recipe_id, complete_recipe_sha256, bundle, dict(counts)
+    return dataset_id, recipe_id, recipe_sha256, bundle, _expected_record_counts(track, profile)
+
+
 def release_source_identity(
     prepared: PreparedBenchmark,
     *,
@@ -596,9 +636,13 @@ def validate_release_source_identity(
         ):
             raise SchemaValidationError("release source artifact byte_size is invalid")
         require_sha256(raw["sha256"], "release source artifact SHA-256")
-    expected_dataset_id, expected_recipe_id, expected_recipe_sha256, expected_bundle = (
-        _expected_preparation_identity(track, profile)
-    )
+    (
+        expected_dataset_id,
+        expected_recipe_id,
+        expected_recipe_sha256,
+        expected_bundle,
+        expected_counts,
+    ) = _expected_preparation_contract(track, profile, value["source_recipe_id"])
     if (
         value["prepared_dataset_id"] != expected_dataset_id
         or value["source_recipe_id"] != expected_recipe_id
@@ -607,7 +651,6 @@ def validate_release_source_identity(
         raise SchemaValidationError(
             f"release Profile {profile!r} is not bound to its complete prepared recipe"
         )
-    expected_counts = _expected_record_counts(track, profile)
     if dict(raw_counts) != expected_counts:
         raise SchemaValidationError(
             f"release Profile {profile!r} does not have its frozen full-preparation record counts"
@@ -723,3 +766,18 @@ __all__ = [
     "validate_support_matrix",
     "validate_support_payload",
 ]
+
+
+def reference_system_for_task(task: str) -> str:
+    """Return the sole installed quick-start reference in this task's direction."""
+    from taim.pipeline_extensions import pipeline_extensions
+
+    systems = [
+        extension.default_system
+        for extension in pipeline_extensions()
+        if extension.default_system is not None
+        and extension.system_tasks[extension.default_system] == task
+    ]
+    if len(systems) != 1:
+        raise ValueError(f"task {task!r} requires exactly one installed reference System")
+    return systems[0]

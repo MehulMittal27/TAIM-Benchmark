@@ -47,6 +47,34 @@ def _canonical_json_bytes(payload: object) -> bytes:
     ).encode()
 
 
+SNOMED_EDITION_LOCK = (
+    Path(__file__).parent / "data" / "locks" / "snomed-ct-folded-query-lexicon.json"
+)
+
+
+def require_qualified_snomed_release(release: Path) -> None:
+    """Refuse a missing release, or an edition other than the locked one, before any corpus loads.
+
+    Folding reads the release's description file, so the edition is its SHA-256: the directory
+    name is whatever the user called it. Another edition folds different queries and yields a
+    different, non-comparable bundle, so it is refused here rather than seen only in an identity.
+    """
+
+    from taim.query_folding import sha256_file, snomed_release_files
+
+    _concept_file, description_file = snomed_release_files(release)
+    lock = json.loads(SNOMED_EDITION_LOCK.read_text(encoding="utf-8"))
+    expected = lock["description_file"]
+    supplied = sha256_file(description_file)
+    if supplied != expected["sha256"]:
+        raise ValueError(
+            f"SNOMED CT release {release} is not the edition bm25-folded is qualified on: its "
+            f"{description_file.name} has {supplied}; expected {lock['edition']}, "
+            f"{expected['name']} with {expected['sha256']}. Another edition folds different, "
+            "non-comparable queries"
+        )
+
+
 def validate_folded_query_bundle(
     payload: object,
     *,
@@ -159,7 +187,9 @@ def build_folded_query_bundle(
 
 __all__ = [
     "FOLDED_QUERY_BUNDLE_SCHEMA_VERSION",
+    "SNOMED_EDITION_LOCK",
     "FoldedQuery",
     "build_folded_query_bundle",
+    "require_qualified_snomed_release",
     "validate_folded_query_bundle",
 ]

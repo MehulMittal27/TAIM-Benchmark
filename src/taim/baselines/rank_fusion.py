@@ -14,13 +14,13 @@ RRF_COMPONENT_DEPTH = 1_000
 DEFAULT_RRF_OUTPUT_DEPTH = 1_000
 
 
-def _non_negative_integer(value: object, field_name: str) -> int:
+def non_negative_integer(value: object, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError(f"{field_name} must be a non-negative integer")
     return value
 
 
-def _validated_component(
+def validated_component(
     candidates: Iterable[Candidate],
     *,
     expected_system_id: str,
@@ -115,10 +115,10 @@ def fuse_rrf(
 ) -> list[Candidate]:
     """Fuse two declared component identities through the shared exact kernel."""
 
-    first, first_run = _validated_component(
+    first, first_run = validated_component(
         first_candidates, expected_system_id=expected_system_ids[0]
     )
-    second, second_run = _validated_component(
+    second, second_run = validated_component(
         second_candidates, expected_system_id=expected_system_ids[1]
     )
     if first_run == second_run:
@@ -128,7 +128,7 @@ def fuse_rrf(
         run_id=run_id,
         system_id=system_id,
         component_depth=RRF_COMPONENT_DEPTH,
-        output_depth=_non_negative_integer(top_k, "top_k"),
+        output_depth=non_negative_integer(top_k, "top_k"),
     )
 
 
@@ -210,8 +210,8 @@ def fuse_rrf_n(
     fractions and breaks ties on ``trial_id``.
     """
 
-    output_depth = _non_negative_integer(top_k, "top_k")
-    effective_component_depth = _non_negative_integer(component_depth, "component_depth")
+    output_depth = non_negative_integer(top_k, "top_k")
+    effective_component_depth = non_negative_integer(component_depth, "component_depth")
     validated = _validated_named_components(components)
     return _fused_ranking(
         tuple(rows for _name, rows, _component_run_id in sorted(validated)),
@@ -230,8 +230,8 @@ def rrf_n_configuration(
 ) -> dict[str, JsonValue]:
     """Return the complete JSON-compatible N-component RRF retrieval configuration."""
 
-    output_depth = _non_negative_integer(top_k, "top_k")
-    effective_component_depth = _non_negative_integer(component_depth, "component_depth")
+    output_depth = non_negative_integer(top_k, "top_k")
+    effective_component_depth = non_negative_integer(component_depth, "component_depth")
     validated = _validated_named_components(components)
     return {
         "implementation": "taim.baselines.rrf.fuse_rrf_n",

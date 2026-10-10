@@ -26,7 +26,7 @@ from taim.baselines.encoder_registry import (
     EncoderPolicy,
 )
 from taim.schemas import Candidate, JsonValue
-from taim.snapshot import BenchmarkTopic, TrialDocument
+from taim.snapshot import BenchmarkTopic, Trial
 
 BGE_M3_MODEL_ID = BGE_M3_POLICY.model_id
 BGE_M3_MODEL_REVISION = BGE_M3_POLICY.model_revision
@@ -102,6 +102,10 @@ class DenseIndexError(ValueError):
     """Raised when a dense index is malformed or does not match its inputs."""
 
 
+class UnsupportedCudaDeviceError(ValueError):
+    """Raised when the installed torch build has no kernels for the requested card."""
+
+
 class TextEncoder(Protocol):
     """Small injection boundary used by the production and mocked encoders."""
 
@@ -126,6 +130,54 @@ def _require_numpy() -> Any:
             "install TAIM with its 'dense' extra"
         ) from exc
     return numpy
+
+
+def arch_list_supports(capability: Sequence[int], arch_list: Sequence[str]) -> bool:
+    """Whether a torch build carries kernels a card of ``capability`` can run.
+
+    A cubin built for ``sm_XY`` runs on a card of the same major capability and at least its
+    minor one; an architecture-specific build (``sm_90a``) runs only on its own capability. A
+    ``compute_XY`` entry is PTX, which needs a JIT compile nothing here proves, so it does not
+    count. CUDA available is not the same as supported: a V100 (7.0) against a build whose
+    lowest cubin is ``sm_75`` is available and unsupported.
+    """
+
+    major, minor = capability
+    for arch in arch_list:
+        kind, _, target = arch.partition("_")
+        digits = target.rstrip("abcdefghijklmnopqrstuvwxyz")
+        if kind != "sm" or len(digits) < 2 or not digits.isdigit():
+            continue
+        built = (int(digits[:-1]), int(digits[-1]))
+        if target != digits:
+            if built == (major, minor):
+                return True
+        elif built[0] == major and built[1] <= minor:
+            return True
+    return False
+
+
+def require_supported_cuda_device(torch: Any, device: Any) -> None:
+    """Refuse a CUDA card the installed torch build cannot execute on, before any model loads.
+
+    ``torch.cuda.is_available()`` is true on such a card, and the first kernel fails only after
+    the weights are downloaded and loaded. The locked torch 2.13.0 wheel is built for CUDA 13 with
+    kernels for sm_75 through sm_120, so it refuses a V100 (compute capability 7.0).
+    """
+
+    if device.type != "cuda":
+        return
+    index = torch.cuda.current_device() if device.index is None else device.index
+    capability = tuple(torch.cuda.get_device_capability(index))
+    architectures = tuple(torch.cuda.get_arch_list())
+    if arch_list_supports(capability, architectures):
+        return
+    raise UnsupportedCudaDeviceError(
+        f"CUDA device {index} ({torch.cuda.get_device_name(index)}) has compute capability "
+        f"{capability[0]}.{capability[1]}, but the installed torch {torch.__version__} carries "
+        f"kernels only for {' '.join(architectures) or 'no CUDA architecture'}; "
+        "no model was loaded. Use a card this build supports"
+    )
 
 
 def _package_version(distribution: str) -> str:
@@ -312,6 +364,7 @@ class BgeM3Encoder:
                 "install TAIM with its 'dense' extra"
             ) from exc
 
+        require_supported_cuda_device(torch, torch.device(self.device))
         policy = self.policy
         model = SentenceTransformer(
             policy.model_id,
@@ -523,6 +576,7 @@ class Qwen3Embedding06BEncoder:
                 requested = torch.device("mps", 0)
         except (RuntimeError, TypeError, ValueError) as exc:
             raise DenseIndexError(f"Qwen device {self.device!r} cannot be resolved") from exc
+        require_supported_cuda_device(torch, requested)
         self._resolved_device = str(requested)
         return self._resolved_device
 
@@ -572,6 +626,7 @@ class Qwen3Embedding06BEncoder:
                 "install TAIM with its 'dense' extra"
             ) from exc
 
+        device = self._resolve_device(torch)
         self._verify_resolved_files()
         policy = self.policy
         tokenizer = AutoTokenizer.from_pretrained(
@@ -588,7 +643,7 @@ class Qwen3Embedding06BEncoder:
             attn_implementation=policy.attention_implementation,
             trust_remote_code=policy.trust_remote_code,
         )
-        model.to(self._resolve_device(torch))
+        model.to(device)
         model.eval()
 
         self._validate_loaded_runtime(torch=torch, tokenizer=tokenizer, model=model)
@@ -1017,6 +1072,7 @@ class TransformerBiEncoder:
                 requested = torch.device("mps", 0)
         except (RuntimeError, TypeError, ValueError) as exc:
             raise DenseIndexError(f"device {self.device!r} cannot be resolved") from exc
+        require_supported_cuda_device(torch, requested)
         self._resolved_device = str(requested)
         return self._resolved_device
 
@@ -1035,6 +1091,7 @@ class TransformerBiEncoder:
                 "install TAIM with its 'dense' extra"
             ) from exc
 
+        device = self._resolve_device(torch)
         # Exact float32 everywhere: TF32 would silently change the numerics of a
         # run that the manifest declares as float32.
         if hasattr(torch.backends, "cuda"):
@@ -1060,7 +1117,7 @@ class TransformerBiEncoder:
             attn_implementation=policy.attention_implementation,
             trust_remote_code=policy.trust_remote_code,
         )
-        model.to(self._resolve_device(torch))
+        model.to(device)
         model.eval()
         tower = _BiEncoderTower(
             tokenizer=tokenizer,
@@ -1424,17 +1481,17 @@ def _select_recorded_build_configuration(
     raise DenseIndexError("dense index build configuration does not match")
 
 
-def _validate_documents(documents: Sequence[TrialDocument]) -> tuple[TrialDocument, ...]:
+def _validate_documents(documents: Sequence[Trial]) -> tuple[Trial, ...]:
     rows = tuple(documents)
     if not rows:
         raise ValueError("at least one trial document is required")
     if any(
-        not isinstance(document, TrialDocument)
+        not isinstance(document, Trial)
         or not isinstance(document.trial_id, str)
         or not isinstance(document.canonical_text, str)
         for document in rows
     ):
-        raise TypeError("documents must contain TrialDocument records")
+        raise TypeError("documents must contain Trial records")
     trial_ids = [document.trial_id for document in rows]
     if len(trial_ids) != len(set(trial_ids)):
         raise ValueError("trial_id values must be unique")
@@ -1786,7 +1843,7 @@ class DenseIndex:
 
 
 def prepare_dense_index(
-    documents: Sequence[TrialDocument],
+    documents: Sequence[Trial],
     *,
     directory: str | Path,
     corpus_hash: str,

@@ -11,7 +11,7 @@ import tempfile
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol, cast
 
 from taim.evaluation import evaluate_profile_run, evaluate_run
 from taim.evaluation_package import EvaluationPackage
@@ -41,6 +41,7 @@ from taim.snapshot import BenchmarkTopic
 
 if TYPE_CHECKING:
     from taim.pair_assessment import StoredPairAssessmentRun
+    from taim.patient_to_trial import PatientToTrialTaskInput
 
 _TREC_RUN_NAME = re.compile(r"[A-Za-z0-9]{1,12}\Z")
 _SHA256 = re.compile(r"sha256:[0-9a-f]{64}\Z")
@@ -426,27 +427,25 @@ def primary_candidates(stored: StoredRun) -> tuple[Candidate, ...]:
 def load_run(
     directory: str | Path,
     *,
-    require_evaluator_artifact_identity: bool = False,
+    source_snapshot: PatientToTrialTaskInput | None = None,
 ) -> StoredRun:
     """Load a run and verify its closed artifact identities.
 
-    Current-schema runs with older evaluator artifacts remain readable. Publication callers set
-    ``require_evaluator_artifact_identity`` so the hash-bound scorecard must also
-    identify the two standalone metric artifacts.
+    The hash-bound scorecard must identify the two standalone metric artifacts. Compact records
+    verify lineage and artifact integrity, not the absent corpus content. Pass
+    ``source_snapshot`` to also verify the original content-based Task Input identity.
     """
 
-    return _load_run(
-        directory,
-        allow_incomplete_scorecard=False,
-        require_evaluator_artifact_identity=require_evaluator_artifact_identity,
-    )
+    stored = _load_run(directory, allow_incomplete_scorecard=False)
+    if source_snapshot is not None:
+        stored.manifest.resolve_task_input(source_snapshot)
+    return stored
 
 
 def _load_run(
     directory: str | Path,
     *,
     allow_incomplete_scorecard: bool,
-    require_evaluator_artifact_identity: bool = False,
     verify_evaluator_artifact_hashes: bool = True,
 ) -> StoredRun:
     """Load a run, allowing only the writer's private pre-scorecard staging state."""
@@ -562,16 +561,8 @@ def _load_run(
                     raise ValueError(f"{artifact_name} {field_name} does not match manifest")
         if profile_metrics.get("benchmark_profile") != manifest.benchmark_profile:
             raise ValueError("profile metrics Benchmark Profile does not match manifest")
-        evaluator_artifacts = scorecard.get("evaluator_artifacts")
-        if evaluator_artifacts is None:
-            if require_evaluator_artifact_identity:
-                raise ValueError(
-                    "scorecard does not bind metrics.json and profile-metrics.json; "
-                    "re-evaluate the Local Run before publication"
-                )
-        elif not isinstance(evaluator_artifacts, Mapping):
-            raise SchemaValidationError("scorecard evaluator_artifacts must be an object")
-        elif verify_evaluator_artifact_hashes:
+        evaluator_artifacts = cast(Mapping[str, object], scorecard["evaluator_artifacts"])
+        if verify_evaluator_artifact_hashes:
             for field_name, path in (
                 ("metrics_sha256", run_directory / "metrics.json"),
                 ("profile_metrics_sha256", run_directory / "profile-metrics.json"),
@@ -876,7 +867,7 @@ def _write_evaluator_artifacts(
     )
     read_metrics(metrics_path)
     read_profile_metrics(profile_metrics_path)
-    return load_run(directory, require_evaluator_artifact_identity=True)
+    return load_run(directory)
 
 
 def _rebind_evaluation_package_for_profile(
@@ -990,7 +981,7 @@ def reevaluate_run(
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise
-    return load_run(destination, require_evaluator_artifact_identity=True)
+    return load_run(destination)
 
 
 def write_run(
@@ -1158,7 +1149,7 @@ def write_run(
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise
-    return load_run(directory, require_evaluator_artifact_identity=True)
+    return load_run(directory)
 
 
 __all__ = [

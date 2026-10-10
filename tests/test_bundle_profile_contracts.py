@@ -10,8 +10,8 @@ from taim.release_profiles import (
     ordered_trial_ids_sha256,
 )
 from taim.release_result_bundle import (
-    _is_absolute_filesystem_path,
     _validate_benchmark_profile_projection,
+    is_absolute_filesystem_path,
 )
 from taim.schemas import (
     SchemaValidationError,
@@ -164,4 +164,4 @@ def test_external_fidelity_bundle_profile_uses_its_distinct_receipt_policy() -> 
     ],
 )
 def test_absolute_filesystem_path_values_are_recognized_exactly(value: str, absolute: bool) -> None:
-    assert _is_absolute_filesystem_path(value) is absolute
+    assert is_absolute_filesystem_path(value) is absolute

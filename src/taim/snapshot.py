@@ -12,7 +12,7 @@ import json
 import math
 import re
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from decimal import Decimal, InvalidOperation
 from pathlib import PurePath, PurePosixPath
 from types import MappingProxyType
@@ -25,6 +25,7 @@ from taim.contracts import (
     canonical_json,
     content_sha256,
     iter_canonical_json,
+    require_exact_keys,
     require_non_empty,
     require_sha256,
     validate_json,
@@ -191,7 +192,7 @@ def _copy_system_input_value(value: JsonValue, *, path: str) -> JsonValue:
 
 
 def freeze_system_input_options(
-    value: Mapping[str, object], *, path: str = "SystemRunRequest options"
+    value: Mapping[str, object], *, path: str = "PatientToTrialRunRequest options"
 ) -> Mapping[str, object]:
     """Freeze only explicit, value-safe System option types.
 
@@ -1392,7 +1393,13 @@ class BenchmarkTopic:
 
 
 @dataclass(frozen=True, slots=True)
-class TrialDocument:
+class Trial:
+    """Immutable source content and visible derived evidence for one stable trial ID.
+
+    ``content_hash`` is computed from the historical entity-version canonical
+    payload. Python layout is flat; persisted identity bytes remain unchanged.
+    """
+
     trial_id: str
     source_identity: SourceRecordIdentity
     canonical_text: str
@@ -1400,6 +1407,9 @@ class TrialDocument:
     typed_clinical_core: TypedClinicalCore | None = None
     registry_extensions: Mapping[str, JsonValue] = field(default_factory=dict)
     additional_fields: Mapping[str, JsonValue] = field(default_factory=dict)
+
+    derived_evidence: Mapping[str, JsonValue] = field(default_factory=dict)
+    content_hash: str = field(init=False)
 
     schema_version = SNAPSHOT_CONTRACT_VERSION
 
@@ -1451,7 +1461,79 @@ class TrialDocument:
             _copy_system_input_json(self.additional_fields, path="trial additional fields"),
         )
 
+        if not isinstance(self.derived_evidence, Mapping):
+            raise SchemaValidationError("trial derived_evidence must be an object")
+        # Preserve the entity contract's structural checks for serialized evaluator carriers.
+        safe_evidence = freeze_system_input_options(
+            self.derived_evidence, path="trial derived_evidence"
+        )
+        object.__setattr__(
+            self,
+            "derived_evidence",
+            _copy_system_input_json(
+                cast(Mapping[str, JsonValue], safe_evidence), path="trial derived_evidence"
+            ),
+        )
+        object.__setattr__(self, "content_hash", content_sha256(self._version_identity_payload()))
+
+    @property
+    def trial_version_id(self) -> str:
+        """Persisted entity-version identity, identical to ``content_hash``."""
+        return self.content_hash
+
+    def _version_identity_payload(self) -> dict[str, JsonValue]:
+        return {
+            "schema_version": "1.0",
+            "entity_type": "trial",
+            "trial_id": self.trial_id,
+            "trial": self.to_source_dict(),
+            "derived_evidence": json_value_to_builtins(self.derived_evidence),
+        }
+
+    def to_version_dict(self) -> dict[str, JsonValue]:
+        """Serialize the historical entity envelope used in task and pair identities."""
+        return {**self._version_identity_payload(), "trial_version_id": self.content_hash}
+
+    @classmethod
+    def from_version_dict(cls, payload: Mapping[str, object]) -> Trial:
+        """Read and verify persisted entity envelopes without changing their hashes."""
+        require_exact_keys(
+            payload,
+            {
+                "schema_version",
+                "entity_type",
+                "trial_id",
+                "trial",
+                "derived_evidence",
+                "trial_version_id",
+            },
+            role="Trial entity version",
+        )
+        if payload["schema_version"] != "1.0" or payload["entity_type"] != "trial":
+            raise SchemaValidationError("unsupported Trial entity version")
+        source = payload["trial"]
+        evidence = payload["derived_evidence"]
+        if not isinstance(source, Mapping) or not isinstance(evidence, Mapping):
+            raise SchemaValidationError("Trial entity fields must be objects")
+        trial = cls.from_dict(source)
+        if trial.trial_id != payload["trial_id"]:
+            raise SchemaValidationError("trial_id does not match source content")
+        trial = replace(trial, derived_evidence=cast(Mapping[str, JsonValue], evidence))
+        require_sha256(payload["trial_version_id"], "trial_version_id")
+        if payload["trial_version_id"] != trial.content_hash:
+            raise SchemaValidationError("trial_version_id does not match entity content")
+        return trial
+
     def to_dict(self) -> dict[str, JsonValue]:
+        """Serialize a source-only Snapshot 2.0 record; projections use to_version_dict."""
+        if self.derived_evidence:
+            raise SchemaValidationError(
+                "Snapshot records require source-only Trials; use to_version_dict for projections"
+            )
+        return self.to_source_dict()
+
+    def to_source_dict(self) -> dict[str, JsonValue]:
+        """Serialize only source content using the unchanged Snapshot 2.0 format."""
         payload: dict[str, JsonValue] = {
             "schema_version": self.schema_version,
             "trial_id": self.trial_id,
@@ -1475,9 +1557,10 @@ class TrialDocument:
         return canonical_json(self.to_dict())
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, object]) -> TrialDocument:
+    def from_dict(cls, payload: Mapping[str, object]) -> Trial:
+        """Read a Snapshot 2.0 source record, preserving every additive source field."""
         if payload.get("schema_version") != SNAPSHOT_CONTRACT_VERSION:
-            raise SchemaValidationError("unsupported TrialDocument schema_version")
+            raise SchemaValidationError("unsupported Trial schema_version")
         raw_sections = payload.get("sections", [])
         if not isinstance(raw_sections, list):
             raise SchemaValidationError("trial sections must be an array")
@@ -1521,14 +1604,14 @@ class TrialDocument:
         )
 
     @classmethod
-    def from_json(cls, serialized: str) -> TrialDocument:
+    def from_json(cls, serialized: str) -> Trial:
         payload = json.loads(serialized)
         if not isinstance(payload, dict):
-            raise SchemaValidationError("TrialDocument must be a JSON object")
+            raise SchemaValidationError("Trial must be a JSON object")
         return cls.from_dict(payload)
 
 
-class FrozenTrialDocuments(Sequence[TrialDocument]):
+class FrozenTrialDocuments(Sequence[Trial]):
     """Marker interface for immutable, repeatable trial collections."""
 
 
@@ -1679,7 +1762,7 @@ def _update_canonical_value(digests: tuple[Any, ...], value: object) -> None:
 
 def _update_record_array(
     digests: tuple[Any, ...],
-    records: Iterable[BenchmarkTopic | TrialDocument | DerivedView],
+    records: Iterable[BenchmarkTopic | Trial | DerivedView],
 ) -> None:
     _update_digests(digests, b"[")
     for index, record in enumerate(records):
@@ -1710,7 +1793,7 @@ def _seal_snapshot_content(
     *,
     benchmark_lineage: str,
     topics: tuple[BenchmarkTopic, ...],
-    trials: Sequence[TrialDocument],
+    trials: Sequence[Trial],
     base_capabilities: Iterable[str],
     available_capabilities: Iterable[str],
     derived_views: tuple[DerivedView, ...],
@@ -1756,8 +1839,12 @@ def _seal_snapshot_content(
     has_complete_eligibility = False
     has_incomplete_eligibility = False
     for index, trial in enumerate(trials):
-        if not isinstance(trial, TrialDocument):
-            raise SchemaValidationError("Snapshot trials must contain TrialDocument objects")
+        if not isinstance(trial, Trial):
+            raise SchemaValidationError("Snapshot trials must contain Trial objects")
+        if trial.derived_evidence:
+            raise SchemaValidationError(
+                "Snapshot trials must be source-only; declare projected evidence in Derived Views"
+            )
         if previous_trial_id is not None and trial.trial_id <= previous_trial_id:
             if trial.trial_id == previous_trial_id:
                 raise SchemaValidationError("Snapshot trial identities must be unique")
@@ -1809,7 +1896,7 @@ class BenchmarkSnapshot:
     benchmark_lineage: str
     snapshot_name: str = field(compare=False)
     topics: tuple[BenchmarkTopic, ...]
-    trials: Sequence[TrialDocument]
+    trials: Sequence[Trial]
     available_capabilities: frozenset[str]
     derived_views: tuple[DerivedView, ...] = ()
     base_snapshot_id: str = field(init=False)
@@ -2010,7 +2097,7 @@ __all__ = [
     "SemanticTextSection",
     "SexEligibility",
     "SourceRecordIdentity",
-    "TrialDocument",
+    "Trial",
     "TypedClinicalCore",
     "TypedPatientCore",
     "canonical_json",

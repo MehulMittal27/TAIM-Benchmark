@@ -287,22 +287,34 @@ def _release_file(release: Path, prefix: str) -> Path:
     directory = release / "Snapshot" / "Terminology"
     matches = sorted(directory.glob(f"{prefix}*.txt"))
     if not matches:
-        raise ValueError(f"no {prefix}* file under {directory}")
+        raise ValueError(
+            f"{release} is not a SNOMED CT RF2 release: no {prefix}*.txt under {directory}. "
+            "SNOMED CT is licensed and TAIM ships none; supply the release from your own licence"
+        )
     return matches[0]
+
+
+def snomed_release_files(release: Path) -> tuple[Path, Path]:
+    """The concept and English description snapshot files the lexicon reads, or a refusal."""
+
+    return (
+        _release_file(release, "sct2_Concept_Snapshot"),
+        _release_file(release, "sct2_Description_Snapshot-en"),
+    )
 
 
 def load_concept_lexicon(release: Path) -> ConceptLexicon:
     """Index the active English surface forms of clinically meaningful concepts."""
 
+    concept_file, description_file = snomed_release_files(release)
     active: set[str] = set()
-    with _release_file(release, "sct2_Concept_Snapshot").open(encoding="utf-8") as stream:
+    with concept_file.open(encoding="utf-8") as stream:
         next(stream)
         for line in stream:
             fields = line.split("\t")
             if fields[2] == "1":
                 active.add(fields[0])
 
-    description_file = _release_file(release, "sct2_Description_Snapshot-en")
     semantic_tag: dict[str, str] = {}
     terms: dict[str, set[str]] = {}
     with description_file.open(encoding="utf-8") as stream:
@@ -706,5 +718,6 @@ __all__ = [
     "merge_spans",
     "normalize_concept_text",
     "sha256_file",
+    "snomed_release_files",
     "words",
 ]

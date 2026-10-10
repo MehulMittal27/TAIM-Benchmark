@@ -1,0 +1,15 @@
+{
+  "text": "Adults with confirmed alpha syndrome; excludes active cardiac disease.",
+  "criteria": [
+    {
+      "identifier": "INC-01",
+      "polarity": "inclusion",
+      "text": "Confirmed alpha syndrome"
+    },
+    {
+      "identifier": "EXC-02",
+      "polarity": "exclusion",
+      "text": "Active cardiac disease"
+    }
+  ]
+}

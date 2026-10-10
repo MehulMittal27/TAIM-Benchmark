@@ -10,7 +10,8 @@ from importlib.resources import files
 from types import MappingProxyType
 from typing import ClassVar, TypeAlias
 
-from taim.schemas import JsonValue
+from taim.contracts import ParameterBasis, parameter_basis
+from taim.schemas import JsonValue, SchemaValidationError
 
 ENCODER_POLICY_SCHEMA_VERSION = "1.0"
 TEXT_PLACEHOLDER = "{text}"
@@ -22,6 +23,12 @@ _ALLOWED_TRUNCATION = frozenset({"disabled", "maximum_length"})
 _ALLOWED_DTYPES = frozenset({"bfloat16", "float16", "float32"})
 _ALLOWED_NORMALIZATION = frozenset({"L2", "encoder-L2", "none"})
 _ALLOWED_DEVICE_POLICIES = frozenset({"cpu-only", "runtime-selected-exact-match"})
+_NUMERIC_FIELDS = (
+    "embedding_dimension",
+    "maximum_length",
+    "query_maximum_length",
+    "document_maximum_length",
+)
 
 
 class EncoderRegistryError(ValueError):
@@ -111,6 +118,10 @@ class EncoderPolicy:
     document_tokenizer_revision: str | None = None
     query_maximum_length: int | None = None
     document_maximum_length: int | None = None
+    #: Why each number this policy sets is that number, keyed by field name. It is never part of
+    #: equality, ``to_dict()`` or ``policy_hash()``, so recording or amending a basis moves no
+    #: published identity; and a policy that sets a number without one is refused.
+    bases: Mapping[str, ParameterBasis] = field(default_factory=dict, compare=False, repr=False)
 
     @property
     def is_asymmetric(self) -> bool:
@@ -201,6 +212,21 @@ class EncoderPolicy:
                 raise EncoderRegistryError(
                     f"{field_name} must not exceed maximum_length {self.maximum_length}"
                 )
+        numeric = {name for name in _NUMERIC_FIELDS if getattr(self, name) is not None}
+        if not isinstance(self.bases, Mapping) or set(self.bases) != numeric:
+            recorded = sorted(self.bases) if isinstance(self.bases, Mapping) else self.bases
+            raise EncoderRegistryError(
+                f"encoder {self.encoder_id!r} must record a basis for exactly the numbers it "
+                f"sets, {sorted(numeric)}; recorded {recorded}"
+            )
+        try:
+            bases = {
+                name: parameter_basis(raw, path=f"encoder {self.encoder_id!r} {name}")
+                for name, raw in sorted(self.bases.items())
+            }
+        except SchemaValidationError as exc:
+            raise EncoderRegistryError(str(exc)) from exc
+        object.__setattr__(self, "bases", MappingProxyType(bases))
 
     def to_dict(self) -> dict[str, JsonValue]:
         """Return deterministic JSON-compatible policy data."""
@@ -420,6 +446,32 @@ BGE_M3_POLICY = EncoderPolicy(
     backend="torch",
     attention_implementation="eager",
     trust_remote_code=False,
+    bases={
+        "embedding_dimension": ParameterBasis(
+            kind="fact",
+            ref=(
+                "The output dimension of BAAI/bge-m3 at the pinned revision. taim.baselines.dense "
+                "refuses a loaded model whose sentence-embedding dimension differs, and has since "
+                "the arm entered TAIM in commit 079dc81."
+            ),
+            reviewed_by="backfill from the project record; not owner-reviewed",
+            reviewed_at="2026-09-26",
+        ),
+        "maximum_length": ParameterBasis(
+            kind="unknown",
+            ref=(
+                "Entered as BGE_M3_MAX_LENGTH = 8_192 in TAIM commit 079dc81 (2026-07-21, 'Add "
+                "TREC CT 2021 retrieval milestone'), whose message and code give no reason; the "
+                "milestone note of commit b915769 states the value without justifying it. "
+                "Searched: every commit on every branch that adds 8192, 8_192 or 8,192; commit "
+                "messages for 'max length' and 'context window'; the ADRs, protocols, specs and "
+                "research notes. It was not taken from TrialMatchAI, whose own BGE-M3 embedder is "
+                "configured at 512."
+            ),
+            reviewed_by="backfill from the project record; not owner-reviewed",
+            reviewed_at="2026-09-26",
+        ),
+    },
 )
 
 QWEN3_EMBEDDING_06B_QUERY_TEMPLATE = (
@@ -457,6 +509,32 @@ QWEN3_EMBEDDING_06B_POLICY = EncoderPolicy(
     backend="torch-transformers",
     attention_implementation="eager",
     trust_remote_code=False,
+    bases={
+        "embedding_dimension": ParameterBasis(
+            kind="control",
+            ref=(
+                "The full hidden size of Qwen/Qwen3-Embedding-0.6B, which taim.baselines.dense re-"
+                "checks at load. The Qwen3 embedding specification (TAIM commit d93139f) lists "
+                "'Embedding dimension | 1,024' under 'Hold these policies fixed for the primary "
+                "comparison', matching BGE-M3; no record says why the full dimension rather than a"
+                " smaller one the model also exposes."
+            ),
+            reviewed_by="backfill from the project record; not owner-reviewed",
+            reviewed_at="2026-09-26",
+        ),
+        "maximum_length": ParameterBasis(
+            kind="control",
+            ref=(
+                "The Qwen3 embedding specification (TAIM commit d93139f): 'Maximum length | 8,192 "
+                "tokens for both BGE and Qwen' and 'Qwen's larger advertised context window is "
+                "intentionally not used in this comparison. The shared 8,192-token cap isolates "
+                "the encoder change from a context-budget change.' The magnitude is BGE-M3's, "
+                "whose own basis is unknown."
+            ),
+            reviewed_by="backfill from the project record; not owner-reviewed",
+            reviewed_at="2026-09-26",
+        ),
+    },
 )
 
 QWEN3_EMBEDDING_06B_NO_TEMPLATE_POLICY = replace(

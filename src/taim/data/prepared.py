@@ -18,6 +18,7 @@ from taim.contracts import (
     EVALUATION_PACKAGE_VERSION,
     SNAPSHOT_CANONICALIZATION_VERSION,
     SNAPSHOT_CONTRACT_VERSION,
+    canonical_json,
     content_sha256,
 )
 from taim.evaluation_package import ConnectorDiagnostic, EvaluationPackage
@@ -36,7 +37,7 @@ from taim.snapshot import (
     DerivedView,
     FieldProvenance,
     FrozenTrialDocuments,
-    TrialDocument,
+    Trial,
 )
 from taim.source import SourceArtifact, SourceBundle
 
@@ -336,7 +337,7 @@ class PreparedBenchmark:
         return self.snapshot.topics
 
     @property
-    def trials(self) -> Sequence[TrialDocument]:
+    def trials(self) -> Sequence[Trial]:
         return self.snapshot.trials
 
     def resolve_provenance(self, provenance: FieldProvenance) -> SourceArtifact:
@@ -403,6 +404,8 @@ def _write_jsonl(path: Path, rows: Iterable[object]) -> dict[str, JsonValue]:
         for row in rows:
             if isinstance(row, RelevanceJudgment):
                 serialized = row.to_json()
+            elif isinstance(row, Mapping):
+                serialized = canonical_json(row)
             else:
                 to_json = getattr(row, "to_json", None)
                 if not callable(to_json):
@@ -419,6 +422,50 @@ def _write_jsonl(path: Path, rows: Iterable[object]) -> dict[str, JsonValue]:
         "byte_size": byte_size,
         "sha256": "sha256:" + digest.hexdigest(),
     }
+
+
+def _write_derived_views(
+    directory: Path,
+    views: Sequence[DerivedView],
+) -> tuple[list[JsonValue], dict[str, JsonValue]]:
+    """Each Derived View's manifest entry, and the JSONL output of each trial-keyed view.
+
+    A view whose content maps trial IDs to records is stored beside the trials, one record per
+    line, as the loader reads it; any other view stays inline in the manifest.
+    """
+
+    descriptors: list[JsonValue] = []
+    outputs: dict[str, JsonValue] = {}
+    for view in views:
+        content = view.content
+        records = content.get("trials") if isinstance(content, Mapping) else None
+        if (
+            view.additional_fields
+            or not isinstance(content, Mapping)
+            or set(content) != {"schema_version", "trials"}
+            or not isinstance(content["schema_version"], str)
+            or not isinstance(records, Mapping)
+            or any(
+                not isinstance(record, Mapping) or record.get("trial_id") != trial_id
+                for trial_id, record in records.items()
+            )
+        ):
+            descriptors.append(view.to_dict())
+            continue
+        outputs[view.name] = _write_jsonl(
+            directory / f"derived-view-{view.name}.jsonl",
+            (records[trial_id] for trial_id in sorted(records)),
+        )
+        descriptor = view.to_dict()
+        del descriptor["content"]
+        descriptor["content_reference"] = {
+            "format": "jsonl-object-map-v1",
+            "output_name": view.name,
+            "content_schema_version": content["schema_version"],
+            "mapping_key": "trial_id",
+        }
+        descriptors.append(descriptor)
+    return descriptors, outputs
 
 
 def _write_json(path: Path, payload: object) -> None:
@@ -484,6 +531,7 @@ def write_prepared_benchmark(
             "diagnostics": _write_jsonl(paths["diagnostics"], diagnostics_tuple),
             "judgments": _write_jsonl(paths["judgments"], evaluation_package.judgments),
         }
+        derived_views, derived_view_outputs = _write_derived_views(staging, snapshot.derived_views)
         timestamp = created_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
         manifest: dict[str, Any] = {
             "schema_version": SNAPSHOT_CONTRACT_VERSION,
@@ -497,11 +545,13 @@ def write_prepared_benchmark(
                 "definition": recipe,
             },
             "snapshot_preparation": preparation.to_dict(),
-            "snapshot": snapshot.manifest_dict(),
+            "snapshot": {**snapshot.manifest_dict(), "derived_views": derived_views},
             "evaluation_package": evaluation_package.manifest_dict(),
             "outputs": outputs,
             "build_provenance": json_value_to_builtins(build_provenance),
         }
+        if derived_view_outputs:
+            manifest["derived_view_outputs"] = derived_view_outputs
         manifest_path = staging / PREPARED_MANIFEST_FILENAME
         _write_json(manifest_path, manifest)
         staging.replace(destination)
@@ -660,13 +710,13 @@ class _PreparedTrialDocuments(FrozenTrialDocuments):
     def __len__(self) -> int:
         return sum(record_count for _, record_count, _, _ in self._shards)
 
-    def __iter__(self) -> Iterator[TrialDocument]:
+    def __iter__(self) -> Iterator[Trial]:
         for path, record_count, compression, shard_index in self._shards:
             count = 0
             for trial in _iter_jsonl(
                 path,
                 name=f"trial shard {shard_index}",
-                parse=TrialDocument.from_json,
+                parse=Trial.from_json,
                 compression=compression,
             ):
                 count += 1
@@ -677,12 +727,12 @@ class _PreparedTrialDocuments(FrozenTrialDocuments):
                 )
 
     @overload
-    def __getitem__(self, index: int) -> TrialDocument: ...
+    def __getitem__(self, index: int) -> Trial: ...
 
     @overload
-    def __getitem__(self, index: slice) -> tuple[TrialDocument, ...]: ...
+    def __getitem__(self, index: slice) -> tuple[Trial, ...]: ...
 
-    def __getitem__(self, index: int | slice) -> TrialDocument | tuple[TrialDocument, ...]:
+    def __getitem__(self, index: int | slice) -> Trial | tuple[Trial, ...]:
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self))
             if step > 0:

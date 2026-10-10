@@ -1,0 +1,146 @@
+{
+  "kind": "trialmatchai-open-concept-source-snapshot",
+  "schema_version": "1",
+  "upstream": {
+    "repository": "https://github.com/cbib/TrialMatchAI.git",
+    "commit": "3bc0e5f44d742ef069f8ef73bbc4187573d9db6a",
+    "source_table": "src/trialmatchai/entities/concept_sources.py:49-75 OPEN_SOURCES"
+  },
+  "fetch": "each configured URL fetched once with curl -L --fail (redirects followed, as requests.get does), 2026-09-26",
+  "conversion": "the tag's own build_open_dictionaries over a copy of these bytes; download_source reused every cached file (no network)",
+  "total_rows": 616925,
+  "sources": [
+    {
+      "source": "genes",
+      "kind": "gene_info",
+      "vocabulary_id": "NCBIGene",
+      "domain_id": "Gene",
+      "configured_url": "https://ftp.ncbi.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz",
+      "resolved_url": "https://ftp.ncbi.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz",
+      "resolved_url_signed": false,
+      "http_status": 200,
+      "fetch_started_utc": "2026-09-26T18:55:23Z",
+      "fetch_finished_utc": "2026-09-26T18:55:24Z",
+      "filename": "Homo_sapiens.gene_info.gz",
+      "bytes": 5190133,
+      "sha256": "sha256:4a333625190f594abc21fd7564c7a0ee991a0331c639c6d3b7bb814b944e75b7",
+      "last_modified": "Fri, 25 Sep 2026 11:31:16 GMT",
+      "etag": null,
+      "data_version": null,
+      "converted_dictionary": {
+        "rows": 193911,
+        "sha256": "sha256:ccd142d5d99892b766c5047ecc90c7578994c25d3f9369f7c55ae14ffcc500d0"
+      }
+    },
+    {
+      "source": "diseases",
+      "kind": "obo",
+      "vocabulary_id": "DOID",
+      "domain_id": "Disease",
+      "configured_url": "http://purl.obolibrary.org/obo/doid.obo",
+      "resolved_url": "https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/main/src/ontology/doid.obo",
+      "resolved_url_signed": false,
+      "http_status": 200,
+      "fetch_started_utc": "2026-09-26T18:55:24Z",
+      "fetch_finished_utc": "2026-09-26T18:55:25Z",
+      "filename": "doid.obo",
+      "bytes": 7221215,
+      "sha256": "sha256:e729a25090b71f8d71be3e1f5ad3cf8c51d2ba7fb8232ca4ab12ecf4be633db9",
+      "last_modified": null,
+      "etag": "\"9bb5519252ed0c426456850ffc609d4c1d654409849596e6dcbc513e8fbf5f7b\"",
+      "data_version": "releases/2026-08-31/doid.obo",
+      "converted_dictionary": {
+        "rows": 12282,
+        "sha256": "sha256:080a8d5681bbf9b89431118bf72c61f84cad4e18bb74840df15e0bce631cde91"
+      }
+    },
+    {
+      "source": "chemicals",
+      "kind": "obo",
+      "vocabulary_id": "ChEBI",
+      "domain_id": "Chemical",
+      "configured_url": "https://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.obo",
+      "resolved_url": "https://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.obo",
+      "resolved_url_signed": false,
+      "http_status": 200,
+      "fetch_started_utc": "2026-09-26T18:55:25Z",
+      "fetch_finished_utc": "2026-09-26T18:55:41Z",
+      "filename": "chebi_lite.obo",
+      "bytes": 55411092,
+      "sha256": "sha256:0d147fb39d66cd4b2a2d0d7ae82367c8f382f0dcb8df0c1b04ac313ea2f35ef4",
+      "last_modified": "Wed, 09 Sep 2026 20:25:58 GMT",
+      "etag": "\"34d8194-65b12a8b1d6a3\"",
+      "data_version": "chebi/255",
+      "converted_dictionary": {
+        "rows": 218533,
+        "sha256": "sha256:d1b4d75ad825b9a261532370bbebe02d25e2c14c54c11f35a0e51351a33347e7"
+      }
+    },
+    {
+      "source": "cell_lines",
+      "kind": "obo",
+      "vocabulary_id": "Cellosaurus",
+      "domain_id": "CellLine",
+      "configured_url": "https://ftp.expasy.org/databases/cellosaurus/cellosaurus.obo",
+      "resolved_url": "https://ftp.expasy.org/databases/cellosaurus/cellosaurus.obo",
+      "resolved_url_signed": false,
+      "http_status": 200,
+      "fetch_started_utc": "2026-09-26T18:55:41Z",
+      "fetch_finished_utc": "2026-09-26T18:55:45Z",
+      "filename": "cellosaurus.obo",
+      "bytes": 118533192,
+      "sha256": "sha256:bebb8bd8e63af2a051aed67adfac8f90246e9bfade92d97d871e99e9b4d4b365",
+      "last_modified": "Thu, 25 Jun 2026 11:24:00 GMT",
+      "etag": "\"710ac48-655123a879400\"",
+      "data_version": "56.0",
+      "converted_dictionary": {
+        "rows": 168970,
+        "sha256": "sha256:ad86dc539d874fcf0824788016cfd2ffad4a236c34af57407bdc40b3105d6946"
+      }
+    },
+    {
+      "source": "cell_types",
+      "kind": "obo",
+      "vocabulary_id": "CL",
+      "domain_id": "CellType",
+      "configured_url": "http://purl.obolibrary.org/obo/cl.obo",
+      "resolved_url": "https://release-assets.githubusercontent.com/github-production-release-asset/36889083/cdfd716a-2896-4637-9b3b-6da1ad72c4a1",
+      "resolved_url_signed": true,
+      "http_status": 200,
+      "fetch_started_utc": "2026-09-26T18:55:45Z",
+      "fetch_finished_utc": "2026-09-26T18:55:46Z",
+      "filename": "cl.obo",
+      "bytes": 17353259,
+      "sha256": "sha256:7e19b4aef8e7fe7720b0c4474c6a5b8713c904ea9ab7b7d5d96f2cb28b8fc51f",
+      "last_modified": "Mon, 08 Jun 2026 14:38:48 GMT",
+      "etag": "\"0x8DEC56BA6C2DCDE\"",
+      "data_version": "releases/2026-06-08",
+      "converted_dictionary": {
+        "rows": 3335,
+        "sha256": "sha256:92e7ae510c9143ec4a320e377db9ffa264bcd8edf9ba108d85f0d0e7d35e4f7e"
+      }
+    },
+    {
+      "source": "phenotypes",
+      "kind": "obo",
+      "vocabulary_id": "HPO",
+      "domain_id": "Phenotype",
+      "configured_url": "http://purl.obolibrary.org/obo/hp.obo",
+      "resolved_url": "https://release-assets.githubusercontent.com/github-production-release-asset/41063438/7100cdc5-8b17-4986-98b7-4b4d90427c09",
+      "resolved_url_signed": true,
+      "http_status": 200,
+      "fetch_started_utc": "2026-09-26T18:55:46Z",
+      "fetch_finished_utc": "2026-09-26T18:55:47Z",
+      "filename": "hp.obo",
+      "bytes": 10863613,
+      "sha256": "sha256:93dace952fcb3ec4728818857f6ba76bc2d5312f4d83266519b8694b8e798f22",
+      "last_modified": "Wed, 02 Sep 2026 20:59:18 GMT",
+      "etag": "\"0x8DF09350DFA7286\"",
+      "data_version": "hp/releases/2026-09-01",
+      "converted_dictionary": {
+        "rows": 19894,
+        "sha256": "sha256:453c5437912d64c2242ceaa4b97df790cb25ad5fef0e566656498c488ca2b834"
+      }
+    }
+  ]
+}

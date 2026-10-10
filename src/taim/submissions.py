@@ -25,10 +25,10 @@ from taim.contracts import (
 )
 from taim.evaluation_package import EvaluationPackage
 from taim.file_hash import sha256_file
+from taim.patient_to_trial import PatientToTrialTaskInput
 from taim.public_patient_to_trial import _evaluate_profile_cutoff
 from taim.release_profiles import load_profile
 from taim.schemas import Candidate
-from taim.system_contracts import SystemBenchmarkSnapshot
 from taim.trial_to_patient import TrialToPatientTaskInput
 
 _SCHEMA = "1.0"
@@ -155,7 +155,7 @@ def load_task(
         raise ValueError("submission task direction or schema differs")
     _identity(payload, "export_id")
     if task == "patient_to_trial":
-        snapshot = SystemBenchmarkSnapshot.from_dict(payload["input"])
+        snapshot = PatientToTrialTaskInput.from_dict(payload["input"])
         package = EvaluationPackage.from_dict(_read(evaluator_dir / "evaluation-package.json"))
         if (
             package.snapshot_id != snapshot.prepared_snapshot_id
@@ -225,13 +225,17 @@ def load_task(
         _release_identity,
         _validate_benchmark_profile_projection,
     )
-    from taim.release_support import require_supported_combination, validate_release_source_identity
+    from taim.release_support import (
+        reference_system_for_task,
+        require_supported_combination,
+        validate_release_source_identity,
+    )
 
     capability = require_supported_combination(
         track=lineage,
         task=task,
         profile=payload["profile"],
-        system="bm25" if task == "patient_to_trial" else "bm25-trial-to-patient",
+        system=reference_system_for_task(task),
     )
     validate_release_source_identity(
         payload["release_source"],
@@ -264,7 +268,7 @@ def load_task(
 
 def _members(payload: Mapping[str, Any]) -> tuple[list[str], set[str], str, str]:
     if payload["task"] == "patient_to_trial":
-        forward = SystemBenchmarkSnapshot.from_dict(payload["input"])
+        forward = PatientToTrialTaskInput.from_dict(payload["input"])
         return (
             [topic.topic_id for topic in forward.topics],
             {trial.trial_id for trial in forward.trials},
@@ -384,7 +388,7 @@ def _evaluate(
 ) -> dict[str, Any]:
     task_input = payload["input"]
     if payload["task"] == "patient_to_trial":
-        snapshot = SystemBenchmarkSnapshot.from_dict(task_input)
+        snapshot = PatientToTrialTaskInput.from_dict(task_input)
         evaluation = EvaluationPackage.from_dict(package)
         profile = load_profile(payload["profile"])
         candidates = tuple(

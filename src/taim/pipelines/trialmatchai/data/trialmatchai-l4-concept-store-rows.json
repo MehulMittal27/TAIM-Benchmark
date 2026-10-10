@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "store": "candidate-21352305",
+  "row_digest_rule": "SHA-256 over the sorted SHA-256 digests of one canonical JSON array per row: concept_id, vocabulary_id, concept_code, concept_name, domain_id, concept_class_id, standard_concept, synonyms, fts_text. Row order and the embedding column are not part of it",
+  "rows": {
+    "count": 3899744,
+    "digest": "sha256:0ee5fc1533018c0fbadd64daa4f4afbb4e7440acb758a3a98a31d935247c186f"
+  },
+  "recipe": {
+    "manifest_version": "2",
+    "embeddings": {
+      "batch_size": 32,
+      "dimension": 1024,
+      "max_length": 512,
+      "metric": "cosine",
+      "mode": "vector",
+      "model_name": "BAAI/bge-m3",
+      "normalize": true,
+      "pooling": "mean",
+      "present": true,
+      "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+      "skip_embeddings": false,
+      "use_fp16": false
+    },
+    "indexes": {
+      "filters": [
+        {
+          "column": "vocabulary_id",
+          "type": "BTREE"
+        },
+        {
+          "column": "domain_id",
+          "type": "BTREE"
+        }
+      ],
+      "fts": {
+        "column": "fts_text",
+        "type": "FTS"
+      },
+      "vector": {
+        "column": "embedding",
+        "max_iterations": 50,
+        "metric": "cosine",
+        "num_bits": 8,
+        "num_partitions": 1024,
+        "num_sub_vectors": 128,
+        "sample_rate": 256,
+        "train": true,
+        "type": "IVF_PQ"
+      }
+    }
+  }
+}

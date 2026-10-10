@@ -20,7 +20,7 @@ from taim.snapshot import (
     FieldProvenance,
     HealthyVolunteerAcceptance,
     SexEligibility,
-    TrialDocument,
+    Trial,
 )
 
 CONSTRAINT_FACT_VIEW_NAME = "constraint_facts"
@@ -841,7 +841,7 @@ def _topic_record(
 
 
 def _structured_trial_assertions(
-    trial: TrialDocument,
+    trial: Trial,
 ) -> dict[FactName, list[tuple[JsonValue, dict[str, JsonValue]]]]:
     core = trial.typed_clinical_core
     if core is None:
@@ -894,7 +894,7 @@ def _structured_trial_assertions(
 
 
 def _text_trial_assertions(
-    trial: TrialDocument,
+    trial: Trial,
     extractor: ConstraintFactExtractor,
     requested_facts: frozenset[FactName],
 ) -> tuple[
@@ -923,7 +923,7 @@ def _text_trial_assertions(
 
 
 def _trial_record(
-    trial: TrialDocument,
+    trial: Trial,
     extractor: ConstraintFactExtractor,
 ) -> dict[str, JsonValue]:
     structured = _structured_trial_assertions(trial)

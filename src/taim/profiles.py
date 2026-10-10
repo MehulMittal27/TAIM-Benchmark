@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Literal, cast
 
-from taim.contracts import require_non_empty, require_sha256
+from taim.contracts import parameter_values, require_non_empty, require_sha256
 from taim.evaluation_package import EvaluationPackage
-from taim.schemas import JsonValue, RelevanceJudgment
-from taim.snapshot import BenchmarkTopic, TrialDocument
+from taim.profile_values import (
+    ProfileDefinition,
+    ResolvedBenchmarkValue,
+    profile_bytes_sha256,
+    profile_json_bytes,
+    profile_lines_sha256,
+)
+from taim.schemas import JsonValue
 
 if TYPE_CHECKING:
     from taim.data import PreparedBenchmark
@@ -142,59 +147,22 @@ class BenchmarkProfileEvaluationPolicy:
 
 
 @dataclass(frozen=True, slots=True)
-class BenchmarkProfile:
-    """Validated static definition of one benchmark comparison profile."""
+class BenchmarkProfile(ProfileDefinition):
+    """Profile admitted by this module's corpus and evaluation policy."""
 
-    profile_id: str
-    profile_version: str
     corpus_policy: CorpusPolicy
-    expected_pool_count: int | None
-    paper_pool_identity_status: str | None
-    cutoffs: tuple[int, ...]
-    discount: str
-    unjudged_policy: UnjudgedPolicy
-    gain_mapping: Mapping[str, int]
-    precision_metric: str
-    precision_relevance_minimum: int | None
-    precision_denominator: PrecisionDenominator
-    ranking_source: str
-    ideal_policy: str
-    topic_policy: str
-    definition_sha256: str
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "cutoffs", tuple(self.cutoffs))
-        object.__setattr__(self, "gain_mapping", MappingProxyType(dict(self.gain_mapping)))
-
-    def evaluation_configuration(self) -> dict[str, JsonValue]:
-        """Return the complete JSON-safe evaluation policy."""
-
-        return {
-            "cutoffs": list(self.cutoffs),
-            "discount": self.discount,
-            "unjudged_policy": self.unjudged_policy,
-            "gain_mapping": dict(self.gain_mapping),
-            "precision_metric": self.precision_metric,
-            "precision_relevance_minimum": self.precision_relevance_minimum,
-            "precision_denominator": self.precision_denominator,
-            "ranking_source": self.ranking_source,
-            "ideal_policy": self.ideal_policy,
-            "topic_policy": self.topic_policy,
-        }
 
 
 @dataclass(frozen=True, slots=True)
-class ResolvedBenchmark:
-    """A prepared benchmark resolved to one immutable comparison corpus."""
+class ResolvedBenchmark(ResolvedBenchmarkValue[BenchmarkProfile]):
+    """An immutable corpus admitted under this module's profile policy."""
 
-    prepared: PreparedBenchmark
-    profile: BenchmarkProfile
-    trials: Sequence[TrialDocument]
-    corpus_hash: str
-    pool_ids_hash: str
-    pool_source_hash: str | None
     unverified_membership_acknowledged: bool
-    evaluation_package: EvaluationPackage = field(init=False)
+
+    def manifest_configuration(self) -> dict[str, JsonValue]:
+        return self.profile_manifest_configuration(
+            unverified_membership_acknowledged=self.unverified_membership_acknowledged
+        )
 
     def __post_init__(self) -> None:
         if self.trials is self.prepared.trials:
@@ -214,82 +182,6 @@ class ResolvedBenchmark:
                 judgment_scheme=self.prepared.evaluation_package.judgment_scheme,
             )
         object.__setattr__(self, "evaluation_package", evaluation_package)
-
-    @property
-    def name(self) -> str:
-        return self.prepared.name
-
-    @property
-    def benchmark_lineage(self) -> str:
-        return self.prepared.snapshot.benchmark_lineage
-
-    @property
-    def snapshot_contract_version(self) -> str:
-        return self.prepared.snapshot.contract_version
-
-    @property
-    def prepared_snapshot_id(self) -> str:
-        return self.prepared.snapshot.snapshot_id
-
-    @property
-    def evaluation_package_id(self) -> str:
-        return self.evaluation_package.evaluation_package_id
-
-    @property
-    def dataset_id(self) -> str:
-        return self.prepared.dataset_id
-
-    @property
-    def directory(self) -> Path:
-        return self.prepared.directory
-
-    @property
-    def topics(self) -> tuple[BenchmarkTopic, ...]:
-        return self.prepared.topics
-
-    @property
-    def judgments(self) -> tuple[RelevanceJudgment, ...]:
-        return self.evaluation_package.judgments
-
-    def manifest_configuration(self) -> dict[str, JsonValue]:
-        """Return the complete profile provenance stored with every run."""
-
-        return {
-            "profile_id": self.profile.profile_id,
-            "profile_version": self.profile.profile_version,
-            "definition_sha256": self.profile.definition_sha256,
-            "corpus_policy": self.profile.corpus_policy,
-            "source_corpus_sha256": self.prepared.snapshot.logical_content_hashes()["trials"],
-            "effective_corpus_sha256": self.corpus_hash,
-            "effective_corpus_count": len(self.trials),
-            "pool_ids_sha256": self.pool_ids_hash,
-            "pool_source_sha256": self.pool_source_hash,
-            "paper_pool_identity_status": self.profile.paper_pool_identity_status,
-            "unverified_membership_acknowledged": self.unverified_membership_acknowledged,
-            "evaluation": self.profile.evaluation_configuration(),
-        }
-
-
-def _canonical_json_bytes(payload: object) -> bytes:
-    return json.dumps(
-        payload,
-        allow_nan=False,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-
-
-def _sha256_bytes(payload: bytes) -> str:
-    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
-
-
-def _sha256_lines(lines: Iterable[str]) -> str:
-    digest = hashlib.sha256()
-    for line in lines:
-        digest.update(line.encode("utf-8"))
-        digest.update(b"\n")
-    return f"sha256:{digest.hexdigest()}"
 
 
 def resolve_benchmark_profile_evaluation(
@@ -390,7 +282,9 @@ def load_profile_definition(
     """Load and strictly validate one profile definition file against the policy it must state."""
 
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = parameter_values(
+            json.loads(path.read_text(encoding="utf-8")), role="benchmark profile"
+        )
     except json.JSONDecodeError as exc:
         raise ValueError(f"invalid benchmark profile JSON: {exc}") from exc
     if not isinstance(payload, dict):
@@ -426,7 +320,7 @@ def load_profile_definition(
         },
         role="benchmark profile evaluation",
     )
-    definition_sha256 = _sha256_bytes(_canonical_json_bytes(payload))
+    definition_sha256 = profile_bytes_sha256(profile_json_bytes(payload))
     evaluation_policy = resolve_benchmark_profile_evaluation(
         {
             "profile_id": payload["profile_id"],
@@ -515,7 +409,7 @@ def _load_trial_pool(path: Path, *, expected_count: int) -> tuple[tuple[str, ...
         raise ValueError("trial pool must not contain duplicate IDs")
     if lines != sorted(lines):
         raise ValueError("trial pool IDs must be in canonical ascending order")
-    return tuple(lines), _sha256_bytes(source_bytes)
+    return tuple(lines), profile_bytes_sha256(source_bytes)
 
 
 def resolve_benchmark_profile(
@@ -557,7 +451,7 @@ def resolve_loaded_profile(
             profile=profile,
             trials=prepared.trials,
             corpus_hash=prepared.snapshot.logical_content_hashes()["trials"],
-            pool_ids_hash=_sha256_lines(prepared_trial_ids),
+            pool_ids_hash=profile_lines_sha256(prepared_trial_ids),
             pool_source_hash=None,
             unverified_membership_acknowledged=False,
         )
@@ -592,13 +486,13 @@ def resolve_loaded_profile(
     selected_trials = tuple(trial for trial in prepared.trials if trial.trial_id in pool_id_set)
     if len(selected_trials) != profile.expected_pool_count:
         raise ValueError("resolved trial pool count does not match profile")
-    corpus_hash = _sha256_lines(trial.to_json() for trial in selected_trials)
+    corpus_hash = profile_lines_sha256(trial.to_json() for trial in selected_trials)
     return ResolvedBenchmark(
         prepared=prepared,
         profile=profile,
         trials=selected_trials,
         corpus_hash=corpus_hash,
-        pool_ids_hash=_sha256_lines(pool_ids),
+        pool_ids_hash=profile_lines_sha256(pool_ids),
         pool_source_hash=pool_source_hash,
         unverified_membership_acknowledged=True,
     )

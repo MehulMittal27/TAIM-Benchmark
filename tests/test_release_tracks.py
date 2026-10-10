@@ -2,9 +2,11 @@ from __future__ import annotations
 
 # ruff: noqa: S101
 import json
+import re
 from importlib.resources import files
 from pathlib import Path
 
+from taim.data.trec_ct_2021 import load_source_bundle_lock
 from taim.file_hash import sha256_file
 from taim.pipeline_extensions import pipeline_extensions
 from taim.release_cli import main
@@ -43,3 +45,21 @@ def test_support_command_is_machine_readable(capsys) -> None:
     assert sorted(capability_key(row) for row in listed) == sorted(
         capability_key(row) for row in shipped
     )
+
+
+def test_trec_2021_acquisition_guide_lists_the_packaged_lock() -> None:
+    # The guide copies each file's URL, size and digest out of the lock so a reader can download
+    # without opening JSON; this keeps the copy from drifting.
+    guide = Path(__file__).parents[1] / "docs" / "trec-2021-acquisition.md"
+    rows = re.findall(
+        r"^\| \[`([^`]+)`\]\((\S+)\) \| ([\d,]+) \| `([0-9a-f]{64})` \|$",
+        guide.read_text(encoding="utf-8"),
+        flags=re.MULTILINE,
+    )
+    assert [
+        (name, url, int(size.replace(",", "")), f"sha256:{digest}")
+        for name, url, size, digest in rows
+    ] == [
+        (artifact.filename, artifact.url, artifact.byte_size, artifact.sha256)
+        for artifact in load_source_bundle_lock().artifacts
+    ]

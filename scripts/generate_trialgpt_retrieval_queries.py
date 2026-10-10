@@ -7,14 +7,15 @@ import argparse
 import json
 from pathlib import Path
 
-from taim.adapters.trialgpt import TRIALGPT_CODEX_MODEL, CodexTrialGPTProvider
 from taim.artifacts import sha256_file
-from taim.snapshot import BenchmarkTopic
-from taim.trialgpt_generation import GenerationCache, GenerationCacheRunLease
-from taim.trialgpt_retrieval_producer import (
-    RetrievalQueryTopic,
+from taim.generation import GenerationCache, GenerationCacheRunLease
+from taim.pipelines.trialgpt.query_plan_records import (
+    generation_cache_path,
+    load_query_topics,
+    query_plan_models,
+)
+from taim.pipelines.trialgpt.retrieval_producer import (
     generate_three_luna_queries,
-    resolve_trialgpt_retrieval_target,
     write_generated_arm_queries,
 )
 
@@ -37,83 +38,20 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _load_topics(
-    manifest_path: Path,
-    *,
-    track: str,
-    profile: str,
-) -> tuple[tuple[RetrievalQueryTopic, ...], str]:
-    target = resolve_trialgpt_retrieval_target(track=track, profile=profile)
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if not isinstance(manifest, dict):
-        raise ValueError("prepared manifest must be a JSON object")
-    snapshot = manifest.get("snapshot")
-    if (
-        manifest.get("dataset_id") != target.prepared_dataset_id
-        or not isinstance(snapshot, dict)
-        or snapshot.get("benchmark_lineage") != target.track
-        or snapshot.get("snapshot_name") != target.snapshot_name
-    ):
-        raise ValueError("prepared manifest does not match the admitted Track/Profile target")
-    snapshot_id = snapshot.get("snapshot_id")
-    outputs = manifest.get("outputs")
-    topics_output = outputs.get("topics") if isinstance(outputs, dict) else None
-    if (
-        not isinstance(snapshot_id, str)
-        or not isinstance(topics_output, dict)
-        or not isinstance(topics_output.get("filename"), str)
-        or not isinstance(topics_output.get("sha256"), str)
-    ):
-        raise ValueError("prepared manifest has no single-file topics output contract")
-    path = manifest_path.parent / topics_output["filename"]
-    if sha256_file(path) != topics_output["sha256"]:
-        raise ValueError("prepared topics file does not match its manifest")
-    topics: list[RetrievalQueryTopic] = []
-    with path.open(encoding="utf-8") as stream:
-        for line_number, line in enumerate(stream, start=1):
-            try:
-                topic = BenchmarkTopic.from_json(line)
-            except (ValueError, json.JSONDecodeError) as exc:
-                raise ValueError(f"invalid prepared topic at line {line_number}") from exc
-            topics.append(RetrievalQueryTopic(topic.topic_id, topic.canonical_text))
-    if len(topics) != topics_output.get("record_count"):
-        raise ValueError("prepared topics record count does not match its manifest")
-    if len(topics) != target.topic_count:
-        raise ValueError("prepared topics do not contain the frozen complete topic set")
-    return tuple(topics), snapshot_id
-
-
 def main() -> int:
     args = _parser().parse_args()
-    topics, snapshot_id = _load_topics(
+    topics, snapshot_id = load_query_topics(
         args.prepared_manifest,
         track=args.track,
         profile=args.profile,
     )
-    providers = {
-        "medium": CodexTrialGPTProvider(
-            model=TRIALGPT_CODEX_MODEL,
-            reasoning_effort="medium",
-            codex_executable=args.codex_executable,
-        ),
-        "xhigh": CodexTrialGPTProvider(
-            model=TRIALGPT_CODEX_MODEL,
-            reasoning_effort="xhigh",
-            codex_executable=args.codex_executable,
-        ),
-        "recall-explicit": CodexTrialGPTProvider(
-            model=TRIALGPT_CODEX_MODEL,
-            reasoning_effort="medium",
-            codex_executable=args.codex_executable,
-        ),
-    }
-    cache = GenerationCache(args.cache)
+    cache = GenerationCache(generation_cache_path(args.cache))
+    models = query_plan_models(cache=cache, codex_executable=args.codex_executable)
     try:
-        with GenerationCacheRunLease(args.cache, run_id=args.run_id):
+        with GenerationCacheRunLease(cache.path, run_id=args.run_id):
             queries = generate_three_luna_queries(
                 topics,
-                providers=providers,
-                cache=cache,
+                models=models,
                 max_workers=args.workers,
             )
             write_generated_arm_queries(queries, args.output)

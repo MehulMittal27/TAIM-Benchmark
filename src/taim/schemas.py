@@ -15,7 +15,10 @@ from dataclasses import dataclass, field, fields
 from datetime import UTC, datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, ClassVar, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
+
+if TYPE_CHECKING:
+    from taim.patient_to_trial import PatientToTrialTaskInput
 
 SCHEMA_VERSION = "1.0"
 # Primary Ranking, Pipeline Depth, Stage Rankings, and budget K are required run semantics.
@@ -651,7 +654,7 @@ class RunManifest(_VersionedSchema):
         query_versions: tuple[tuple[str, str], ...],
         trial_versions: tuple[tuple[str, str], ...],
     ) -> None:
-        """Recompute both forward identities from their complete embedded content."""
+        """Validate the compact lineage record and recompute System identity."""
 
         # Local imports avoid a schemas -> entity_versions -> schemas import cycle.
         from taim.contracts import (
@@ -663,11 +666,10 @@ class RunManifest(_VersionedSchema):
         from taim.entity_versions import (
             PatientEntityVersion,
             PatientEvidenceProfile,
-            TrialVersion,
             clinical_as_of_text,
             parse_clinical_as_of,
         )
-        from taim.snapshot import DerivedView, freeze_system_input_options
+        from taim.snapshot import freeze_system_input_options
 
         task_fields = {
             "snapshot_contract_version",
@@ -682,8 +684,7 @@ class RunManifest(_VersionedSchema):
             "derived_views",
             "task_input_id",
         }
-        identity_version = system_input.get("identity_version", "1.0")
-        if identity_version not in {"1.0", "2.0"}:
+        if system_input.get("identity_version") != "2.0":
             raise SchemaValidationError("unsupported forward System Input identity_version")
         expected_fields = task_fields | {
             "system_input_id",
@@ -692,9 +693,15 @@ class RunManifest(_VersionedSchema):
             "options",
             "required_capabilities",
             "optional_capabilities",
+            "identity_version",
+            "trial_corpus_encoding",
+            "trial_corpus_count",
+            "trial_corpus_lineage_sha256",
         }
-        if identity_version == "2.0":
-            expected_fields.add("identity_version")
+        if system_input.get("trial_corpus_encoding") != "lineage-v1":
+            raise SchemaValidationError(
+                "forward System Input must record trial_corpus_encoding lineage-v1"
+            )
         if set(system_input) != expected_fields:
             raise SchemaValidationError(
                 "configuration.system_input fields do not match the forward System input contract"
@@ -741,13 +748,18 @@ class RunManifest(_VersionedSchema):
             PatientEntityVersion.from_dict(cast(Mapping[str, object], value))
             for value in raw_patient_versions
         )
-        trial_entities = tuple(
-            TrialVersion.from_dict(cast(Mapping[str, object], value))
-            for value in raw_trial_versions
-        )
-        derived_views = tuple(
-            DerivedView.from_dict(cast(Mapping[str, object], value)) for value in raw_derived_views
-        )
+        for raw_view in raw_derived_views:
+            view = cast(Mapping[str, object], raw_view)
+            if set(view) != {"name", "version", "input_snapshot_id", "view_id"}:
+                raise SchemaValidationError("compact Derived View fields do not match lineage")
+            name = _require_non_empty_string(view["name"], "Derived View name")
+            if re.fullmatch(r"[a-z0-9]+(?:[_-][a-z0-9]+)*", name) is None:
+                raise SchemaValidationError("Derived View name must be a lowercase slug")
+            _require_non_empty_string(view["version"], "Derived View version")
+            for field_name in ("input_snapshot_id", "view_id"):
+                value = view[field_name]
+                if not isinstance(value, str) or _SHA256.fullmatch(value) is None:
+                    raise SchemaValidationError(f"Derived View {field_name} must be a SHA-256")
         input_clinical_as_of = parse_clinical_as_of(system_input["clinical_as_of"])
         if input_clinical_as_of != self.clinical_as_of.astimezone(UTC):
             raise SchemaValidationError(
@@ -769,9 +781,15 @@ class RunManifest(_VersionedSchema):
         input_query_versions = tuple(
             (entity.patient_id, entity.patient_version_id) for entity in patient_entities
         )
-        input_trial_versions = tuple(
-            (entity.trial_id, entity.trial_version_id) for entity in trial_entities
+        input_trial_versions = self._parse_serialized_entity_lineage(
+            list(raw_trial_versions), entity_name="trial"
         )
+        count = system_input["trial_corpus_count"]
+        _require_exact_int(count, "trial_corpus_count")
+        if count != len(trial_versions):
+            raise SchemaValidationError("compact trial_corpus_count does not match lineage")
+        if system_input["trial_corpus_lineage_sha256"] != content_sha256(raw_trial_versions):
+            raise SchemaValidationError("compact trial_corpus_lineage_sha256 does not match")
         if input_query_versions != query_versions:
             raise SchemaValidationError("forward patient entity-version lineage does not match")
         if input_trial_versions != trial_versions:
@@ -818,23 +836,11 @@ class RunManifest(_VersionedSchema):
             path="configuration.system_input.options",
         )
 
-        task_payload: dict[str, JsonValue] = {
-            "snapshot_contract_version": self.snapshot_contract_version,
-            "task": self.task,
-            "benchmark_lineage": self.benchmark_lineage,
-            "prepared_snapshot_id": self.prepared_snapshot_id,
-            "clinical_as_of": clinical_as_of_text(input_clinical_as_of),
-            "patient_evidence_profile": profile.to_dict(),
-            "query_patient_versions": [entity.to_dict() for entity in patient_entities],
-            "trial_corpus_versions": [entity.to_dict() for entity in trial_entities],
-            "available_capabilities": list(available),
-            "derived_views": [view.to_dict() for view in derived_views],
-        }
-        task_input_id = content_sha256(task_payload)
-        if system_input["task_input_id"] != task_input_id or self.task_input_id != task_input_id:
-            raise SchemaValidationError(
-                "forward task_input_id does not match embedded task input content"
-            )
+        # The content-based task_input_id cannot be recomputed from a lineage record;
+        # resolve_task_input requires the matching source before exposing content.
+        task_input_id = self.task_input_id
+        if system_input["task_input_id"] != task_input_id:
+            raise SchemaValidationError("forward task_input_id does not match compact record")
         identity_options = system_input_identity_value(validated_options, path="options")
         identity_payload: dict[str, JsonValue] = {
             "task_input_id": task_input_id,
@@ -844,22 +850,21 @@ class RunManifest(_VersionedSchema):
             "required_capabilities": list(required),
             "optional_capabilities": list(optional),
         }
-        if identity_version == "2.0":
-            identity_options, _omitted = portable_system_input_identity_value(
-                validated_options,
-                path="options",
-            )
-            identity_payload.update(
-                {
-                    "identity_version": "2.0",
-                    "task_input_membership_id": task_input_membership_id(
-                        task="patient_to_trial",
-                        patient_entity_versions=input_query_versions,
-                        trial_entity_versions=input_trial_versions,
-                    ),
-                    "options": identity_options,
-                }
-            )
+        identity_options, _omitted = portable_system_input_identity_value(
+            validated_options,
+            path="options",
+        )
+        identity_payload.update(
+            {
+                "identity_version": "2.0",
+                "task_input_membership_id": task_input_membership_id(
+                    task="patient_to_trial",
+                    patient_entity_versions=input_query_versions,
+                    trial_entity_versions=input_trial_versions,
+                ),
+                "options": identity_options,
+            }
+        )
         system_input_id = content_sha256(identity_payload)
         if (
             system_input["system_input_id"] != system_input_id
@@ -868,6 +873,41 @@ class RunManifest(_VersionedSchema):
             raise SchemaValidationError(
                 "forward system_input_id does not match embedded System input content"
             )
+
+    def resolve_task_input(
+        self, source: PatientToTrialTaskInput | None = None
+    ) -> PatientToTrialTaskInput:
+        """Reconstruct and verify content from the matching prepared source.
+
+        A source is the profile-resolved, judgment-free Task Input, constructed
+        from the prepared benchmark with this run's evidence profile and cutoff.
+        It must reproduce both the original content digest and the complete record.
+        """
+
+        from taim.patient_to_trial import PatientToTrialTaskInput
+
+        system_input = cast(Mapping[str, object], self.configuration["system_input"])
+        request_fields = {
+            "system_input_id",
+            "top_k",
+            "metric_cutoff",
+            "options",
+            "required_capabilities",
+            "optional_capabilities",
+            "identity_version",
+        }
+        record = {key: value for key, value in system_input.items() if key not in request_fields}
+        if source is None:
+            raise SchemaValidationError(
+                "compact run requires the matching prepared source to resolve Task Input content"
+            )
+        if not isinstance(source, PatientToTrialTaskInput):
+            raise TypeError("source must be a PatientToTrialTaskInput")
+        if source.task_input_record_dict() != record:
+            raise SchemaValidationError(
+                "supplied source does not reproduce the run's pinned Task Input content and lineage"
+            )
+        return source
 
     @staticmethod
     def _sorted_unique_strings(value: object, *, field_name: str) -> tuple[str, ...]:

@@ -842,16 +842,11 @@ def evaluate_profile_run(
     }
 
 
-# A concise alias for callers that already have schema objects.
-evaluate = evaluate_run
-
-
 __all__ = [
     "SchemeTopicMetrics",
     "TopicMetrics",
     "eligible_recall_at_k",
     "eligible_reciprocal_rank",
-    "evaluate",
     "evaluate_graded_condensed_run",
     "evaluate_profile_run",
     "evaluate_run",

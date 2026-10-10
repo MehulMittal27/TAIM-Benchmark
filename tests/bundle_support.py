@@ -32,12 +32,12 @@ def _dependency_environment() -> dict[str, object]:
 
 @pytest.fixture(autouse=True)
 def _clean_test_producer(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("taim.release_cli._git_state", lambda: ("a" * 40, False))
+    monkeypatch.setattr("taim.release_producer.git_state", lambda: ("a" * 40, False))
     monkeypatch.setattr(
-        "taim.release_cli._verified_release_identity", lambda _args: _release_identity()
+        "taim.release_producer.verified_release_identity", lambda _args: _release_identity()
     )
     monkeypatch.setattr(
-        "taim.release_cli._verified_dependency_environment",
+        "taim.release_producer.verified_dependency_environment",
         lambda _args, *, system_id: _dependency_environment(),
     )
 
@@ -70,4 +70,24 @@ def _rehash_bundle(bundle: Path) -> None:
             f"{sha256_file(bundle / name).removeprefix('sha256:')}  {name}\n" for name in names
         ),
         encoding="utf-8",
+    )
+
+
+def _fixture_task_source(directory):
+    from taim.entity_versions import PatientEvidenceProfile
+    from taim.patient_to_trial import PatientToTrialTaskInput
+    from taim.profiles import resolve_benchmark_profile
+    from taim.release_fixture import load_release_fixture
+    from taim.schemas import read_manifest
+
+    manifest = read_manifest(directory / "manifest.json")
+    return PatientToTrialTaskInput.from_benchmark(
+        resolve_benchmark_profile(
+            load_release_fixture(manifest.benchmark_lineage),
+            profile_id=manifest.benchmark_profile["profile_id"],
+        ),
+        clinical_as_of=manifest.clinical_as_of,
+        patient_evidence_profile=PatientEvidenceProfile.from_dict(
+            manifest.patient_evidence_profile
+        ),
     )

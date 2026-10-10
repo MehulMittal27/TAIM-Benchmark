@@ -5,28 +5,36 @@ from __future__ import annotations
 import argparse
 import json
 import platform
-import re
-import shutil
-import subprocess
 import sys
-import tomllib
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
-from importlib import metadata
 from pathlib import Path
 from typing import cast
 
-from taim import __version__
-from taim.benchmark_release import (
-    load_benchmark_release_manifest,
-    validate_release_package_artifact,
+from taim import __version__, release_producer
+from taim.cli_support import (
+    DEFAULT_RETRIEVAL_DEPTH,
+    add_bm25_options,
+    add_pool_options,
+    add_real_input_options,
+    add_release_identity_options,
+    add_run_output_options,
+    print_payload,
+    read_json_object,
+    read_pool_ids,
+    sha256_identity,
 )
-from taim.contracts import content_sha256, require_sha256
 from taim.data import PreparedBenchmark, load_prepared_benchmark
-from taim.entity_versions import parse_clinical_as_of, source_grounded_patient_evidence_profile
+from taim.entity_versions import source_grounded_patient_evidence_profile
 from taim.file_hash import sha256_file
-from taim.pipeline_extensions import ComponentRun, extension_for, pipeline_extensions
+from taim.patient_to_trial import PatientToTrialRunRequest
+from taim.pipeline_extensions import (
+    ComponentRun,
+    PipelineExtension,
+    extension_for,
+    pipeline_extensions,
+)
 from taim.public_patient_to_trial import (
     evaluate_public_patient_to_trial_run,
     load_local_evaluation_package,
@@ -43,7 +51,6 @@ from taim.release_profiles import (
     resolve_benchmark_profile,
 )
 from taim.release_reference_systems import run_release_reference_system
-from taim.release_result_bundle import validate_dependency_environment
 from taim.release_support import (
     RELEASE_VERSION,
     SUBCOMMAND_SYSTEMS,
@@ -67,7 +74,6 @@ from taim.schemas import (
     StageRanking,
 )
 from taim.submission_cli import add_submission_commands
-from taim.system_contracts import SystemRunRequest
 from taim.trial_to_patient import (
     StoredTrialToPatientRun,
     TrialToPatientEvaluationPackage,
@@ -79,242 +85,14 @@ from taim.trial_to_patient import (
     write_trial_to_patient_run,
 )
 
-DEFAULT_RETRIEVAL_DEPTH = 1_000
-DEFAULT_METRIC_CUTOFF = 5
-
-
-def _positive_integer(value: str) -> int:
-    parsed = int(value)
-    if parsed < 1:
-        raise argparse.ArgumentTypeError("value must be a positive integer")
-    return parsed
-
-
-def _sha256_identity(value: str) -> str:
-    try:
-        require_sha256(value, "SHA-256 identity")
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError(str(exc)) from exc
-    return value
-
-
-def _installed_package_files() -> dict[str, tuple[str, int]]:
-    package_root = Path(__file__).resolve().parent
-    records: dict[str, tuple[str, int]] = {}
-    for path in sorted(package_root.rglob("*")):
-        relative = path.relative_to(package_root)
-        if "__pycache__" in relative.parts or path.suffix == ".pyc":
-            continue
-        if path.is_symlink():
-            raise ValueError(f"executing TAIM package contains a symlink: {relative.as_posix()}")
-        if path.is_file():
-            records[relative.as_posix()] = (sha256_file(path), path.stat().st_size)
-    return records
-
-
-def _distribution_name(value: str) -> str:
-    return re.sub(r"[-_.]+", "-", value).casefold()
-
-
-def _installed_distributions() -> list[dict[str, str]]:
-    installed: dict[str, str] = {}
-    for distribution in metadata.distributions():
-        raw_name = distribution.metadata["Name"]
-        if not raw_name:
-            raise ValueError("installed Python distribution lacks its canonical name")
-        name = _distribution_name(raw_name)
-        version = distribution.version
-        existing = installed.get(name)
-        if existing is not None and existing != version:
-            raise ValueError(f"installed Python distribution {name!r} has conflicting versions")
-        installed[name] = version
-    return [{"name": name, "version": version} for name, version in sorted(installed.items())]
-
-
-def _locked_distribution_versions(path: Path) -> dict[str, frozenset[str]]:
-    try:
-        payload = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
-        raise ValueError("release dependency lock is not readable TOML") from exc
-    packages = payload.get("package")
-    if not isinstance(packages, list) or not packages:
-        raise ValueError("release dependency lock has no package records")
-    versions: dict[str, set[str]] = {}
-    for raw in packages:
-        if not isinstance(raw, Mapping):
-            raise ValueError("release dependency lock package record is invalid")
-        name = raw.get("name")
-        version = raw.get("version")
-        if not isinstance(name, str) or not name or not isinstance(version, str) or not version:
-            raise ValueError("release dependency lock package identity is invalid")
-        versions.setdefault(_distribution_name(name), set()).add(version)
-    return {name: frozenset(values) for name, values in versions.items()}
-
-
-def _manifest_dependency_lock(args: argparse.Namespace) -> Path:
-    lock_path = cast(Path, args.dependency_lock)
-    manifest = load_benchmark_release_manifest(args.release_manifest)
-    records = [
-        raw
-        for raw in cast(list[Mapping[str, object]], manifest["files"])
-        if raw.get("destination") == "uv.lock"
-    ]
-    if len(records) != 1:
-        raise ValueError("release manifest must contain exactly one uv.lock")
-    record = records[0]
-    if (
-        record.get("sha256") != sha256_file(lock_path)
-        or record.get("byte_size") != lock_path.stat().st_size
-    ):
-        raise ValueError("release dependency lock does not match the supplied release manifest")
-    return lock_path
-
-
-def _verified_dependency_environment(
-    args: argparse.Namespace,
-    *,
-    system_id: str,
-) -> dict[str, JsonValue]:
-    lock_path = _manifest_dependency_lock(args)
-    locked = _locked_distribution_versions(lock_path)
-    distributions = _installed_distributions()
-    installed = {row["name"]: row["version"] for row in distributions}
-    for name, version in installed.items():
-        allowed = locked.get(name)
-        if allowed is not None and version not in allowed:
-            raise ValueError(
-                f"installed Python distribution {name}=={version} is not resolved by uv.lock"
-            )
-    required: set[str] = set()
-    extension = extension_for(system_id)
-    if extension is not None:
-        required.update(extension.required_distributions)
-    missing = sorted(name for name in required if name not in installed or name not in locked)
-    if missing:
-        raise ValueError(
-            f"release System {system_id!r} lacks locked installed distributions: "
-            + ", ".join(missing)
-        )
-    core: dict[str, JsonValue] = {
-        "schema_version": "1.0",
-        "dependency_lock_sha256": sha256_file(lock_path),
-        "python_version": platform.python_version(),
-        "python_implementation": platform.python_implementation(),
-        "platform": sys.platform,
-        "machine": platform.machine(),
-        "distributions": cast(JsonValue, distributions),
-    }
-    return validate_dependency_environment({**core, "environment_id": content_sha256(core)})
-
-
-def _verified_release_identity(args: argparse.Namespace) -> dict[str, str] | None:
-    manifest_path = args.release_manifest
-    package_artifact = args.package_artifact
-    dependency_lock = args.dependency_lock
-    if manifest_path is None and package_artifact is None and dependency_lock is None:
-        return None
-    if manifest_path is None or package_artifact is None or dependency_lock is None:
-        raise ValueError(
-            "release producer identity requires --release-manifest, --package-artifact, and "
-            "--dependency-lock together"
-        )
-    verified = validate_release_package_artifact(manifest_path, package_artifact)
-    archived = {
-        relative: (digest, byte_size) for relative, digest, byte_size in verified.package_files
-    }
-    if _installed_package_files() != archived:
-        raise ValueError("executing TAIM package does not match the supplied release artifact")
-    return verified.release_identity()
-
-
-def _release_source_commit(args: argparse.Namespace) -> str:
-    if args.release_manifest is None:
-        return _git_state()[0]
-    manifest = load_benchmark_release_manifest(args.release_manifest)
-    source_commit = manifest.get("source_commit")
-    if not isinstance(source_commit, str) or re.fullmatch(r"[0-9a-f]{40}", source_commit) is None:
-        raise ValueError("release manifest source commit is invalid")
-    return source_commit
-
-
-def _package_repository() -> Path | None:
-    module = Path(__file__).resolve()
-    for candidate in module.parents:
-        expected = candidate / "src" / "taim" / "release_cli.py"
-        if (candidate / ".git").exists() and expected.exists() and expected.resolve() == module:
-            return candidate
-    return None
-
-
-def _git_state() -> tuple[str, bool]:
-    git = shutil.which("git")
-    repository = _package_repository()
-    if git is None or repository is None:
-        return (f"packaged-taim-{__version__}", False)
-    commit = subprocess.run(  # noqa: S603
-        [git, "rev-parse", "--verify", "HEAD"],
-        cwd=repository,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    status = subprocess.run(  # noqa: S603
-        [git, "status", "--porcelain", "--untracked-files=all"],
-        cwd=repository,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if commit.returncode or status.returncode:
-        return (f"packaged-taim-{__version__}", False)
-    return (commit.stdout.strip(), bool(status.stdout.strip()))
-
 
 def _run_id(system_id: str) -> str:
     return f"public-{system_id}-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S%fZ')}"
 
 
-def _print(payload: object) -> None:
-    print(json.dumps(payload, allow_nan=False, sort_keys=True))
-
-
 def _support_list(_args: argparse.Namespace) -> int:
-    _print(load_release_support())
+    print_payload(load_release_support())
     return 0
-
-
-def _read_json_object(path: Path, role: str) -> dict[str, object]:
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"cannot read {role}: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise ValueError(f"{role} must contain a JSON object")
-    return payload
-
-
-def _read_pool_ids(path: Path | None) -> tuple[str, ...] | None:
-    if path is None:
-        return None
-    try:
-        if path.suffix.casefold() == ".json":
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(payload, list):
-                raise ValueError("JSON pool file must contain an array")
-            values = tuple(payload)
-        else:
-            values = tuple(
-                line.strip()
-                for line in path.read_text(encoding="utf-8").splitlines()
-                if line.strip()
-            )
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"cannot read external-fidelity pool file: {exc}") from exc
-    if not values or any(not isinstance(value, str) or not value for value in values):
-        raise ValueError("external-fidelity pool file must contain non-empty trial IDs")
-    if len(values) != len(set(values)):
-        raise ValueError("external-fidelity pool file contains duplicate trial IDs")
-    return cast(tuple[str, ...], values)
 
 
 def _verified_external_pool_ids(
@@ -354,7 +132,7 @@ def _prepare_external_pool(args: argparse.Namespace) -> int:
     lock_path = (
         Path(__file__).parent / "data" / "locks" / "trialgpt-trec-2021-external-fidelity.json"
     )
-    lock = _read_json_object(lock_path, "external-fidelity source lock")
+    lock = read_json_object(lock_path, "external-fidelity source lock")
     source = cast(Mapping[str, object], lock["source"])
     membership = cast(Mapping[str, object], lock["membership"])
     trial_ids = _verified_external_pool_ids(
@@ -370,7 +148,7 @@ def _prepare_external_pool(args: argparse.Namespace) -> int:
         encoding="utf-8",
         newline="\n",
     )
-    _print(
+    print_payload(
         {
             "release": RELEASE_VERSION,
             "track": "trec-ct-2021",
@@ -392,59 +170,9 @@ def _forward_options(
     task_input_id: str,
 ) -> dict[str, object]:
     extension = extension_for(args.system)
-    if extension is not None:
+    if extension is not None and extension.run_options is not None:
         return extension.run_options(args, benchmark, task_input_id)
     raise ValueError("fusion and staged options are supplied as direction-specific artifacts")
-
-
-def _revalidate_release_producer(
-    args: argparse.Namespace,
-    *,
-    system_id: str,
-    release_identity: Mapping[str, str] | None,
-    dependency_environment: Mapping[str, JsonValue] | None,
-    git_state: tuple[str, bool],
-) -> tuple[str, bool]:
-    if release_identity is None:
-        return _git_state()
-    current_identity = _verified_release_identity(args)
-    current_environment = _verified_dependency_environment(args, system_id=system_id)
-    current_git_state = _git_state()
-    if (
-        current_identity != release_identity
-        or current_environment != dependency_environment
-        or current_git_state != git_state
-    ):
-        raise ValueError("release producer identity changed during benchmark execution")
-    return current_git_state
-
-
-def _rrf_component_producer_identity(
-    component,
-    *,
-    expected_release_identity: Mapping[str, str],
-    expected_lock_sha256: str,
-) -> dict[str, JsonValue]:
-    manifest = component.manifest
-    execution = manifest.configuration.get("execution_provenance")
-    if not isinstance(execution, Mapping) or execution.get("git_commit") != manifest.git_commit:
-        raise ValueError("RRF component producer commit does not match its Run Manifest")
-    if execution.get("working_tree_dirty") is not False:
-        raise ValueError("RRF component producer must be a clean checkout")
-    release_identity = manifest.configuration.get("producer_release_identity")
-    if release_identity != expected_release_identity:
-        raise ValueError("RRF component producer release identity does not match")
-    dependency_environment = validate_dependency_environment(
-        manifest.configuration.get("producer_dependency_environment")
-    )
-    if dependency_environment["dependency_lock_sha256"] != expected_lock_sha256:
-        raise ValueError("RRF component dependency lock does not match the fusion producer")
-    return {
-        "git_commit": manifest.git_commit,
-        "working_tree_dirty": False,
-        "release_identity": cast(JsonValue, dict(expected_release_identity)),
-        "dependency_environment": dependency_environment,
-    }
 
 
 def _store_forward(
@@ -456,7 +184,7 @@ def _store_forward(
     clinical_as_of: datetime,
     protocol_approval_id: str | None = None,
 ) -> Path:
-    producer_release_identity = _verified_release_identity(args)
+    producer_release_identity = release_producer.verified_release_identity(args)
     if (
         profile_id.endswith("-judgment-union") or profile_id == EXTERNAL_FIDELITY_TREC_2021_PROFILE
     ) and producer_release_identity is None:
@@ -465,11 +193,11 @@ def _store_forward(
             "--dependency-lock"
         )
     producer_dependency_environment = (
-        _verified_dependency_environment(args, system_id=args.system)
+        release_producer.verified_dependency_environment(args, system_id=args.system)
         if producer_release_identity is not None
         else None
     )
-    producer_git_state = _git_state()
+    producer_git_state = release_producer.git_state()
     capability = require_supported_combination(
         track=track,
         task="patient_to_trial",
@@ -501,11 +229,11 @@ def _store_forward(
         expected_pool_count=getattr(args, "pool_count", None),
         expected_pool_ids_sha256=getattr(args, "pool_ids_sha256", None),
         expected_pool_receipt_id=getattr(args, "pool_receipt_id", None),
-        supplied_pool_ids=_read_pool_ids(getattr(args, "pool_file", None)),
+        supplied_pool_ids=read_pool_ids(getattr(args, "pool_file", None)),
     )
     evaluation_package = benchmark.evaluation_package
     run_id = args.run_id or _run_id(args.system)
-    request = SystemRunRequest.for_benchmark(
+    request = PatientToTrialRunRequest.for_benchmark(
         benchmark,
         run_id=run_id,
         top_k=args.top_k,
@@ -513,7 +241,6 @@ def _store_forward(
         options={},
         clinical_as_of=clinical_as_of,
         patient_evidence_profile=source_grounded_patient_evidence_profile(),
-        identity_version="2.0",
     )
     configuration: dict[str, JsonValue]
     stage_rankings: tuple[StageRanking, ...] = ()
@@ -558,12 +285,12 @@ def _store_forward(
     ):
         raise ValueError("reference System omitted its exact System Input identity")
     system_input_id = str(system_input["system_input_id"])
-    commit, dirty = _revalidate_release_producer(
+    commit, dirty = release_producer.revalidate_release_producer(
         args,
         system_id=args.system,
         release_identity=producer_release_identity,
         dependency_environment=producer_dependency_environment,
-        git_state=producer_git_state,
+        expected_git_state=producer_git_state,
     )
     configuration.update(
         {
@@ -624,7 +351,7 @@ def _store_forward(
         candidates=candidates,
         evaluation_package=evaluation_package,
     )
-    _print(
+    print_payload(
         {
             "release": RELEASE_VERSION,
             "track": track,
@@ -706,7 +433,7 @@ def _forward_validate(args: argparse.Namespace) -> int:
         profile,
     )
     support = cast(Mapping[str, object], stored.manifest.configuration["release_support"])
-    _print(
+    print_payload(
         {
             "release_version": support["release_version"],
             "track": support["track"],
@@ -729,7 +456,7 @@ def _forward_evaluate(args: argparse.Namespace) -> int:
     package = load_local_evaluation_package(args.run_dir)
     profile = load_profile(cast(str, stored.manifest.benchmark_profile["profile_id"]))
     if args.stage is None:
-        _print(evaluate_public_patient_to_trial_run(stored, package, profile))
+        print_payload(evaluate_public_patient_to_trial_run(stored, package, profile))
         return 0
     stages = {stage.name: stage for stage in stored.stage_rankings}
     try:
@@ -742,7 +469,7 @@ def _forward_evaluate(args: argparse.Namespace) -> int:
         package,
         profile,
     )
-    _print(
+    print_payload(
         {
             "evaluation_scope": "stage_diagnostic",
             "stage": stage.name,
@@ -776,13 +503,13 @@ def _reverse_provenance(
 
 def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: str) -> Path:
     system_id = SUBCOMMAND_SYSTEMS[("trial-to-patient", "fixture")]
-    producer_release_identity = _verified_release_identity(args)
+    producer_release_identity = release_producer.verified_release_identity(args)
     producer_dependency_environment = (
-        _verified_dependency_environment(args, system_id=system_id)
+        release_producer.verified_dependency_environment(args, system_id=system_id)
         if producer_release_identity is not None
         else None
     )
-    producer_git_state = _git_state()
+    producer_git_state = release_producer.git_state()
     capability = require_supported_combination(
         track=track,
         task="trial_to_patient",
@@ -802,15 +529,14 @@ def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: s
         top_k=args.top_k,
         metric_cutoff=args.metric_cutoff,
         options={"b": args.b, "k1": args.k1},
-        identity_version="2.0",
     )
     result = run_trial_to_patient_system(system_id, request)
-    final_git_state = _revalidate_release_producer(
+    final_git_state = release_producer.revalidate_release_producer(
         args,
         system_id=system_id,
         release_identity=producer_release_identity,
         dependency_environment=producer_dependency_environment,
-        git_state=producer_git_state,
+        expected_git_state=producer_git_state,
     )
     configuration = {
         **result.configuration,
@@ -848,7 +574,7 @@ def _store_reverse(resolved, args: argparse.Namespace, *, track: str, profile: s
         encoding="utf-8",
         newline="\n",
     )
-    _print(
+    print_payload(
         {
             "release": RELEASE_VERSION,
             "track": track,
@@ -935,13 +661,13 @@ def _reverse_identity_payload(
 
 def _reverse_validate(args: argparse.Namespace) -> int:
     stored, _package, support, _metrics = _validated_reverse_run(args.run_dir)
-    _print(_reverse_identity_payload(stored, support))
+    print_payload(_reverse_identity_payload(stored, support))
     return 0
 
 
 def _reverse_evaluate(args: argparse.Namespace) -> int:
     stored, _package, support, metrics = _validated_reverse_run(args.run_dir)
-    _print({**metrics, **_reverse_identity_payload(stored, support)})
+    print_payload({**metrics, **_reverse_identity_payload(stored, support)})
     return 0
 
 
@@ -975,7 +701,7 @@ def _prepare(args: argparse.Namespace) -> int:
             args.output_dir,
             query_variant=args.query_profile,
         )
-    _print(
+    print_payload(
         {
             "release": RELEASE_VERSION,
             "track": args.track,
@@ -1028,13 +754,13 @@ def _inspect_pool(args: argparse.Namespace) -> int:
         inspect_external_fidelity_profile(
             prepared,
             profile_id=args.profile,
-            supplied_pool_ids=_read_pool_ids(args.pool_file) or (),
+            supplied_pool_ids=read_pool_ids(args.pool_file) or (),
             expected_pool_count=load_profile(args.profile).expected_pool_count or 0,
         )
         if is_external
         else inspect_judgment_union_profile(prepared, profile_id=args.profile)
     )
-    _print(
+    print_payload(
         {
             "release": RELEASE_VERSION,
             "track": args.track,
@@ -1055,27 +781,34 @@ def _release_validate(args: argparse.Namespace) -> int:
         execute_quick_start=args.runtime,
         quick_start_executable=sys.argv[0] if args.runtime else None,
     )
-    _print(report)
+    print_payload(report)
     return 0
 
 
 def _bundle_validate(args: argparse.Namespace) -> int:
     from taim.release_result_bundle import validate_release_result_bundle
 
-    _print(validate_release_result_bundle(args.bundle_dir))
+    print_payload(validate_release_result_bundle(args.bundle_dir))
     return 0
 
 
-def _add_forward_options(parser: argparse.ArgumentParser, *, real: bool) -> None:
+def _add_forward_options(
+    parser: argparse.ArgumentParser,
+    *,
+    real: bool,
+    extensions: Sequence[PipelineExtension] | None = None,
+) -> None:
+    extensions = pipeline_extensions() if extensions is None else extensions
     parser.add_argument(
         "--system",
         choices=tuple(
             system for system, tasks in SYSTEM_TASKS.items() if "patient_to_trial" in tasks
         ),
+        metavar="SYSTEM",
         default=next(
             (
                 extension.default_system
-                for extension in pipeline_extensions()
+                for extension in extensions
                 if extension.default_system is not None
                 and extension.system_tasks[extension.default_system] == "patient_to_trial"
             ),
@@ -1084,98 +817,94 @@ def _add_forward_options(parser: argparse.ArgumentParser, *, real: bool) -> None
                 None,
             ),
         ),
+        help="System to run; support list reports the Systems each Track and Profile declare. "
+        "Omitted, the System the release's quick start runs",
     )
-    parser.add_argument("--run-id")
-    parser.add_argument("--output-dir", type=Path, default=Path("runs"))
-    parser.add_argument("--top-k", type=_positive_integer, default=DEFAULT_RETRIEVAL_DEPTH)
-    parser.add_argument("--metric-cutoff", type=_positive_integer, default=DEFAULT_METRIC_CUTOFF)
-    option_adders = dict.fromkeys(extension.add_run_options for extension in pipeline_extensions())
+    add_run_output_options(parser, top_k=DEFAULT_RETRIEVAL_DEPTH)
+    option_adders = dict.fromkeys(extension.add_run_options for extension in extensions)
     for add_options in option_adders:
         add_options(parser)
-    _add_release_identity_options(parser)
+    add_release_identity_options(
+        parser,
+        rule="only runs given all three can enter a Result Bundle, and judgment-union and "
+        "external-fidelity Profiles require them",
+    )
     if real:
-        parser.add_argument("--data-dir", type=Path, required=True)
-        parser.add_argument("--clinical-as-of", type=parse_clinical_as_of, required=True)
-        parser.add_argument(
-            "--pool-file",
-            type=Path,
-            help="caller-supplied trial-ID membership for an external-fidelity Profile",
-        )
-        parser.add_argument(
-            "--pool-count",
-            type=_positive_integer,
-            help="frozen count emitted by data pool inspect for a judgment-union Profile",
-        )
-        parser.add_argument(
-            "--pool-ids-sha256",
-            type=_sha256_identity,
-            help="frozen ID-list digest emitted by data pool inspect",
-        )
-        parser.add_argument(
-            "--pool-receipt-id",
-            type=_sha256_identity,
-            help="content identity emitted by data pool inspect",
-        )
-        parser.add_argument(
-            "--protocol-approval-id",
-            type=_sha256_identity,
-            help="required for judgment-union and TREC 2022/2023 confirmation runs",
-        )
+        add_real_input_options(parser)
+        add_pool_options(parser)
 
 
 def _add_reverse_options(parser: argparse.ArgumentParser, *, real: bool) -> None:
-    parser.add_argument("--run-id")
-    parser.add_argument("--output-dir", type=Path, default=Path("runs"))
-    parser.add_argument("--top-k", type=_positive_integer, default=20)
-    parser.add_argument("--metric-cutoff", type=_positive_integer, default=5)
-    parser.add_argument("--k1", type=float, default=1.2)
-    parser.add_argument("--b", type=float, default=0.75)
-    _add_release_identity_options(parser)
+    add_run_output_options(parser, top_k=20)
+    add_bm25_options(parser)
+    add_release_identity_options(parser, rule="only runs given all three can enter a Result Bundle")
     if real:
-        parser.add_argument("--data-dir", type=Path, required=True)
-        parser.add_argument("--clinical-as-of", type=parse_clinical_as_of, required=True)
+        add_real_input_options(parser)
 
 
-def _add_release_identity_options(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--release-manifest", type=Path)
-    parser.add_argument("--package-artifact", type=Path)
-    parser.add_argument(
-        "--dependency-lock",
-        type=Path,
-        help="public uv.lock whose bytes are bound by the release manifest",
-    )
-
-
-def _add_direction_commands(parent: argparse.ArgumentParser, *, reverse: bool) -> None:
+def _add_direction_commands(
+    parent: argparse.ArgumentParser,
+    *,
+    reverse: bool,
+    extensions: Sequence[PipelineExtension],
+) -> None:
     commands = parent.add_subparsers(dest="operation", required=True)
     fixture = commands.add_parser("fixture", help="run deterministic conformance data")
     fixture_commands = fixture.add_subparsers(dest="fixture_operation", required=True)
-    fixture_run = fixture_commands.add_parser("run")
-    fixture_run.add_argument("--track", choices=SUPPORTED_TRACKS, default="trec-ct-2021")
+    fixture_run = fixture_commands.add_parser(
+        "run",
+        help="run one System on the packaged synthetic fixture; its scores are conformance "
+        "evidence, not effectiveness",
+    )
+    fixture_run.add_argument(
+        "--track",
+        choices=SUPPORTED_TRACKS,
+        default="trec-ct-2021",
+        help="Track whose synthetic fixture to run",
+    )
     if reverse:
         _add_reverse_options(fixture_run, real=False)
         fixture_run.set_defaults(handler=_reverse_fixture_run)
     else:
-        _add_forward_options(fixture_run, real=False)
+        _add_forward_options(fixture_run, real=False, extensions=extensions)
         fixture_run.set_defaults(handler=_forward_fixture_run)
     benchmark = commands.add_parser("benchmark", help="run a qualified real-data profile")
     benchmark_commands = benchmark.add_subparsers(dest="benchmark_operation", required=True)
-    benchmark_run = benchmark_commands.add_parser("run")
     if reverse:
+        benchmark_run = benchmark_commands.add_parser(
+            "run", help="run the TREC 2021 reverse viability Profile on prepared TREC 2021 files"
+        )
         _add_reverse_options(benchmark_run, real=True)
         benchmark_run.set_defaults(handler=_reverse_benchmark_run)
     else:
-        benchmark_run.add_argument("--track", choices=SUPPORTED_TRACKS, required=True)
-        benchmark_run.add_argument("--profile")
-        _add_forward_options(benchmark_run, real=True)
+        benchmark_run = benchmark_commands.add_parser(
+            "run", help="run one System on a real Profile of a prepared Track"
+        )
+        benchmark_run.add_argument(
+            "--track", choices=SUPPORTED_TRACKS, required=True, help="Track of the prepared files"
+        )
+        benchmark_run.add_argument(
+            "--profile",
+            help="Benchmark Profile to run; omitted, official-full on TREC 2021 and "
+            "confirmation-full on TREC 2022/2023. SIGIR 2016 requires one",
+        )
+        _add_forward_options(benchmark_run, real=True, extensions=extensions)
         benchmark_run.set_defaults(handler=_forward_benchmark_run)
     run = commands.add_parser("run", help="validate or evaluate a closed run")
     run_commands = run.add_subparsers(dest="run_operation", required=True)
-    validate = run_commands.add_parser("validate")
-    validate.add_argument("--run-dir", type=Path, required=True)
+    validate = run_commands.add_parser(
+        "validate", help="check a run directory against its manifest and print its identities"
+    )
+    validate.add_argument(
+        "--run-dir", type=Path, required=True, help="run directory a run command wrote"
+    )
     validate.set_defaults(handler=_reverse_validate if reverse else _forward_validate)
-    evaluate = run_commands.add_parser("evaluate")
-    evaluate.add_argument("--run-dir", type=Path, required=True)
+    evaluate = run_commands.add_parser(
+        "evaluate", help="validate a run directory, then score its Primary Ranking"
+    )
+    evaluate.add_argument(
+        "--run-dir", type=Path, required=True, help="run directory a run command wrote"
+    )
     if not reverse:
         evaluate.add_argument(
             "--stage",
@@ -1186,14 +915,22 @@ def _add_direction_commands(parent: argparse.ArgumentParser, *, reverse: bool) -
     if not reverse:
         command_adders = dict.fromkeys(
             extension.add_patient_to_trial_commands
-            for extension in pipeline_extensions()
+            for extension in extensions
             if extension.add_patient_to_trial_commands is not None
         )
         for add_commands in command_adders:
             add_commands(commands)
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(
+    extensions: Sequence[PipelineExtension] | None = None,
+) -> argparse.ArgumentParser:
+    """The ``trial-benchmark`` parser, with the options and commands of ``extensions``.
+
+    ``extensions`` defaults to every pipeline extension this installation ships.
+    """
+
+    extensions = pipeline_extensions() if extensions is None else extensions
     parser = argparse.ArgumentParser(
         prog="trial-benchmark",
         description="TAIM Benchmark Release 0.1",
@@ -1201,24 +938,44 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     support = commands.add_parser("support", help="inspect executable release capabilities")
     support_commands = support.add_subparsers(dest="support_operation", required=True)
-    support_list = support_commands.add_parser("list")
+    support_list = support_commands.add_parser(
+        "list",
+        help="print the Track, Task, Profile and System combinations this release executes",
+    )
     support_list.set_defaults(handler=_support_list)
     if any("patient_to_trial" in tasks for tasks in SYSTEM_TASKS.values()):
         forward = commands.add_parser("patient-to-trial", help="patient query against trial corpus")
-        _add_direction_commands(forward, reverse=False)
+        _add_direction_commands(forward, reverse=False, extensions=extensions)
     if any("trial_to_patient" in tasks for tasks in SYSTEM_TASKS.values()):
         reverse = commands.add_parser("trial-to-patient", help="trial query against patient corpus")
-        _add_direction_commands(reverse, reverse=True)
+        _add_direction_commands(reverse, reverse=True, extensions=extensions)
     data = commands.add_parser("data", help="prepare checksum-locked local source files")
     data_commands = data.add_subparsers(dest="data_operation", required=True)
-    prepare = data_commands.add_parser("prepare")
-    prepare.add_argument("--track", choices=SUPPORTED_TRACKS, required=True)
-    prepare.add_argument("--query-profile")
-    prepare.add_argument("--source", type=Path, required=True)
-    prepare.add_argument("--output-dir", type=Path, required=True)
+    prepare = data_commands.add_parser(
+        "prepare",
+        help="verify acquired source files against the Track's packaged lock and write the "
+        "prepared files every run reads",
+    )
+    prepare.add_argument(
+        "--track", choices=SUPPORTED_TRACKS, required=True, help="Track to prepare"
+    )
+    prepare.add_argument(
+        "--query-profile",
+        help="SIGIR 2016 query text, description or summary; required there, ignored elsewhere",
+    )
+    prepare.add_argument(
+        "--source",
+        type=Path,
+        required=True,
+        help="directory holding the Track's acquired source files, as its acquisition guide names "
+        "them",
+    )
+    prepare.add_argument(
+        "--output-dir", type=Path, required=True, help="directory that receives the prepared files"
+    )
     prepare.add_argument(
         "--protocol-approval-id",
-        type=_sha256_identity,
+        type=sha256_identity,
         help="required before a TREC 2022/2023 source file is opened",
     )
     prepare.set_defaults(handler=_prepare)
@@ -1226,12 +983,30 @@ def build_parser() -> argparse.ArgumentParser:
         "pool", help="inspect a compute-bounded corpus before effectiveness execution"
     )
     pool_commands = pool.add_subparsers(dest="pool_operation", required=True)
-    pool_inspect = pool_commands.add_parser("inspect")
-    pool_inspect.add_argument("--track", choices=SUPPORTED_TRACKS, required=True)
-    pool_inspect.add_argument("--profile", required=True)
-    pool_inspect.add_argument("--data-dir", type=Path, required=True)
-    pool_inspect.add_argument("--pool-file", type=Path)
-    pool_inspect.add_argument("--protocol-approval-id", type=_sha256_identity)
+    pool_inspect = pool_commands.add_parser(
+        "inspect",
+        help="print the receipt of a judgment-union or external-fidelity pool, whose values every "
+        "run on that Profile must pass",
+    )
+    pool_inspect.add_argument(
+        "--track", choices=SUPPORTED_TRACKS, required=True, help="Track of the prepared files"
+    )
+    pool_inspect.add_argument(
+        "--profile", required=True, help="judgment-union or external-fidelity Profile to inspect"
+    )
+    pool_inspect.add_argument(
+        "--data-dir", type=Path, required=True, help="directory written by data prepare"
+    )
+    pool_inspect.add_argument(
+        "--pool-file",
+        type=Path,
+        help="trial IDs written by data external-pool prepare; external-fidelity Profile only",
+    )
+    pool_inspect.add_argument(
+        "--protocol-approval-id",
+        type=sha256_identity,
+        help="SHA-256 of the frozen protocol that governs the Profile; always required",
+    )
     pool_inspect.set_defaults(handler=_inspect_pool)
     external_pool = data_commands.add_parser(
         "external-pool",
@@ -1240,26 +1015,52 @@ def build_parser() -> argparse.ArgumentParser:
     external_pool_commands = external_pool.add_subparsers(
         dest="external_pool_operation", required=True
     )
-    external_pool_prepare = external_pool_commands.add_parser("prepare")
+    external_pool_prepare = external_pool_commands.add_parser(
+        "prepare",
+        help="check an external corpus against its packaged lock and write its trial IDs, sorted, "
+        "as a JSON array",
+    )
     external_pool_prepare.add_argument(
         "--profile",
         choices=(EXTERNAL_FIDELITY_TREC_2021_PROFILE,),
         required=True,
+        help="external-fidelity Profile whose source to verify",
     )
-    external_pool_prepare.add_argument("--source", type=Path, required=True)
-    external_pool_prepare.add_argument("--output", type=Path, required=True)
+    external_pool_prepare.add_argument(
+        "--source",
+        type=Path,
+        required=True,
+        help="the external corpus file its acquisition guide names",
+    )
+    external_pool_prepare.add_argument(
+        "--output", type=Path, required=True, help="file that receives the trial IDs"
+    )
     external_pool_prepare.set_defaults(handler=_prepare_external_pool)
     release = commands.add_parser("release", help="validate a generated public candidate")
     release_commands = release.add_subparsers(dest="release_operation", required=True)
-    release_validate = release_commands.add_parser("validate")
-    release_validate.add_argument("--candidate", type=Path, required=True)
-    release_validate.add_argument("--manifest", type=Path, required=True)
-    release_validate.add_argument("--runtime", action="store_true")
+    release_validate = release_commands.add_parser(
+        "validate", help="check a candidate release tree against its frozen manifest"
+    )
+    release_validate.add_argument(
+        "--candidate", type=Path, required=True, help="root of the candidate release tree"
+    )
+    release_validate.add_argument(
+        "--manifest", type=Path, required=True, help="the candidate's frozen release manifest"
+    )
+    release_validate.add_argument(
+        "--runtime",
+        action="store_true",
+        help="also execute the manifest's quick-start commands with this executable",
+    )
     release_validate.set_defaults(handler=_release_validate)
     bundle = commands.add_parser("bundle", help="validate a Published Result Bundle")
     bundle_commands = bundle.add_subparsers(dest="bundle_operation", required=True)
-    bundle_validate = bundle_commands.add_parser("validate")
-    bundle_validate.add_argument("--bundle-dir", type=Path, required=True)
+    bundle_validate = bundle_commands.add_parser(
+        "validate", help="recompute a Published Result Bundle's checksums, identities and metrics"
+    )
+    bundle_validate.add_argument(
+        "--bundle-dir", type=Path, required=True, help="the Result Bundle directory"
+    )
     bundle_validate.set_defaults(handler=_bundle_validate)
     return parser
 

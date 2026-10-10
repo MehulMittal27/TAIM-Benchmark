@@ -13,7 +13,7 @@ The no-template dense component also requires `dense`.
 | --- | --- |
 | Benchmark Snapshot | `2.0` |
 | Run Manifest | `7.0` |
-| System Input identity | `2.0`; legacy `1.0` remains readable |
+| System Input identity | `2.0` only; the retired `1.0` recipe is not read |
 | Published Result Bundle | `1.0` |
 | Benchmark Release manifest | `1.0` |
 | Release support catalog | `1.0` |
@@ -28,12 +28,56 @@ The no-template dense component also requires `dense`.
 | External submission result (`submission.json`) | `1.0` |
 | External System dependency declaration | `1.0` |
 
-The stable entry points are `trial-benchmark`, the forward `System` contracts, and the explicitly
+The stable entry points are `trial-benchmark`, the explicit `PatientToTrialSystem` contracts, and the explicitly
 exported `TrialToPatientTaskInput`, `TrialToPatientRunRequest`, direction-specific Benchmark
 Profile, Evaluation Package, run, manifest, and evaluator contracts, and the `submission` input,
 ranking, and pipeline-declaration formats in [Score your own pipeline](external-pipelines.md). A
 forward run is not accepted by a reverse loader, and a reverse run is not accepted by a forward
 loader. There is no neutral ranking artifact or generic direction flag.
+
+Patient-to-trial Python execution contract `2.0` exports `PatientToTrialTaskInput`,
+`PatientToTrialRunRequest`, `PatientToTrialRunResult`, and `PatientToTrialSystem` from
+`taim.patient_to_trial`. These replace `SystemBenchmarkSnapshot`, `SystemRunRequest`,
+`SystemRunResult`, and `System` from the removed `taim.system_contracts` module. Update imports;
+there are no compatibility aliases. Serialized inputs and identity recipes retain their versions.
+
+Pipeline implementations live under `taim.pipelines`, grouped by family. Shared retrieval,
+generation, eligibility parsing and artifacts keep their shared modules. Each pipeline's CLI and
+release binding lives in its family too: `taim.pipelines.<family>.extension` for a family of one
+release unit, otherwise `taim.pipelines.<family>.<unit>_extension`. Since 0.1.2 the bindings moved
+there from `taim.pipeline_extensions.<unit>`; update imports, there are no compatibility aliases.
+`taim.pipeline_extensions` keeps only the binding contract (`PipelineExtension`, `RankingExecution`,
+`extension_for`, `pipeline_extensions`). A binding registers only the ranking directions it
+implements.
+Submission export and validation use the sole installed reference declared for that task. They
+refuse an installation with no reference or ambiguous defaults.
+
+New forward run records use `configuration.system_input.trial_corpus_encoding = "lineage-v1"`.
+They store ordered `(trial_id, trial_version_id)` pairs, an exact count and the canonical SHA-256
+of those pairs instead of full trial documents. Derived Views contain only `name`, `version`,
+`input_snapshot_id` and the content-addressed `view_id`; their configuration and content stay in
+the source. This is a new encoding inside Run Manifest `7.0`;
+readers predating this encoding reject it. The full `PatientToTrialTaskInput.to_dict()` interface,
+Task Input IDs, System Input identity recipes, entity versions and evaluator identities are
+unchanged. `PatientToTrialRunRequest.system_input_record_dict()` is the only forward System Input
+serialization, and every run producer writes it.
+
+Loading a compact run verifies the recorded lineage, patient content, System Input identity and
+closed artifact hashes. It cannot recompute the original content-based Task Input ID without the
+corpus. `RunManifest.resolve_task_input(source)` requires a matching, profile-resolved
+`PatientToTrialTaskInput` before returning entity content; it checks the complete compact record,
+including the source's recomputed Task Input ID. Both forward loaders accept `source_snapshot=`
+for this additional verification. Retain the checksum-verified prepared package, select the run's
+Benchmark Profile, and use its Patient Evidence Profile and clinical cutoff to construct the source.
+A matching trial ID alone never authorizes substituting current registry content.
+Both Result Bundle builders require `source_snapshot=` for compact forward runs and verify it
+before projecting or writing the bundle. Source-free loading alone does not establish publication
+integrity.
+
+Forward manifests must record the lineage encoding. Earlier v7 records that embedded full trial
+content are no longer read; they are verified from the commit that wrote them. Pre-v7 manifests
+remain unsupported. Compact records still contain patient information and are
+Local Run artifacts, not safe public projections; Result Bundle privacy rules continue to apply.
 
 Named forward Stage Rankings remain part of their patient-to-trial Run Manifest and closed run
 tree. They are validated against the same direction, Task Input, run, System, entity membership,
@@ -73,7 +117,7 @@ match.
 This release uses an immutable disk-backed sequence instead of retaining full-corpus trial objects.
 This changes resource use, not logical Snapshot content or any public artifact schema. Loading and
 bounded-Profile projection are validated on an 18 GB laptop; individual Systems retain their own
-hardware requirements.
+hardware requirements, stated with each System in the [method contracts](method-contracts.md).
 
 Release versions use semantic versioning for the documented Python and CLI surface. Artifact schema
 versions remain independent: incompatible schema changes increment that schema's major version,

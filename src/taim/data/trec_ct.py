@@ -34,7 +34,7 @@ from taim.data.trec_ct_2021 import (
 )
 from taim.evaluation_package import ConnectorDiagnostic, EvaluationPackage
 from taim.file_hash import sha256_file
-from taim.schemas import JsonValue, RelevanceJudgment
+from taim.schemas import JsonValue, RelevanceJudgment, json_value_to_builtins
 from taim.snapshot import (
     CAPABILITY_CANONICAL_PATIENT_TEXT,
     CAPABILITY_CANONICAL_TRIAL_TEXT,
@@ -46,7 +46,7 @@ from taim.snapshot import (
     BenchmarkTopic,
     PatientEvidenceItem,
     SourceRecordIdentity,
-    TrialDocument,
+    Trial,
 )
 from taim.source import SourceArtifact, SourceBundle
 
@@ -310,11 +310,11 @@ def _parse_trials(
     archive_roles: frozenset[str],
     include_trial_ids: frozenset[str] | None,
 ) -> tuple[
-    tuple[TrialDocument, ...],
+    tuple[Trial, ...],
     tuple[ConnectorDiagnostic, ...],
     Mapping[str, str],
 ]:
-    trials: dict[str, TrialDocument] = {}
+    trials: dict[str, Trial] = {}
     diagnostics: list[ConnectorDiagnostic] = []
     alias_to_trial_id: dict[str, str] = {}
     unresolved_selected_aliases: frozenset[str] = frozenset()
@@ -398,7 +398,7 @@ def _parse_trials(
 
 def _normalize_judgment_trial_ids(
     judgments: tuple[RelevanceJudgment, ...],
-    trials: tuple[TrialDocument, ...],
+    trials: tuple[Trial, ...],
     alias_to_trial_id: Mapping[str, str],
 ) -> tuple[
     tuple[RelevanceJudgment, ...],
@@ -446,7 +446,7 @@ def _normalize_judgment_trial_ids(
 
 def _validate_relations(
     topics: tuple[BenchmarkTopic, ...],
-    trials: tuple[TrialDocument, ...],
+    trials: tuple[Trial, ...],
     judgments: tuple[RelevanceJudgment, ...],
 ) -> None:
     topic_ids = {topic.topic_id for topic in topics}
@@ -535,7 +535,7 @@ def _source_recipe(
         "selection": selection,
         "field_disposition_table": [
             topic_disposition,
-            *FIELD_DISPOSITION_TABLE[1:],
+            *[json_value_to_builtins(item) for item in FIELD_DISPOSITION_TABLE[1:]],
             {
                 "source": "clinical_study/id_info/nct_alias",
                 "disposition": "evaluator_identity_normalization",

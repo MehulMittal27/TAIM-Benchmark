@@ -14,7 +14,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import ClassVar, Protocol, cast
+from typing import TYPE_CHECKING, ClassVar, Protocol, cast
 
 from taim.contracts import (
     SNAPSHOT_CONTRACT_VERSION,
@@ -33,7 +33,7 @@ from taim.data import PreparedBenchmark
 from taim.entity_versions import (
     PatientEntityVersion,
     PatientEvidenceProfile,
-    TrialVersion,
+    Trial,
     clinical_as_of_text,
     parse_clinical_as_of,
     validate_clinical_as_of,
@@ -61,6 +61,9 @@ from taim.snapshot import (
     freeze_system_input_options,
     validate_capability_declarations,
 )
+
+if TYPE_CHECKING:
+    from taim.pipeline_extensions import RankingExecution
 
 TRIAL_TO_PATIENT_SCHEMA_VERSION = "1.0"
 TRIAL_TO_PATIENT_RUN_MANIFEST_VERSION = "1.0"
@@ -233,7 +236,7 @@ class TrialToPatientTaskInput:
     clinical_as_of: datetime
     patient_evidence_profile: PatientEvidenceProfile
     benchmark_profile: TrialToPatientBenchmarkProfile
-    trial_versions: tuple[TrialVersion, ...]
+    trial_versions: tuple[Trial, ...]
     patient_versions: tuple[PatientEntityVersion, ...]
     available_capabilities: frozenset[str]
     derived_views: tuple[DerivedView, ...] = ()
@@ -255,10 +258,8 @@ class TrialToPatientTaskInput:
             )
         trial_versions = tuple(self.trial_versions)
         patient_versions = tuple(self.patient_versions)
-        if not trial_versions or any(
-            not isinstance(version, TrialVersion) for version in trial_versions
-        ):
-            raise SchemaValidationError("trial_versions must contain TrialVersion objects")
+        if not trial_versions or any(not isinstance(version, Trial) for version in trial_versions):
+            raise SchemaValidationError("trial_versions must contain Trial objects")
         if not patient_versions or any(
             not isinstance(version, PatientEntityVersion) for version in patient_versions
         ):
@@ -309,7 +310,7 @@ class TrialToPatientTaskInput:
             {
                 "task": TRIAL_TO_PATIENT_TASK,
                 "role": "queries",
-                "trial_versions": [version.to_dict() for version in trial_versions],
+                "trial_versions": [version.to_version_dict() for version in trial_versions],
             }
         )
         patient_corpus_id = content_sha256(
@@ -339,7 +340,7 @@ class TrialToPatientTaskInput:
             "benchmark_profile": self.benchmark_profile.to_dict(),
             "query_set_id": self.query_set_id,
             "patient_corpus_id": self.patient_corpus_id,
-            "trial_versions": [version.to_dict() for version in self.trial_versions],
+            "trial_versions": [version.to_version_dict() for version in self.trial_versions],
             "patient_versions": [version.to_dict() for version in self.patient_versions],
             "available_capabilities": cast(list[JsonValue], sorted(self.available_capabilities)),
             "derived_views": [view.to_dict() for view in self.derived_views],
@@ -414,7 +415,7 @@ class TrialToPatientTaskInput:
                 cast(Mapping[str, object], benchmark_profile)
             ),
             trial_versions=tuple(
-                TrialVersion.from_dict(cast(Mapping[str, object], version))
+                Trial.from_version_dict(cast(Mapping[str, object], version))
                 for version in trial_versions
             ),
             patient_versions=tuple(
@@ -858,17 +859,12 @@ class TrialToPatientRunRequest:
     options: Mapping[str, object]
     required_capabilities: frozenset[str] = frozenset()
     optional_capabilities: frozenset[str] = frozenset()
-    identity_version: str = "1.0"
     system_input_id: str = field(init=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.task_input, TrialToPatientTaskInput):
             raise TypeError("task_input must be a TrialToPatientTaskInput")
         require_non_empty(self.run_id, "run_id")
-        if self.identity_version not in {"1.0", "2.0"}:
-            raise SchemaValidationError(
-                "reverse System Input identity_version must be '1.0' or '2.0'"
-            )
         _require_positive_int(self.top_k, "top_k")
         _require_positive_int(self.metric_cutoff, "metric_cutoff")
         if self.metric_cutoff not in self.task_input.benchmark_profile.cutoffs:
@@ -904,28 +900,27 @@ class TrialToPatientRunRequest:
             "required_capabilities": cast(list[JsonValue], sorted(required)),
             "optional_capabilities": cast(list[JsonValue], sorted(optional)),
         }
-        if self.identity_version == "2.0":
-            identity_options, _omitted = portable_system_input_identity_value(
-                options,
-                path="options",
-            )
-            identity_payload.update(
-                {
-                    "identity_version": self.identity_version,
-                    "task_input_membership_id": task_input_membership_id(
-                        task=TRIAL_TO_PATIENT_TASK,
-                        patient_entity_versions=(
-                            (version.patient_id, version.patient_version_id)
-                            for version in self.task_input.patient_versions
-                        ),
-                        trial_entity_versions=(
-                            (version.trial_id, version.trial_version_id)
-                            for version in self.task_input.trial_versions
-                        ),
+        identity_options, _omitted = portable_system_input_identity_value(
+            options,
+            path="options",
+        )
+        identity_payload.update(
+            {
+                "identity_version": "2.0",
+                "task_input_membership_id": task_input_membership_id(
+                    task=TRIAL_TO_PATIENT_TASK,
+                    patient_entity_versions=(
+                        (version.patient_id, version.patient_version_id)
+                        for version in self.task_input.patient_versions
                     ),
-                    "options": identity_options,
-                }
-            )
+                    trial_entity_versions=(
+                        (version.trial_id, version.trial_version_id)
+                        for version in self.task_input.trial_versions
+                    ),
+                ),
+                "options": identity_options,
+            }
+        )
         object.__setattr__(self, "system_input_id", content_sha256(identity_payload))
 
     def system_input_dict(self) -> dict[str, JsonValue]:
@@ -938,8 +933,7 @@ class TrialToPatientRunRequest:
             "required_capabilities": cast(list[JsonValue], sorted(self.required_capabilities)),
             "optional_capabilities": cast(list[JsonValue], sorted(self.optional_capabilities)),
         }
-        if self.identity_version == "2.0":
-            payload["identity_version"] = self.identity_version
+        payload["identity_version"] = "2.0"
         return payload
 
     @classmethod
@@ -953,7 +947,6 @@ class TrialToPatientRunRequest:
         options: Mapping[str, object],
         required_capabilities: Iterable[str] = (),
         optional_capabilities: Iterable[str] = (),
-        identity_version: str = "1.0",
     ) -> TrialToPatientRunRequest:
         if not isinstance(benchmark, ResolvedTrialToPatientBenchmark):
             raise TypeError("benchmark must be a resolved trial-to-patient benchmark")
@@ -965,7 +958,6 @@ class TrialToPatientRunRequest:
             options=options,
             required_capabilities=frozenset(required_capabilities),
             optional_capabilities=frozenset(optional_capabilities),
-            identity_version=identity_version,
         )
 
 
@@ -1176,28 +1168,26 @@ class TrialToPatientSystem(Protocol):
     def run(self, request: TrialToPatientRunRequest) -> TrialToPatientRunResult: ...
 
 
-def _reverse_systems() -> dict[str, TrialToPatientSystem]:
-    from taim.pipeline_extensions import pipeline_extensions
-
-    return {
-        system_id: cast(TrialToPatientSystem, system)
-        for extension in pipeline_extensions()
-        if extension.reverse_systems is not None
-        for system_id, system in extension.reverse_systems().items()
-    }
-
-
-def _effective_trial_to_patient_request(
+def _trial_to_patient_execution(
     system_id: str,
+) -> RankingExecution[TrialToPatientRunRequest, TrialToPatientRunResult]:
+    from taim.pipeline_extensions import extension_for
+
+    extension = extension_for(system_id)
+    if (
+        extension is None
+        or extension.trial_to_patient is None
+        or extension.system_tasks[system_id] != "trial_to_patient"
+    ):
+        raise ValueError(f"unknown trial-to-patient System {system_id!r}")
+    return extension.trial_to_patient
+
+
+def normalize_trial_to_patient_request(
+    system: TrialToPatientSystem,
     request: TrialToPatientRunRequest,
-) -> tuple[TrialToPatientSystem, TrialToPatientRunRequest]:
-    try:
-        system = _reverse_systems()[system_id]
-    except KeyError as exc:
-        known = ", ".join(sorted(_reverse_systems()))
-        raise ValueError(
-            f"unknown trial-to-patient System {system_id!r}; available Systems: {known}"
-        ) from exc
+) -> TrialToPatientRunRequest:
+    """Project method options and bind declared capabilities without running the System."""
     required = request.required_capabilities | system.required_capabilities
     optional = (request.optional_capabilities | system.optional_capabilities) - required
     filtered_options = {
@@ -1209,15 +1199,18 @@ def _effective_trial_to_patient_request(
         required_capabilities=required,
         optional_capabilities=optional,
     )
-    return system, system_request
+    return system_request
 
 
 def run_trial_to_patient_system(
     system_id: str,
     request: TrialToPatientRunRequest,
 ) -> TrialToPatientRunResult:
-    system, system_request = _effective_trial_to_patient_request(system_id, request)
-    result = system.run(system_request)
+    if not isinstance(request, TrialToPatientRunRequest):
+        raise TypeError("request must be a TrialToPatientRunRequest")
+    execution = _trial_to_patient_execution(system_id)
+    system_request = execution.prepare(system_id, request)
+    result = execution.run(system_id, system_request)
     if not isinstance(result, TrialToPatientRunResult):
         raise TypeError(
             f"trial-to-patient System {system_id!r} must return TrialToPatientRunResult"
@@ -1502,8 +1495,7 @@ class TrialToPatientRunManifest:
             "derived_views",
             "task_input_id",
         }
-        identity_version = system_input.get("identity_version", "1.0")
-        if identity_version not in {"1.0", "2.0"}:
+        if system_input.get("identity_version") != "2.0":
             raise SchemaValidationError("unsupported reverse System Input identity_version")
         expected_fields = task_fields | {
             "system_input_id",
@@ -1512,9 +1504,8 @@ class TrialToPatientRunManifest:
             "options",
             "required_capabilities",
             "optional_capabilities",
+            "identity_version",
         }
-        if identity_version == "2.0":
-            expected_fields.add("identity_version")
         if set(system_input) != expected_fields:
             raise SchemaValidationError(
                 "reverse configuration.system_input fields do not match the System input contract"
@@ -1576,7 +1567,6 @@ class TrialToPatientRunManifest:
             options=cast(Mapping[str, object], options),
             required_capabilities=frozenset(cast(list[str], required)),
             optional_capabilities=frozenset(cast(list[str], optional)),
-            identity_version=cast(str, identity_version),
         )
         if request.top_k != self.budget_k or request.metric_cutoff != self.metric_cutoff:
             raise SchemaValidationError(
@@ -1905,9 +1895,13 @@ def write_trial_to_patient_run(
     if not isinstance(execution_provenance, TrialToPatientExecutionProvenance):
         raise TypeError("execution_provenance must be a TrialToPatientExecutionProvenance")
     system_id = result.system_id
-    if system_id not in _reverse_systems():
-        raise SchemaValidationError("reverse result was not produced by a registered System")
-    _system, effective_request = _effective_trial_to_patient_request(system_id, request)
+    try:
+        execution = _trial_to_patient_execution(system_id)
+    except ValueError as exc:
+        raise SchemaValidationError(
+            "reverse result was not produced by a registered System"
+        ) from exc
+    effective_request = execution.prepare(system_id, request)
     if result.system_input_id != effective_request.system_input_id:
         raise SchemaValidationError("reverse result does not bind the effective System Input")
     system_identity = result.configuration.get("system_identity")

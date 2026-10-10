@@ -28,6 +28,7 @@ from taim.judgments import (
     TREC_CT_JUDGMENT_SCHEME,
     JudgmentScheme,
 )
+from taim.patient_to_trial import PatientToTrialTaskInput
 from taim.pipeline_extensions import extension_for
 from taim.public_patient_to_trial import (
     evaluate_public_patient_to_trial_run,
@@ -199,7 +200,7 @@ def _json_identity(value: object) -> str:
     return f"sha256:{hashlib.sha256(serialized).hexdigest()}"
 
 
-def _positive_int(value: object, *, role: str) -> int:
+def positive_int(value: object, *, role: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
         raise SchemaValidationError(f"{role} must be a positive integer")
     return value
@@ -224,7 +225,7 @@ _ABSOLUTE_FILESYSTEM_PATH = re.compile(
 )
 
 
-def _is_absolute_filesystem_path(value: str) -> bool:
+def is_absolute_filesystem_path(value: str) -> bool:
     return _ABSOLUTE_FILESYSTEM_PATH.match(value) is not None
 
 
@@ -237,7 +238,7 @@ def _absolute_path_locations(value: object, *, location: str) -> Iterator[str]:
     elif isinstance(value, list):
         for index, nested in enumerate(value):
             yield from _absolute_path_locations(nested, location=f"{location}[{index}]")
-    elif isinstance(value, str) and _is_absolute_filesystem_path(value):
+    elif isinstance(value, str) and is_absolute_filesystem_path(value):
         yield location
 
 
@@ -368,8 +369,8 @@ def _system_input_projection(
     core: dict[str, JsonValue] = {
         "system_input_id": system_input_id,
         "identity_version": identity_version,
-        "top_k": _positive_int(typed_input.get("top_k"), role="System Input top_k"),
-        "metric_cutoff": _positive_int(
+        "top_k": positive_int(typed_input.get("top_k"), role="System Input top_k"),
+        "metric_cutoff": positive_int(
             typed_input.get("metric_cutoff"), role="System Input metric_cutoff"
         ),
         "effective_options": safe_options,
@@ -394,8 +395,8 @@ def _validate_system_input_projection(value: object, *, system_input_id: str) ->
     if value["identity_version"] != "2.0":
         raise SchemaValidationError("Result Bundle System Input identity_version is unsupported")
     require_sha256(value["system_input_id"], "System Input projection system_input_id")
-    _positive_int(value["top_k"], role="System Input projection top_k")
-    _positive_int(value["metric_cutoff"], role="System Input projection metric_cutoff")
+    positive_int(value["top_k"], role="System Input projection top_k")
+    positive_int(value["metric_cutoff"], role="System Input projection metric_cutoff")
     for field in ("effective_options", "model_identity", "index_identity"):
         if not isinstance(value[field], Mapping):
             raise SchemaValidationError(f"System Input projection {field} must be an object")
@@ -665,7 +666,7 @@ def validate_dependency_environment(value: object) -> dict[str, JsonValue]:
     return {**core, "environment_id": cast(str, value["environment_id"])}
 
 
-def _validated_producer_identity(value: object) -> dict[str, JsonValue]:
+def validated_producer_identity(value: object) -> dict[str, JsonValue]:
     if not isinstance(value, Mapping):
         raise SchemaValidationError("release run lacks its producer identity")
     require_exact_keys(value, _PRODUCER_IDENTITY_FIELDS, role="release producer identity")
@@ -687,7 +688,7 @@ def _forward_producer_identity(manifest: RunManifest) -> dict[str, JsonValue]:
     execution = manifest.configuration.get("execution_provenance")
     if not isinstance(execution, Mapping) or execution.get("git_commit") != manifest.git_commit:
         raise SchemaValidationError("forward producer commit does not match its Run Manifest")
-    return _validated_producer_identity(
+    return validated_producer_identity(
         {
             "git_commit": manifest.git_commit,
             "working_tree_dirty": execution.get("working_tree_dirty"),
@@ -728,9 +729,15 @@ def _declaration(
     return cast(dict[str, JsonValue], json.loads(json.dumps(value, allow_nan=False)))
 
 
-def _forward_projection(run_directory: Path) -> tuple[dict[str, JsonValue], dict[str, object]]:
+def _forward_projection(
+    run_directory: Path, source_snapshot: PatientToTrialTaskInput | None
+) -> tuple[dict[str, JsonValue], dict[str, object]]:
     stored = load_public_patient_to_trial_run(run_directory)
     manifest = stored.manifest
+    if source_snapshot is not None or "trial_corpus_encoding" in cast(
+        Mapping[str, object], manifest.configuration["system_input"]
+    ):
+        manifest.resolve_task_input(source_snapshot)
     package = load_local_evaluation_package(run_directory)
     support = manifest.configuration.get("release_support")
     system_input = manifest.configuration.get("system_input")
@@ -860,7 +867,7 @@ def _reverse_projection(run_directory: Path) -> tuple[dict[str, JsonValue], dict
         "source_lock_sha256": cast(str, source["source_lock_sha256"]),
         "evidence_scope": cast(str, capability["evidence_scope"]),
         "release_source": cast(JsonValue, dict(source)),
-        "producer_identity": _validated_producer_identity(
+        "producer_identity": validated_producer_identity(
             {
                 "git_commit": manifest.execution_provenance.git_commit,
                 "working_tree_dirty": manifest.execution_provenance.working_tree_dirty,
@@ -902,11 +909,13 @@ def _reverse_projection(run_directory: Path) -> tuple[dict[str, JsonValue], dict
     return projection, metrics
 
 
-def _projection(run_directory: Path) -> tuple[dict[str, JsonValue], dict[str, object]]:
+def _projection(
+    run_directory: Path, source_snapshot: PatientToTrialTaskInput | None
+) -> tuple[dict[str, JsonValue], dict[str, object]]:
     manifest = _read_json(run_directory / "manifest.json", role="release run manifest")
     task = manifest.get("task")
     if task == "patient_to_trial":
-        return _forward_projection(run_directory)
+        return _forward_projection(run_directory, source_snapshot)
     if task == "trial_to_patient":
         return _reverse_projection(run_directory)
     raise SchemaValidationError("release run has an unknown or missing Task")
@@ -1020,7 +1029,7 @@ def _validate_metrics_payload(
             per_topic = raw_metrics["per_topic"]
             if not isinstance(aggregate, Mapping) or not isinstance(per_topic, Mapping):
                 raise SchemaValidationError("forward scorecard values must be objects")
-            topic_count = _positive_int(
+            topic_count = positive_int(
                 raw_metrics["topic_count"], role="forward scorecard topic_count"
             )
             if topic_count != len(per_topic):
@@ -1075,7 +1084,7 @@ def _validate_metrics_payload(
                     )
                 first = topic_metrics["first_relevant_rank"]
                 if first is not None:
-                    _positive_int(first, role="forward first relevant rank")
+                    positive_int(first, role="forward first relevant rank")
             for key, values in values_by_metric.items():
                 observed = recall[key] if key in recall_keys else aggregate[key]
                 if not math.isclose(
@@ -1201,17 +1210,18 @@ def build_release_result_bundle(
     *,
     release_identity: Mapping[str, object],
     declaration: Mapping[str, object],
+    source_snapshot: PatientToTrialTaskInput | None = None,
 ) -> ReleaseResultBundle:
-    """Build a public bundle without copying Evaluation Packages or source text."""
+    """Build a public bundle; compact forward records require their matching source."""
 
     source = Path(run_directory)
     output = Path(output_directory)
     if output.exists():
         raise FileExistsError(f"Result Bundle already exists: {output}")
-    projection, metrics = _projection(source)
+    projection, metrics = _projection(source, source_snapshot)
     track, task, profile, system = _validate_run_projection(projection)
     approved_release = _release_identity(release_identity)
-    producer = _validated_producer_identity(projection["producer_identity"])
+    producer = validated_producer_identity(projection["producer_identity"])
     if producer["release_identity"] != approved_release:
         raise SchemaValidationError("Result Bundle release identity does not match its producer")
     admission = _declaration(declaration, track=track, profile=profile, system=system)
@@ -1322,8 +1332,8 @@ def _validate_run_projection(projection: Mapping[str, object]) -> tuple[str, str
         "source_lock_sha256",
     ):
         require_sha256(projection[field], f"Result Bundle run {field}")
-    budget_k = _positive_int(projection["budget_k"], role="Result Bundle budget_k")
-    metric_cutoff = _positive_int(projection["metric_cutoff"], role="Result Bundle metric_cutoff")
+    budget_k = positive_int(projection["budget_k"], role="Result Bundle budget_k")
+    metric_cutoff = positive_int(projection["metric_cutoff"], role="Result Bundle metric_cutoff")
     track = cast(str, projection["track"])
     task = cast(str, projection["task"])
     profile = cast(str, projection["profile"])
@@ -1424,7 +1434,7 @@ def _validate_run_projection(projection: Mapping[str, object]) -> tuple[str, str
         membership_id=membership_id,
         system_input_id=cast(str, projection["system_input_id"]),
     )
-    producer_identity = _validated_producer_identity(projection["producer_identity"])
+    producer_identity = validated_producer_identity(projection["producer_identity"])
     if extension is not None and extension.validate_component_producers is not None:
         extension.validate_component_producers(projected_input, producer_identity)
     return track, task, profile, system
@@ -1531,7 +1541,7 @@ def validate_release_result_bundle(directory: str | Path) -> dict[str, object]:
     if not isinstance(release_identity, Mapping) or not isinstance(admission, Mapping):
         raise SchemaValidationError("Result Bundle identity or admission must be an object")
     _release_identity(release_identity)
-    producer = _validated_producer_identity(projection["producer_identity"])
+    producer = validated_producer_identity(projection["producer_identity"])
     if producer["release_identity"] != _release_identity(release_identity):
         raise SchemaValidationError("Result Bundle release identity does not match its producer")
     validated_admission = _declaration(admission, track=track, profile=profile, system=system)

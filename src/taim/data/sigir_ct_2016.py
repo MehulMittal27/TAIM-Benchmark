@@ -30,7 +30,7 @@ from taim.data.trec_ct_2021 import (
 from taim.evaluation_package import ConnectorDiagnostic, EvaluationPackage
 from taim.file_hash import sha256_file
 from taim.judgments import SIGIR_CT_2016_JUDGMENT_SCHEME
-from taim.schemas import JsonValue, RelevanceJudgment
+from taim.schemas import JsonValue, RelevanceJudgment, json_value_to_builtins
 from taim.snapshot import (
     CAPABILITY_CANONICAL_PATIENT_TEXT,
     CAPABILITY_CANONICAL_TRIAL_TEXT,
@@ -42,7 +42,7 @@ from taim.snapshot import (
     BenchmarkTopic,
     PatientEvidenceItem,
     SourceRecordIdentity,
-    TrialDocument,
+    Trial,
 )
 from taim.source import SourceArtifact, SourceBundle
 
@@ -223,8 +223,8 @@ def _parse_trials(
     *,
     artifact: SourceArtifact,
     include_trial_ids: frozenset[str] | None,
-) -> tuple[tuple[TrialDocument, ...], tuple[ConnectorDiagnostic, ...]]:
-    trials: dict[str, TrialDocument] = {}
+) -> tuple[tuple[Trial, ...], tuple[ConnectorDiagnostic, ...]]:
+    trials: dict[str, Trial] = {}
     diagnostics: list[ConnectorDiagnostic] = []
     try:
         with tarfile.open(source_directory / artifact.filename, mode="r:gz") as archive:
@@ -269,7 +269,7 @@ def _parse_trials(
 
 def _validate_relations(
     topics: tuple[BenchmarkTopic, ...],
-    trials: tuple[TrialDocument, ...],
+    trials: tuple[Trial, ...],
     judgments: tuple[RelevanceJudgment, ...],
 ) -> None:
     topic_ids = {topic.topic_id for topic in topics}
@@ -312,7 +312,7 @@ def _source_recipe(
             "target": "narrative",
             "normalization_rule": f"sigir-ct-2016-{query_variant}-title-text-v1",
         },
-        *FIELD_DISPOSITION_TABLE[1:],
+        *[json_value_to_builtins(item) for item in FIELD_DISPOSITION_TABLE[1:]],
         {
             "source": "alternate topic representation and assessor ad-hoc queries",
             "disposition": "intentionally_ignored",

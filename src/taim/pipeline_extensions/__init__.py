@@ -1,14 +1,15 @@
-"""Pipelines whose public release code lives in a module of their own.
+"""The contract for pipelines whose public release code lives in a module of their own.
 
 A pipeline that not every release publishes keeps its command options, its subcommands, its run
-dispatch and the release rules for its files in a module of this package, and only that pipeline
-owns the module. The release commands find the modules this package ships and never name one, so a
-release that holds a pipeline back leaves its module out and nothing else refers to it.
+dispatch and the release rules for its files in an extension module inside its family folder, and
+only that pipeline owns the module: ``taim.pipelines.<family>.extension`` when the family is one
+release unit, ``taim.pipelines.<family>.<unit>_extension`` for each unit otherwise. The release
+commands find the extension modules this installation ships and never name one, so a release that
+holds a pipeline back leaves its module out and nothing else refers to it.
 
 Each module assigns ``EXTENSION`` once: a single :class:`PipelineExtension` call that writes its
-:data:`LITERAL_FIELDS` as literals. A module may also own its System class and identity; shared
-helpers belong outside this discovery package. The release validator reads those literals from
-a candidate tree without importing the module.
+:data:`LITERAL_FIELDS` as literals. The release validator reads those literals from a candidate
+tree without importing the module. This package holds only the contract the modules share.
 """
 
 from __future__ import annotations
@@ -20,13 +21,35 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from functools import cache
 from types import MappingProxyType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+import taim.pipelines
 
 if TYPE_CHECKING:
     from taim.artifacts import RunEvaluationExtension
+    from taim.patient_to_trial import PatientToTrialRunRequest, PatientToTrialRunResult
     from taim.release_profiles import ResolvedBenchmark
     from taim.schemas import JsonValue
-    from taim.system_contracts import SystemRunRequest, SystemRunResult
+    from taim.trial_to_patient import TrialToPatientRunRequest, TrialToPatientRunResult
+
+RequestT = TypeVar("RequestT")
+ResultT = TypeVar("ResultT")
+
+
+@dataclass(frozen=True, slots=True)
+class RankingExecution(Generic[RequestT, ResultT]):
+    """A typed direction's execution and optional effective-request projection.
+
+    Preparation is pure: persistence can reproduce the exact request without executing a System.
+    Runners that resolve physical inputs themselves retain that resolution inside ``run``.
+    """
+
+    run: Callable[[str, RequestT], ResultT]
+    prepare_request: Callable[[str, RequestT], RequestT] | None = None
+
+    def prepare(self, system_id: str, request: RequestT) -> RequestT:
+        return request if self.prepare_request is None else self.prepare_request(system_id, request)
+
 
 SubcommandAdder = Callable[["argparse._SubParsersAction[argparse.ArgumentParser]"], None]
 # The fields an extension module writes as literals, so that they can be read without importing it.
@@ -58,7 +81,7 @@ class ComponentRun:
 
     args: argparse.Namespace
     benchmark: ResolvedBenchmark
-    request: SystemRunRequest
+    request: PatientToTrialRunRequest
     profile_id: str
     run_id: str
     producer_release_identity: Mapping[str, str] | None
@@ -84,18 +107,25 @@ class PipelineExtension:
     installed to run the pipeline's Systems. ``default_system`` names one of this unit's Systems
     that can run the synthetic quick start, and offers a CLI default in that System's direction.
     ``run_from_components`` runs a System assembled from
-    validated component runs in place of ``run_options`` and ``run``; ``stage_depths`` (each stage's
-    pipeline depth and ranking depth, in order) and ``validate_component_producers`` are the rules
-    its Result Bundles meet.
+    validated component runs in place of ``run_options`` and ``patient_to_trial.run``;
+    ``stage_depths`` records each stage's pipeline depth and ranking depth, in order.
+    ``validate_component_producers`` checks the producer identities in its Result Bundles.
     """
 
     system_tasks: Mapping[str, str]
     pipeline_depth: str
     external_baseline: bool
     subcommands: Mapping[tuple[str, str], str]
-    run: Callable[[str, SystemRunRequest], SystemRunResult]
     add_run_options: Callable[[argparse.ArgumentParser], None]
-    run_options: Callable[[argparse.Namespace, ResolvedBenchmark, str], dict[str, object]]
+    patient_to_trial: RankingExecution[PatientToTrialRunRequest, PatientToTrialRunResult] | None = (
+        None
+    )
+    trial_to_patient: RankingExecution[TrialToPatientRunRequest, TrialToPatientRunResult] | None = (
+        None
+    )
+    run_options: (
+        Callable[[argparse.Namespace, ResolvedBenchmark, str], dict[str, object]] | None
+    ) = None
     add_patient_to_trial_commands: SubcommandAdder | None = None
     protocol_bindings: tuple[tuple[str, str, str], ...] = ()
     module_exports: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
@@ -108,14 +138,22 @@ class PipelineExtension:
     evaluation_extension: Callable[[], RunEvaluationExtension] | None = None
     required_distributions: tuple[str, ...] = ()
     default_system: str | None = None
-    reverse_systems: Callable[[], Mapping[str, object]] | None = None
-    run_from_components: Callable[[ComponentRun], SystemRunResult] | None = None
+    run_from_components: Callable[[ComponentRun], PatientToTrialRunResult] | None = None
     stage_depths: Mapping[str, tuple[str, int]] = field(default_factory=dict)
     validate_component_producers: (
         Callable[[Mapping[str, object], Mapping[str, JsonValue]], None] | None
     ) = None
 
     def __post_init__(self) -> None:
+        tasks = set(self.system_tasks.values())
+        if not tasks or tasks - {"patient_to_trial", "trial_to_patient"}:
+            raise ValueError("pipeline must declare recognized ranking tasks")
+        if ("patient_to_trial" in tasks) != (self.patient_to_trial is not None):
+            raise ValueError("patient-to-trial declaration and execution must agree")
+        if ("trial_to_patient" in tasks) != (self.trial_to_patient is not None):
+            raise ValueError("trial-to-patient declaration and execution must agree")
+        if self.patient_to_trial is None and self.run_from_components is not None:
+            raise ValueError("component runs require patient-to-trial execution")
         if self.default_system is not None and self.default_system not in self.system_tasks:
             raise ValueError("pipeline default_system must name one of its declared Systems")
         for name in (
@@ -133,13 +171,29 @@ class PipelineExtension:
 EXTENSION: PipelineExtension
 
 
+def _is_extension_module(name: str) -> bool:
+    return name == "extension" or name.endswith("_extension")
+
+
 @cache
 def pipeline_extensions() -> tuple[PipelineExtension, ...]:
-    """Every pipeline extension this installation ships, in module-name order."""
+    """Every pipeline extension this installation ships, in family and then module-name order."""
 
+    names: list[str] = []
+    for family in sorted(pkgutil.iter_modules(taim.pipelines.__path__), key=lambda item: item.name):
+        if not family.ispkg:
+            continue
+        package = importlib.import_module(f"taim.pipelines.{family.name}")
+        names.extend(
+            f"{package.__name__}.{module_info.name}"
+            for module_info in sorted(
+                pkgutil.iter_modules(package.__path__), key=lambda item: item.name
+            )
+            if _is_extension_module(module_info.name)
+        )
     found: list[PipelineExtension] = []
-    for module_info in sorted(pkgutil.iter_modules(__path__), key=lambda item: item.name):
-        module = importlib.import_module(f"{__name__}.{module_info.name}")
+    for name in names:
+        module = importlib.import_module(name)
         extension = getattr(module, "EXTENSION", None)
         if not isinstance(extension, PipelineExtension):
             raise TypeError(f"pipeline extension module {module.__name__} defines no EXTENSION")
@@ -170,6 +224,7 @@ __all__ = [
     "LITERAL_FIELDS",
     "ComponentRun",
     "PipelineExtension",
+    "RankingExecution",
     "SubcommandAdder",
     "add_argument_once",
     "extension_for",

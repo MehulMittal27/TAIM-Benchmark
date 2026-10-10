@@ -17,7 +17,7 @@ from taim.contracts import (
     content_sha256,
     require_sha256,
 )
-from taim.schemas import JsonValue, SchemaValidationError
+from taim.schemas import JsonValue, SchemaValidationError, freeze_json_value
 from taim.snapshot import (
     DERIVED_VIEW_CAPABILITY_PREFIX,
     BenchmarkSnapshot,
@@ -29,13 +29,18 @@ from taim.snapshot import (
 ELIGIBILITY_CRITERION_VIEW_CAPABILITY = (
     f"{DERIVED_VIEW_CAPABILITY_PREFIX}{ELIGIBILITY_CRITERION_VIEW_NAME}"
 )
-ELIGIBILITY_VIEW_CONFIGURATION: dict[str, JsonValue] = {
-    "criterion_origin": "derived",
-    "missing_heading_policy": "unlabelled_block_is_unspecified",
-    "non_criterion_item_policy": "preserve_typed_source_spans",
-    "source_span_offset_unit": "unicode_code_point",
-    "source_span_end": "exclusive",
-}
+ELIGIBILITY_VIEW_CONFIGURATION: Mapping[str, JsonValue] = cast(
+    Mapping[str, JsonValue],
+    freeze_json_value(
+        {
+            "criterion_origin": "derived",
+            "missing_heading_policy": "unlabelled_block_is_unspecified",
+            "non_criterion_item_policy": "preserve_typed_source_spans",
+            "source_span_offset_unit": "unicode_code_point",
+            "source_span_end": "exclusive",
+        }
+    ),
+)
 
 CriterionPolarity = Literal["inclusion", "exclusion", "unspecified"]
 ListMarkerType = Literal["bullet", "number", "letter"]

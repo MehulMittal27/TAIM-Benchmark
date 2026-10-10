@@ -32,6 +32,11 @@ PSF-2.0; wrapt under BSD-2-Clause; and Unidecode under GPL-2.0-or-later. These p
 installation dependencies; their source and binary artifacts are not copied into the repository or
 TAIM distribution.
 
+The optional `trialgpt2` extra installs the two requirements of the separately acquired TrialGPT 2.0
+code: openai under Apache-2.0 and tqdm under MPL-2.0 AND MIT. Among their resolved dependencies,
+httpx2, httpcore2 and httpx2-jsfetch are BSD-3-Clause, jiter and truststore are MIT, and sniffio is
+MIT OR Apache-2.0.
+
 On supported GPU platforms, PyTorch installation may resolve CUDA and NVIDIA packages governed by
 NVIDIA terms. The `cuda-toolkit` 13.0.3.0 wheel declares no licence in its embedded metadata, so the
 release definition records `LicenseRef-NVIDIA-CUDA-EULA` instead of treating the absence as an
@@ -68,6 +73,8 @@ and their Profiles are listed in the release catalogue.
 TrialGPT inputs are provisioned separately for each Profile the catalogue declares for it.
 The pinned TrialMatchAI fork is provisioned separately for each Profile the catalogue declares
 for it.
+The pinned TrialMatchAI v0.9.1 checkout is provisioned separately for each Profile the catalogue
+declares for it.
 
 The TrialGPT source lock pins `ncbi-nlp/TrialGPT` commit
 `1b3242cd50c153a9c324661d4a0bd94fc68a4226`. Its exact LICENSE states that the upstream code is a
@@ -80,6 +87,24 @@ requires a fresh, Track-specific frozen retrieval artifact. The checksum-locked 
 external-fidelity corpus is acquired separately; availability of its metadata does not authorize
 redistribution. The TREC 2022 and SIGIR adaptations use their release-defined judgment-union Task
 Inputs rather than copying TrialGPT's published cohort sizes.
+
+The TrialGPT 2.0 source lock pins `TrialGPT2/TrialGPT2.0` commit
+`1c5f9ebc3b98d1f780ceea68043efdaa2daba880`. Its exact LICENSE is the National Library of Medicine
+public-domain notice for a United States Government work: it places no restriction on use or
+reproduction, disclaims all warranties, and asks that any work or product based on it cite its
+authors:
+
+> Yin Fang, Qiao Jin, Shubo Tian, Lauren He, Maya Geer, Noor Naffakh, Ryan Huu-Tuan Nguyen,
+> Zifeng Wang, Jimeng Sun, Charalampos S Floudas, James L Gulley, Kamilia Moalem, Catarina Martins
+> Maia, Amanda Nottke, Juan W Valle, Melinda Bachini, Lourdes Rocha-Nussbaum, Kari Ramage, Nikita
+> Curry, Megan Barnes, Mandy Mansaray, Darlene Gabeau, Craig E Grossman, Heath Skinner, Michael
+> Burczynski, NIH-TrialBench Consortium, Zhiyong Lu. Towards AI-Assisted Clinical Trial Matching:
+> Practical Considerations, Multicenter Evaluation, and Real-World Deployment.
+
+TAIM does not copy the checkout; `TrialGPT2-TAIM-Luna-v1` invokes the separately acquired checkout at
+that commit, unchanged. It re-ranks the frozen retrieval of the TrialGPT retrieval producer above.
+It uses the separately authorized OpenAI Codex service with model `gpt-5.6-luna`; this notice does
+not accept service terms or authorize provider calls.
 
 The selected TrialMatchAI checkout pins `MehulMittal27/TrialMatchAI` commit
 `99aa499e7296ebde836a0ebf00a5ed4948892a83`, whose exact LICENSE is MIT. The original paper
@@ -107,6 +132,16 @@ The selected TrialMatchAI runtime binds these exact model revisions:
 The TrialMatchAI concept store is a user-supplied, manifest-bound runtime input. Its vocabulary and
 terminology sources may require separate licenses, including SNOMED CT where applicable. TAIM does
 not include the store or accept those licenses for the user.
+The TrialMatchAI v0.9.1 source lock pins `cbib/TrialMatchAI` commit
+`3bc0e5f44d742ef069f8ef73bbc4187573d9db6a` (tag `v0.9.1`), whose exact LICENSE is MIT. TAIM does
+not copy the checkout; it invokes the separately acquired checkout at that commit. The System binds
+the same six model revisions listed above for TrialMatchAI, with the same terms: TAIM chose those
+revisions, since the tag's configuration names none.
+
+Its concept store is a user-supplied, manifest-bound runtime input built by the tag's own recipe
+from six openly distributed sources: NCBI Gene (`Homo_sapiens.gene_info`), the Human Disease
+Ontology, ChEBI (lite), Cellosaurus, the Cell Ontology and the Human Phenotype Ontology. Each carries
+its own terms; the store reads no SNOMED CT. TAIM does not include the store or its sources.
 No external System may execute until the operator provides every required licensed input.
 The TREC 2023 adaptation is a TAIM run of the later pinned fork; it is not a reproduction of the
 TrialMatchAI paper.

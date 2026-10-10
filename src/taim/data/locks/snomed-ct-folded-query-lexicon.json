@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "input_id": "SNOMED-CT:user-supplied-release",
+  "role": "folded-query-lexicon",
+  "edition": "SNOMED CT International Edition, 2026-08-01",
+  "description_file": {
+    "name": "sct2_Description_Snapshot-en_INT_20260801.txt",
+    "sha256": "sha256:0164892dab7a88fa5dc098307acbf88b1b252ba4018a9a00dca3d3ef070b6811"
+  },
+  "release_policy": {
+    "source_bytes_shipped": false,
+    "operator_must_supply_licensed_release": true,
+    "other_editions_refused": true
+  }
+}

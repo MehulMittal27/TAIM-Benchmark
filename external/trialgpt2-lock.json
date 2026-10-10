@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "directory": "external/trialgpt2-upstream",
+    "repository": "https://github.com/TrialGPT2/TrialGPT2.0.git",
+    "commit": "1c5f9ebc3b98d1f780ceea68043efdaa2daba880",
+    "git_tree": "14538051649a86f92f74cb273e6b459f11686850",
+    "source_manifest_sha256": "sha256:327eb311bd8530f72b5a2480a3a6ef428d4081e92b4b9c972960679d71e8964b",
+    "verify_remote": true,
+    "detached": true,
+    "partial_clone_filter": "blob:none",
+    "sparse_paths": [
+      "src"
+    ],
+    "excluded_worktree_paths": [
+      "data"
+    ],
+    "license": {
+      "expression": "LicenseRef-NLM-Public-Domain",
+      "path": "LICENSE",
+      "git_blob": "a92be7236dcf1b93c3488444c7521fa25dd8b129",
+      "sha256": "sha256:bb4da61d60a340334fd9dd5c71920bc803ae13b5080a51320aba4aba070480ad",
+      "citation": "Yin Fang, Qiao Jin, Shubo Tian, Lauren He, Maya Geer, Noor Naffakh, Ryan Huu-Tuan Nguyen, Zifeng Wang, Jimeng Sun, Charalampos S Floudas, James L Gulley, Kamilia Moalem, Catarina Martins Maia, Amanda Nottke, Juan W Valle, Melinda Bachini, Lourdes Rocha-Nussbaum, Kari Ramage, Nikita Curry, Megan Barnes, Mandy Mansaray, Darlene Gabeau, Craig E Grossman, Heath Skinner, Michael Burczynski, NIH-TrialBench Consortium, Zhiyong Lu. Towards AI-Assisted Clinical Trial Matching: Practical Considerations, Multicenter Evaluation, and Real-World Deployment.",
+      "covers": "The whole repository at this commit, code and data. Its NIH-TrialBench (data/nih_trialbench) is usable for a later Track; the TREC, SIGIR and ClinicalTrials.gov material under data/ keeps its own terms. TAIM checks out only src/ and the root files."
+    }
+  }
+}

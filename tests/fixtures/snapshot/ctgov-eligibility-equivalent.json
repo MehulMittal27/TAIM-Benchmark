@@ -1,0 +1,14 @@
+{
+  "protocolSection": {
+    "eligibilityModule": {
+      "eligibilityCriteria": "<p><strong>Adults</strong> with alpha syndrome.</p><p>Excludes cardiac disease.</p>",
+      "healthyVolunteers": true,
+      "maximumAge": "N/A",
+      "minimumAge": "18 Years",
+      "sex": "ALL"
+    },
+    "identificationModule": {
+      "nctId": "NCT00000001"
+    }
+  }
+}

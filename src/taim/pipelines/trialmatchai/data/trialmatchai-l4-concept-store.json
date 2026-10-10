@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "store": "candidate-21352305",
+  "digest_rule": "SHA-256 over one canonical JSON line per regular file, sorted by POSIX path relative to the store folder: [path, file SHA-256]. content.table_data holds <table>.lance/data/, content.indexes holds <table>.lance/_indices/, content.table_metadata every other file",
+  "identity": {
+    "manifest_version": "2",
+    "store.row_count": 3899744,
+    "embeddings.mode": "vector",
+    "concept_state.vector_stream_digest": "sha256:46396076e44ed69938deea0ff800bd6ad40313c675d348f273a80d42b7626b12",
+    "content.table_data": "sha256:2f2a6c44461c5f97b3f222d1299e5fce88357574e447bea7f2dc20d745d4ab99",
+    "content.indexes": "sha256:4d5f0bce2552b04cd390b3ba9dc5cb73c8b7e84b0144bf50cbb34bbe5dd9ef0b",
+    "content.table_metadata": "sha256:32bbe8044698fd9374a0bcc488596e236814379f0a2602610f407eedd7dceab8"
+  }
+}

@@ -1,0 +1,11 @@
+concept_id	concept_synonym_name	language_concept_id
+1001	Fixture condition one	4180186
+1001	 fixture condition one 	4180186
+1001		4180186
+1002	Fixture condition two	4180186
+2001	Fixture laboratory one	4180186
+2001	Laboratory one	4180186
+3001	Fixture medication one	4180186
+4001	Fixture symptom one	4180186
+4001	Fixture Symptom One	4180186
+4001		4180186

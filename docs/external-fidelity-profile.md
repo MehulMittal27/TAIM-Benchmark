@@ -65,7 +65,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<receipt-id> \
   --protocol-approval-id "$EXTERNAL_PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.1.2-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25 \
   --run-id external-fidelity-bm25 \

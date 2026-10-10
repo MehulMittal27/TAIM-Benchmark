@@ -45,9 +45,9 @@ must be rerun after freeze against the immutable Release 0.1 preparation.
 
 Every result states its release identity, Track, Task, Profile, System, Primary Ranking, Pipeline
 Depth, Prepared Snapshot ID, Task Input ID, System Input ID, Evaluation Package ID, and budget.
-Release runs use portable System Input identity `2.0`; older Run Manifest v7 artifacts without that
-field retain the original `1.0` recipe and remain readable, but cannot be admitted as Release 0.1
-Published Result Bundles.
+Every run uses the portable System Input identity `2.0`. Older Run Manifest v7 artifacts without
+that field used the retired `1.0` recipe, which hashed machine-local paths; they are no longer read,
+are not migrated, and cannot be admitted as Release 0.1 Published Result Bundles.
 The bundle additionally records the capability evidence scope, complete prepared dataset and
 Snapshot Source Recipe identity, official Source Bundle identity for real Profiles, the safe System
 Input projection, producer identity, and the projected patient/trial entity-version

@@ -27,6 +27,22 @@
       ]
     },
     {
+      "system_id": "TrialGPT2-TAIM-Luna-v1",
+      "models": [],
+      "runtime_inputs": [
+        {
+          "input_id": "OpenAI-Codex:gpt-5.6-luna",
+          "acquisition": "separately-authorized-provider",
+          "redistribution": "not-included"
+        },
+        {
+          "input_id": "TrialGPT2-upstream-code@1c5f9ebc3b98d1f780ceea68043efdaa2daba880",
+          "acquisition": "user-supplied",
+          "redistribution": "not-included"
+        }
+      ]
+    },
+    {
       "system_id": "trialmatchai-current-cuda-l4-trec21-development-v4",
       "models": [
         {
@@ -139,6 +155,47 @@
       "runtime_inputs": [
         {
           "input_id": "TrialMatchAI-upstream-code@99aa499e7296ebde836a0ebf00a5ed4948892a83",
+          "acquisition": "user-supplied",
+          "redistribution": "not-included"
+        },
+        {
+          "input_id": "TrialMatchAI-concept-store:user-supplied-frozen-manifest",
+          "acquisition": "user-supplied-licensed-inputs",
+          "redistribution": "not-included"
+        }
+      ]
+    },
+    {
+      "system_id": "trialmatchai-upstream-v091-cuda-trec21-development-v1",
+      "models": [
+        {
+          "model_id": "BAAI/bge-m3",
+          "revision": "5617a9f61b028005a4858fdac845db406aefb181"
+        },
+        {
+          "model_id": "fastino/gliner2-base-v1",
+          "revision": "f5b2ecedebe4381b088c1cf276f5bf72a52cac54"
+        },
+        {
+          "model_id": "google/gemma-2-2b-it",
+          "revision": "299a8560bedf22ed1c72a8a11e7dce4a7f9f51f8"
+        },
+        {
+          "model_id": "majdabd33/trialmatchai-gemma2-reranker-lora",
+          "revision": "3118ba76d545f71f3aaa7952d2f031ad5fdef8c9"
+        },
+        {
+          "model_id": "majdabd33/trialmatchai-phi4-reasoning-lora",
+          "revision": "9eaddaf048c8d4266a291884ff89db1cf05b07fc"
+        },
+        {
+          "model_id": "microsoft/phi-4",
+          "revision": "2db69c1c3e91a05d2c64a3185acfbaf36f744e25"
+        }
+      ],
+      "runtime_inputs": [
+        {
+          "input_id": "TrialMatchAI-upstream-code@3bc0e5f44d742ef069f8ef73bbc4187573d9db6a",
           "acquisition": "user-supplied",
           "redistribution": "not-included"
         },

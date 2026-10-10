@@ -24,7 +24,7 @@ from taim.release_profiles import (
 from taim.release_result_bundle import _validate_metrics_payload
 from taim.release_support import RELEASE_VERSION
 from taim.schemas import Candidate, RelevanceJudgment, RunManifest
-from taim.snapshot import BenchmarkSnapshot, SourceRecordIdentity, TrialDocument
+from taim.snapshot import BenchmarkSnapshot, SourceRecordIdentity, Trial
 
 
 @pytest.mark.parametrize(
@@ -125,7 +125,7 @@ def test_trec_2021_profiles_report_eligible_precision_without_changing_frozen_pr
 
 def test_judgment_union_profile_excludes_unjudged_only_trials_and_requires_frozen_pool() -> None:
     base = load_release_fixture("trec-ct-2022")
-    unjudged = TrialDocument(
+    unjudged = Trial(
         trial_id="NCT-UNJUDGED",
         source_identity=SourceRecordIdentity("synthetic-test", "NCT-UNJUDGED"),
         canonical_text="Unjudged-only synthetic trial",
@@ -212,3 +212,44 @@ def test_judgment_union_profile_excludes_unjudged_only_trials_and_requires_froze
     )
     with pytest.raises(ValueError, match="every and only"):
         _validate_judgment_union_membership(superset_manifest, package)
+
+
+def test_shared_profile_values_preserve_registry_identities_and_detach_policy_mappings() -> None:
+    from taim import profiles, release_profiles
+
+    research = profiles.load_profile("official-full")
+    release = release_profiles.load_profile("official-full")
+    expected_hash = "sha256:3562ef6c42bb42c298c9b2d04fb1124d6954cfb8b44ca46936efa5b30e3db1b4"
+    assert research.definition_sha256 == release.definition_sha256 == expected_hash
+    assert research.evaluation_configuration() == release.evaluation_configuration()
+    for profile in (research, release):
+        supplied_gains = {"0": 0, "1": 1, "2": 2}
+        detached = replace(profile, gain_mapping=supplied_gains)
+        supplied_gains["2"] = 99
+        assert detached.evaluation_configuration()["gain_mapping"] == {"0": 0, "1": 1, "2": 2}
+        serialized = detached.evaluation_configuration()
+        serialized["gain_mapping"]["2"] = 88
+        assert detached.evaluation_configuration()["gain_mapping"] == {"0": 0, "1": 1, "2": 2}
+        with pytest.raises(TypeError):
+            detached.gain_mapping["2"] = 77
+
+
+def test_shared_resolved_values_keep_release_receipts_out_of_research_manifests() -> None:
+    from taim import profiles, release_profiles
+
+    prepared = load_release_fixture("trec-ct-2021")
+    research = profiles.resolve_benchmark_profile(prepared)
+    release = release_profiles.resolve_benchmark_profile(prepared)
+    research_manifest = research.manifest_configuration()
+    release_manifest = release.manifest_configuration()
+    assert "pool_receipt_id" not in research_manifest
+    assert release_manifest.pop("pool_receipt_id") is None
+    assert release_manifest == research_manifest
+    assert research.evaluation_package is prepared.evaluation_package
+    assert release.evaluation_package is prepared.evaluation_package
+    with pytest.raises(ValueError, match="unknown benchmark profile"):
+        profiles.load_profile("trec-ct-2021-judgment-union")
+    with pytest.raises(ValueError, match="requires --pool-count"):
+        release_profiles.resolve_benchmark_profile(
+            prepared, profile_id="trec-ct-2021-judgment-union"
+        )

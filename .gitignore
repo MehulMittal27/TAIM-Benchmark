@@ -12,3 +12,6 @@ prepared/
 runs/
 /derived/
 /indexes/
+/tools/cql/node_modules/
+/tools/cql/package.json
+/tools/cql/package-lock.json

@@ -12,9 +12,9 @@ from taim.entity_versions import (
     parse_clinical_as_of,
     source_grounded_patient_evidence_profile,
 )
+from taim.patient_to_trial import PatientToTrialRunRequest
 from taim.release_fixture import FIXTURE_CLINICAL_AS_OF, load_release_fixture
 from taim.release_profiles import ResolvedBenchmark, resolve_benchmark_profile
-from taim.system_contracts import SystemRunRequest
 
 
 def _print(value: object) -> int:
@@ -25,7 +25,9 @@ def _print(value: object) -> int:
 def _reference_system(task: str) -> str:
     # Export asks the catalogue which Track and Profile pairs exist through the reference System's
     # rows, so a submission is scored on exactly the inputs a catalogue run of that System gets.
-    return "bm25" if task == "patient_to_trial" else "bm25-trial-to-patient"
+    from taim.release_support import reference_system_for_task
+
+    return reference_system_for_task(task)
 
 
 def _require_fixture_only(args: argparse.Namespace) -> None:
@@ -69,7 +71,7 @@ def _require_protocol(args: argparse.Namespace) -> None:
 
 
 def _forward_input(args: argparse.Namespace) -> ResolvedBenchmark:
-    from taim.release_cli import _read_pool_ids
+    from taim.cli_support import read_pool_ids
     from taim.release_support import source_profile_id
 
     if args.fixture:
@@ -92,12 +94,12 @@ def _forward_input(args: argparse.Namespace) -> ResolvedBenchmark:
         expected_pool_count=args.pool_count,
         expected_pool_ids_sha256=args.pool_ids_sha256,
         expected_pool_receipt_id=args.pool_receipt_id,
-        supplied_pool_ids=_read_pool_ids(args.pool_file) if args.pool_file is not None else None,
+        supplied_pool_ids=read_pool_ids(args.pool_file) if args.pool_file is not None else None,
     )
 
 
 def _export(args: argparse.Namespace) -> int:
-    from taim.release_cli import _verified_release_identity
+    from taim.release_producer import verified_release_identity
     from taim.reverse_fixture import load_reverse_fixture
     from taim.reverse_viability import qualify_reverse_viability_profile
     from taim.submissions import export_task
@@ -106,10 +108,10 @@ def _export(args: argparse.Namespace) -> int:
         _require_fixture_only(args)
     else:
         _require_protocol(args)
-    identity = None if args.fixture else _verified_release_identity(args)
+    identity = None if args.fixture else verified_release_identity(args)
     if args.task == "patient_to_trial":
         benchmark = _forward_input(args)
-        request = SystemRunRequest.for_benchmark(
+        request = PatientToTrialRunRequest.for_benchmark(
             benchmark,
             run_id="external-task-export",
             top_k=args.top_k,
@@ -117,7 +119,6 @@ def _export(args: argparse.Namespace) -> int:
             options={},
             clinical_as_of=FIXTURE_CLINICAL_AS_OF if args.fixture else args.clinical_as_of,
             patient_evidence_profile=source_grounded_patient_evidence_profile(),
-            identity_version="2.0",
         )
         native = request.snapshot.task_input_dict()
         package = benchmark.evaluation_package.to_dict()
@@ -216,71 +217,122 @@ def _validate(args: argparse.Namespace) -> int:
 
 
 def _input_options(parser: argparse.ArgumentParser) -> None:
-    from taim.release_cli import (
-        _add_release_identity_options,
-        _positive_integer,
-        _sha256_identity,
-    )
+    from taim.cli_support import add_pool_options, add_release_identity_options
     from taim.release_support import SUPPORTED_TRACKS
 
-    parser.add_argument("--track", choices=SUPPORTED_TRACKS, default="trec-ct-2021")
+    parser.add_argument(
+        "--track",
+        choices=SUPPORTED_TRACKS,
+        default="trec-ct-2021",
+        help="Track of the task to export",
+    )
     parser.add_argument(
         "--fixture",
         action="store_true",
         help="export packaged synthetic data without downloads",
     )
-    parser.add_argument("--data-dir", type=Path)
-    parser.add_argument("--profile")
-    parser.add_argument("--clinical-as-of", type=parse_clinical_as_of)
-    parser.add_argument("--pool-file", type=Path)
-    parser.add_argument("--pool-count", type=_positive_integer)
-    parser.add_argument("--pool-ids-sha256", type=_sha256_identity)
-    parser.add_argument("--pool-receipt-id", type=_sha256_identity)
     parser.add_argument(
-        "--protocol-approval-id",
-        type=_sha256_identity,
-        help="required, before any input is opened, wherever benchmark run requires it",
+        "--data-dir",
+        type=Path,
+        help="directory written by data prepare; required without --fixture",
     )
-    _add_release_identity_options(parser)
+    parser.add_argument(
+        "--profile", help="Benchmark Profile of the task; required without --fixture"
+    )
+    parser.add_argument(
+        "--clinical-as-of",
+        type=parse_clinical_as_of,
+        help="clinical as-of time, bound into the Task Input ID; required without --fixture",
+    )
+    add_pool_options(parser)
+    add_release_identity_options(parser, rule="every export without --fixture requires them")
 
 
 def add_submission_commands(commands: Any, *, reverse: bool) -> None:
-    from taim.release_cli import _positive_integer
+    from taim.cli_support import positive_integer
 
     parent = commands.add_parser(
         "submission", help="export inputs and evaluate an external pipeline's rankings"
     )
     sub = parent.add_subparsers(dest="submission_operation", required=True)
-    for name, handler in (
-        ("export", _export),
-        ("import", _import),
-        ("validate", _validate),
+    for name, handler, help_text in (
+        (
+            "export",
+            _export,
+            "write the Task Input a pipeline ranks and, apart from it, the judgments that score it",
+        ),
+        (
+            "import",
+            _import,
+            "check a pipeline's ranking and declaration against the exported task and score it",
+        ),
+        (
+            "validate",
+            _validate,
+            "recompute an imported submission's checksums and metrics",
+        ),
     ):
-        parser = sub.add_parser(name)
+        parser = sub.add_parser(name, help=help_text)
         parser.set_defaults(
             handler=handler, task="trial_to_patient" if reverse else "patient_to_trial"
         )
         if name == "export":
             _input_options(parser)
-            parser.add_argument("--top-k", type=_positive_integer, default=1000)
+            parser.add_argument(
+                "--top-k",
+                type=positive_integer,
+                default=1000,
+                help="depth the pipeline must rank each query to",
+            )
             parser.add_argument(
                 "--output",
                 type=Path,
                 required=True,
-                help="task directory: input.json only, the one file the pipeline reads",
+                help="new task directory: input.json only, the one file the pipeline reads",
             )
             parser.add_argument(
                 "--evaluator-output",
                 type=Path,
                 required=True,
-                help="evaluator directory: evaluation-package.json only; keep it from the pipeline",
+                help="new evaluator directory: evaluation-package.json only; keep it from the "
+                "pipeline",
             )
             continue
-        parser.add_argument("--task-dir", type=Path, required=True)
-        parser.add_argument("--evaluator-dir", type=Path, required=True)
+        parser.add_argument(
+            "--task-dir",
+            type=Path,
+            required=True,
+            help="task directory export wrote; it may hold input.json only",
+        )
+        parser.add_argument(
+            "--evaluator-dir",
+            type=Path,
+            required=True,
+            help="evaluator directory export wrote",
+        )
         if name == "import":
-            parser.add_argument("--ranking", type=Path, required=True)
-            parser.add_argument("--pipeline", type=Path, required=True)
-            parser.add_argument("--output", type=Path, required=True)
+            parser.add_argument(
+                "--ranking",
+                type=Path,
+                required=True,
+                help="the pipeline's ranking.jsonl, one JSON row per ranked pair",
+            )
+            parser.add_argument(
+                "--pipeline",
+                type=Path,
+                required=True,
+                help="the pipeline's pipeline.json declaration",
+            )
+            parser.add_argument(
+                "--output",
+                type=Path,
+                required=True,
+                help="directory that receives the checked submission and its metrics",
+            )
         else:
-            parser.add_argument("--submission-dir", type=Path, required=True)
+            parser.add_argument(
+                "--submission-dir",
+                type=Path,
+                required=True,
+                help="directory import wrote",
+            )

@@ -1,0 +1,57 @@
+"""The independently selectable TrialMatchAI v0.9.1 SIGIR 2016 System binding."""
+
+from __future__ import annotations
+
+from taim.patient_to_trial import PatientToTrialRunRequest, PatientToTrialRunResult
+from taim.pipeline_extensions import PipelineExtension, RankingExecution
+from taim.pipelines.trialmatchai.execution import run_system, trialmatchai_add_run_options
+from taim.pipelines.trialmatchai_v091.release import (
+    trialmatchai_upstream_add_patient_to_trial_commands,
+)
+from taim.pipelines.trialmatchai_v091.sigir16 import (
+    TRIALMATCHAI_UPSTREAM_SIGIR_2016_SYSTEM_ID,
+    TrialMatchAIUpstreamSIGIR2016System,
+)
+from taim.pipelines.trialmatchai_v091.system import trialmatchai_upstream_run_options
+
+
+def _run(system_id: str, request: PatientToTrialRunRequest) -> PatientToTrialRunResult:
+    if system_id != TRIALMATCHAI_UPSTREAM_SIGIR_2016_SYSTEM_ID:
+        raise ValueError(f"System {system_id!r} is not this release unit")
+    return run_system(TrialMatchAIUpstreamSIGIR2016System, request)
+
+
+EXTENSION = PipelineExtension(
+    system_tasks={"trialmatchai-upstream-v091-cuda-sigir16-development-v1": "patient_to_trial"},
+    pipeline_depth="post_eligibility",
+    external_baseline=True,
+    subcommands={},
+    patient_to_trial=RankingExecution(run=_run),
+    add_run_options=trialmatchai_add_run_options,
+    run_options=trialmatchai_upstream_run_options,
+    add_patient_to_trial_commands=trialmatchai_upstream_add_patient_to_trial_commands,
+    module_exports={
+        "src/taim/pipelines/trialmatchai_v091/system.py": (
+            "TRIALMATCHAI_UPSTREAM_COMMIT",
+            "TRIALMATCHAI_UPSTREAM_CONCEPT_STORE_MANIFEST_SHA256",
+            "TRIALMATCHAI_UPSTREAM_CONCEPT_STORE_RULING",
+            "TRIALMATCHAI_UPSTREAM_CONFIG_RESOURCE",
+            "TRIALMATCHAI_UPSTREAM_CONFIG_SHA256",
+            "TRIALMATCHAI_UPSTREAM_DRIVER_SHA256",
+            "TRIALMATCHAI_UPSTREAM_MODEL_PINS",
+            "TRIALMATCHAI_UPSTREAM_REPOSITORY",
+            "TRIALMATCHAI_UPSTREAM_REQUIRED_ENVIRONMENT",
+            "TRIALMATCHAI_UPSTREAM_SNAPSHOT_FILES",
+            "TRIALMATCHAI_UPSTREAM_TOPIC_RENDERER_VERSION",
+            "TRIALMATCHAI_UPSTREAM_TREC_PRESET",
+            "TrialMatchAIUpstreamV091Base",
+            "trialmatchai_upstream_config_bytes",
+            "trialmatchai_upstream_linking_evidence",
+            "trialmatchai_upstream_run_options",
+            "trialmatchai_upstream_runtime_contract",
+            "verify_trialmatchai_upstream_model_cache",
+        ),
+    },
+    protected_reference_paths=("docs/trialmatchai-v091-external-baseline.md",),
+    dependency_declarations=("src/taim/data/external-system-dependencies-v1.json",),
+)

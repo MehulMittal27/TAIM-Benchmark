@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from taim.trial_to_patient import TrialToPatientRunManifest
 
 RELEASE_SUPPORT_SCHEMA_VERSION = "1.0"
-RELEASE_VERSION = "0.2.0"
+RELEASE_VERSION = "0.3.0"
 RELEASE_SUPPORT_RESOURCE = "release-support-v0.1.json"
 FROZEN_PAPER_PROTOCOL_SHA256 = (
     "sha256:18a9c9bd3c76455038d01458a5cb2d933059d1e72924285e26500a8aaab1baf6"
@@ -81,6 +81,10 @@ _COMPLETE_ELIGIBILITY_PREPARATIONS: Mapping[tuple[str, str], tuple[str, Mapping[
     ("trec-ct-2022", "trec-ct-2022-judgment-union"): (
         "sha256:c468546653876399cb7544e23be75a9ded0f35565ed1fa5fca428b5fdc9d1610",
         {"topics": 50, "trials": 26_585},
+    ),
+    ("trec-ct-2023", "trec-ct-2023-judgment-union"): (
+        "sha256:28340bd4cb74b7eb1fff65ba927104d70e1219bb311615badefb98fa15a0b45f",
+        {"topics": 40, "trials": 17_105},
     ),
 }
 

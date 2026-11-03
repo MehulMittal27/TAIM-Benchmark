@@ -66,6 +66,11 @@ def test_trialgpt_adaptations_use_existing_other_track_judgment_unions() -> None
             "trec-ct-2022-judgment-union",
             TRIALGPT_TAIM_LUNA_V1_SYSTEM_ID,
         ),
+        (
+            "trec-ct-2023",
+            "trec-ct-2023-judgment-union",
+            TRIALGPT_TAIM_LUNA_V1_SYSTEM_ID,
+        ),
     }
 
 

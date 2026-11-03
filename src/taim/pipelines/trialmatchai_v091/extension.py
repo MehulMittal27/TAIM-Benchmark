@@ -52,5 +52,6 @@ EXTENSION = PipelineExtension(
             "verify_trialmatchai_upstream_model_cache",
         ),
     },
+    protected_reference_paths=("docs/trialmatchai-v091-external-baseline.md",),
     dependency_declarations=("src/taim/data/external-system-dependencies-v1.json",),
 )

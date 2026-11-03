@@ -1,14 +1,15 @@
 # Known issues
 
-## nltk 3.10.3: CVE-2026-81726 (GHSA-8mgp-746c-j5xp)
+## nltk 3.10.3: CVE-2026-81726 (GHSA-8mgp-746c-j5xp), fixed in 0.3.0
 
-**In short.** `uv.lock` pins nltk 3.10.3, as releases 0.1.0, 0.1.1 and 0.1.2 also do. The
-advisory covers every nltk up to and including 3.10.3. When this was checked on 2026-10-08, no
-fixed nltk existed: the advisory lists no patched version, and 3.10.3 is the latest nltk on PyPI.
+**In short.** From Release 0.3.0, `uv.lock` pins nltk 3.10.4, the first version the advisory lists
+as patched (published 2026-10-21). Releases 0.1.0 to 0.2.0 pin nltk 3.10.3, which the advisory
+covers: it covers every nltk up to and including 3.10.3. When this was first checked on
+2026-10-08, no fixed nltk existed.
 
 nltk is installed only with the optional `folding` extra, and only as an indirect dependency. This
-package never calls the six affected functions, so they cannot be reached from it. We will move to
-a fixed nltk once one is published. The evidence follows.
+package never calls the six affected functions, so they cannot be reached from it, with either
+version. The evidence follows.
 
 ### Who has nltk installed
 
@@ -91,6 +92,21 @@ The results:
 - **The hook works.** As a positive control, `AveragedPerceptron.save` was called directly after
   the run, and the hook recorded it.
 
+**The same check on nltk 3.10.4, 2026-11-03.** CPython 3.12.13 on macOS (arm64), in a fresh
+environment installed from Release 0.3.0's `uv.lock` with the `folding` extra: nltk 3.10.4,
+medspacy 1.3.1, medspacy-quickumls 3.2 and spaCy 3.8.16. The topics were the three topics of the
+TREC 2021 synthetic fixture and three sentences with affirmed, negated and historical mentions. The
+SNOMED CT input was a synthetic RF2-format release of nine invented concept IDs.
+
+| Phase | Calls into nltk | Calls to the six functions | Files opened under `nltk_data` |
+| --- | ---: | ---: | ---: |
+| `import medspacy` | 3,931 | 0 | 0 |
+| Building the folded queries | 0 | 0 | 0 |
+
+nltk again read only its `VERSION` file, and the one refused network call was the same urllib3
+probe. The positive control was recorded too, and nltk 3.10.4 itself refused it:
+`AveragedPerceptron.save` to a path outside nltk's allowed roots raises `PermissionError`.
+
 **Earlier releases.** The same `import medspacy` and `medspacy.load` lines are in
 `src/taim/query_folding.py` at the tags `v0.1.0`, `v0.1.1` and `v0.1.2`. The `uv.lock` of each tag
 pins nltk 3.10.3.
@@ -105,6 +121,8 @@ Folding cannot drop nltk on its own:
 
 Neither change is needed while the six functions are unreachable.
 
-### When a fixed nltk is published
+### The fixed nltk
 
-`uv.lock` moves to the fixed nltk, and this section is updated.
+nltk 3.10.4, published on 2026-10-21, is the advisory's first patched version. Release 0.3.0's
+`uv.lock` pins it, and nltk is the only package that changed in the lock for it. The six functions
+stay unreachable from this package, as the check above shows.

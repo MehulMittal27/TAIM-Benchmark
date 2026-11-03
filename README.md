@@ -123,7 +123,7 @@ Acquire each Track locally using its guide, then prepare checksum-verified files
 Real preparation and execution are bound to the packaged Track source lock. The public CLI has no
 override that can substitute an unofficial lock under a real effectiveness Profile.
 
-TREC 2021 Release 0.1 preparation uses `trec-ct-2021-snapshot-recipe-v3`. It is a new immutable
+TREC 2021 preparation uses `trec-ct-2021-snapshot-recipe-v3`, introduced in Release 0.1 and still used. It is a new immutable
 prepared-corpus identity and is not interchangeable with historical TAIM campaign Snapshots. Final
 publishable runs must be produced from this release after freeze. Complete-source preparation is
 shared by the full-corpus and compute-bounded Profiles; only the effective Task Input differs.
@@ -178,7 +178,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25 \
   --run-id bm25-trec-2021-judgment-union \
@@ -250,7 +250,7 @@ trial-benchmark patient-to-trial queries prepare \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --snomed-release /path/to/licensed/SnomedCT_InternationalRF2 \
   --output derived/trec-2021-folded-queries.json
@@ -267,7 +267,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25-folded --top-k 5000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -285,7 +285,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system dense-qwen3-embedding-0.6b-no-template --top-k 5000 \
   --index-dir indexes/qwen3-no-template \
@@ -304,7 +304,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system staged-bm25-qwen3-rrf-rerank --top-k 1000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -366,8 +366,8 @@ query-plan receipts, MedCPT revisions, execution command, and evidence boundary 
 [TrialGPT retrieval producer guide](docs/trialgpt-retrieval-producer.md). Fresh retrieval and System
 artifacts bind this release. The four query-plan files protocol v6 admits are not available, so
 query plans are generated per run and recorded by receipt, as protocol v11 defines it.
-The frozen v5 through v7 and v11 producer protocols are additive to v4; they do not add a TREC
-2023 TrialGPT row.
+The frozen v5 through v7 and v11 producer protocols are additive to v4; a later amendment adds the
+TREC 2023 target.
 
 The repository owner froze the v4 amendment before outcome inspection. The runtime binds its exact
 digest to the external-fidelity Profile and the external baseline Systems, and refuses any other
@@ -386,8 +386,8 @@ The frozen paper matrix predeclares 33 unique rows; a release declares the subse
 lists. The release and input-specific gates still apply to every row.
 
 TREC 2021 also exposes `trec-ct-2021-reverse-complete10`, a specifically named viability profile
-over the frozen complete ten-trial by 75-patient matrix. It accepts only the Release 0.1 recipe-v3
-Prepared Snapshot ID and Evaluation Package ID. It is not a general reverse TREC benchmark.
+over the frozen complete ten-trial by 75-patient matrix. It accepts only the recipe-v3
+Prepared Snapshot ID and Evaluation Package ID, introduced in Release 0.1 and still used. It is not a general reverse TREC benchmark.
 The other Tracks expose only the reverse contract and synthetic fixture until a later protocol
 freezes an exhaustive denominator.
 

@@ -136,7 +136,7 @@ def _add_patient_to_trial_commands(
     )
     preflight.add_argument(
         "--track",
-        choices=("sigir-ct-2016", "trec-ct-2021", "trec-ct-2022"),
+        choices=("sigir-ct-2016", "trec-ct-2021", "trec-ct-2022", "trec-ct-2023"),
         default="trec-ct-2021",
         help="Track of the run the contract is for",
     )
@@ -490,6 +490,7 @@ EXTENSION = PipelineExtension(
         "docs/paper-analysis-protocol-2026-10-07-v14.md",
         "docs/paper-analysis-protocol-2026-10-07-v15.md",
         "docs/paper-analysis-protocol-2026-10-09-v16.md",
+        "docs/paper-analysis-protocol-2026-11-02-v17.md",
         "docs/trialgpt-external-baseline.md",
         "docs/trialgpt-retrieval-producer.md",
         "src/taim/pipelines/trialgpt/trialgpt_extension.py",

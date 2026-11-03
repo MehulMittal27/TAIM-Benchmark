@@ -123,11 +123,11 @@ Hardware: CPU only. Its BGE-M3 component run has the GPU needs.
 
 `staged-bm25-qwen3-rrf-rerank` is declared in
 `staged-bm25-qwen3-rrf-rerank-v1.json`. It accepts only complete depth-5,000 `bm25-folded` and
-`dense-qwen3-embedding-0.6b-no-template` component runs for the same TREC 2021 `official-full` or
-`trec-ct-2021-judgment-union` or `trec-ct-2021-external-fidelity-26149` Task Input, Evaluation
-Package, Profile, Prepared Snapshot ID, and folded-query bundle. Bundle-eligible assembly
-additionally requires clean component producers from
-the same release and dependency lock.
+`dense-qwen3-embedding-0.6b-no-template` component runs for the same Task Input, Evaluation Package,
+Profile, Prepared Snapshot ID, and folded-query bundle, on a Profile its support rows name. The
+declaration names the TREC 2021 Profiles its recipe was frozen on and is the same on every Track,
+so its definition SHA-256 is too; a run records its own Track. Bundle-eligible assembly
+additionally requires clean component producers from the same release and dependency lock.
 
 The System ignores component scores and applies RRF with constant 60 at component depth 5,000.
 Fused scores descend, with trial ID as the deterministic tie-break. The top 2,000 candidates per
@@ -141,17 +141,19 @@ the top 1,000.
 The run stores four direction-specific Stage Rankings: both depth-5,000 components, the depth-2,000
 RRF pool, and the complete depth-2,000 reranked pool. Stage evaluation is explicit and diagnostic;
 none is a neutral ranking artifact or an alternative Primary Ranking. The raw score artifact is
-bound to the ordered fused pairs and the exact rendered query/document text. Its resumable
-checkpoint is valid only at frozen batch boundaries. The selected attention backend is the sole
-enabled SDPA kernel, so execution fails rather than silently dispatching another backend. Runtime
-provenance records that executed backend, the batch-composition hash, CUDA stack, GPU, peak memory,
-truncation count, and checkpoint-resume count.
+bound to the ordered fused pairs and the exact rendered query/document text. It is schema 2.0 from
+Release 0.3.0, and a Release 0.2.0 artifact (schema 1.0, which names no kernels) is refused by name.
+Its resumable checkpoint is valid only at frozen batch boundaries. The selected attention backend is
+the one SDPA kernel enabled besides cuDNN, which stays as torch starts it. Runtime provenance
+records all four SDPA flags, the kernels the run's own batches ran with batch counts, read from
+torch's raw profiler event list (resumed pairs are counted by the checkpoint-resume count),
+batch-composition hash, CUDA stack, GPU, peak memory and truncation.
 
 Hardware: the reranker runs only on CUDA, with compute capability 7.5 or newer under the locked
 torch 2.13.0, so a V100 (7.0) cannot run it; the run names an unsupported card and refuses before
-downloading the model. Its float16 weights take about 8 GB of GPU memory. PyTorch provides the
-`flash` backend only from compute capability 8.0. The components have the hardware needs of their
-own Systems.
+downloading the model, as it does for a torch whose raw profiler event list it cannot read. Its
+float16 weights take about 8 GB of GPU memory. PyTorch provides the `flash` backend only from
+compute capability 8.0. The components have the hardware needs of their own Systems.
 
 ## Reverse BM25
 
@@ -236,8 +238,8 @@ failure-aware TrialGPT matching and aggregation path through the separately auth
 `gpt-5.6-luna` provider. Its clean-commit publication contract binds the Prepared Snapshot,
 Evaluation Package, retrieval lock and artifact, provider configuration, method hashes, workers,
 and every selected topic before a provider call. Paper execution uses exactly 48 generation
-workers. The public contract supports TREC 2021, TREC 2022, and the two explicit SIGIR query
-Profiles, but not TREC 2023. It is a TAIM adaptation, not the upstream paper's GPT-4 System.
+workers. The public contract supports TREC 2021, TREC 2022, TREC 2023, and the two explicit SIGIR
+query Profiles. It is a TAIM adaptation, not the upstream paper's GPT-4 System.
 
 The TrialGPT-TAIM-Luna-v1 row searches upstream TrialGPT's TREC 2021 corpus, which is drawn from
 the TREC 2021 judged union: 26,149 trials, each judged for at least one topic, 7.0% of the

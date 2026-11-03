@@ -254,6 +254,7 @@ EXTENSION = PipelineExtension(
     protected_reference_paths=(
         "docs/paper-analysis-protocol-2026-10-07-v14.md",
         "docs/paper-analysis-protocol-2026-10-07-v15.md",
+        "docs/paper-analysis-protocol-2026-11-02-v17.md",
         "src/taim/pipelines/trialgpt/paper_row_declarations.py",
     ),
     dependency_declarations=("src/taim/data/external-system-dependencies-v1.json",),

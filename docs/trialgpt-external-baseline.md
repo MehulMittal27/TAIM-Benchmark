@@ -52,7 +52,7 @@ trial-benchmark patient-to-trial trialgpt preflight \
   --frozen-retrieval-lock /path/to/track-specific-retrieval-lock.json \
   --generation-workers 48 \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --output /path/to/trialgpt-contract.json
 ```

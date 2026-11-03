@@ -11,10 +11,11 @@ import shutil
 import subprocess
 import time
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from importlib.resources import files
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, cast
 
 from taim.baselines.dense import require_supported_cuda_device
@@ -69,8 +70,8 @@ _PIPELINE_FIELDS = {
 _RERANKER_RUNTIME_FIELDS = {
     "attention_backend_enabled",
     "attention_backend_requested",
-    "attention_backend_selected",
     "attention_implementation",
+    "attention_kernels_observed",
     "batch_composition_sha256",
     "batch_size",
     "cudnn",
@@ -98,6 +99,69 @@ _RERANKER_RUNTIME_FIELDS = {
     "use_cache",
     "wall_seconds",
 }
+#: The four SDPA flags. The recipe sets the first three and leaves cuDNN as torch has it.
+SDPA_FLAGS = ("flash", "mem_efficient", "math", "cudnn")
+#: The kernel each CUDA SDPA operator runs, by the name the profiler records it under.
+#: ``aten::scaled_dot_product_attention`` itself only dispatches to one of these.
+SDPA_KERNEL_OPERATORS = MappingProxyType(
+    {
+        "aten::_scaled_dot_product_flash_attention": "flash",
+        "aten::_scaled_dot_product_efficient_attention": "mem_efficient",
+        "aten::_scaled_dot_product_attention_math": "math",
+        "aten::_scaled_dot_product_cudnn_attention": "cudnn",
+    }
+)
+
+
+def sdpa_kernels(operator_names: Iterable[str]) -> frozenset[str]:
+    """The SDPA kernels one batch ran, from the operators the profiler recorded while it ran.
+
+    An SDPA operator not in ``SDPA_KERNEL_OPERATORS`` is refused rather than guessed at.
+    """
+
+    kernels: set[str] = set()
+    for name in operator_names:
+        if name in SDPA_KERNEL_OPERATORS:
+            kernels.add(SDPA_KERNEL_OPERATORS[name])
+        elif name.startswith("aten::_scaled_dot_product_"):
+            raise ValueError(f"unrecognised SDPA operator {name}")
+    return frozenset(kernels)
+
+
+def profiled_operator_names(torch: Any, trace: Any) -> tuple[str, ...]:
+    """The operators a finished ``torch.profiler.profile`` recorded, from torch's raw event list.
+
+    ``trace.events()`` first builds torch's whole function-event tree: on an A40 that added 0.22 s
+    to a padded batch whose forward pass took 0.28 s. The raw list that tree is built from,
+    ``trace.profiler.kineto_results.events()``, names the same operators at no measurable cost.
+    The raw list is private to torch, so a torch without it, or with another shape, is refused by
+    version; the public list is never read instead.
+    """
+
+    try:
+        names = tuple(event.name() for event in trace.profiler.kineto_results.events())
+    except (AttributeError, TypeError) as exc:
+        raise ValueError(_unreadable_raw_profiler_events(torch)) from exc
+    if not all(isinstance(name, str) for name in names):
+        raise ValueError(_unreadable_raw_profiler_events(torch))
+    return names
+
+
+def _unreadable_raw_profiler_events(torch: Any) -> str:
+    return (
+        f"torch {torch.__version__} has no readable raw profiler event list "
+        "(profile.profiler.kineto_results.events(), each event named by name()); the staged "
+        "reranker records the attention kernels that ran only from that list, so it does not run"
+    )
+
+
+def _require_raw_profiler_events(torch: Any) -> None:
+    """Refuse to start scoring unless torch's raw profiler event list names an operator that ran."""
+
+    with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU]) as trace:
+        torch.zeros(1)
+    if "aten::zeros" not in profiled_operator_names(torch, trace):
+        raise ValueError(_unreadable_raw_profiler_events(torch))
 
 
 def _canonical_json_bytes(payload: object) -> bytes:
@@ -119,6 +183,9 @@ def _positive_int(value: object, role: str) -> int:
 class StagedPipeline:
     pipeline_id: str
     system_id: str
+    #: The Track and Profiles the recipe was frozen on, as the declaration names them. Where the
+    #: System runs is the release's support rows, which the release checks before any run; a run
+    #: records its own Track.
     track: str
     profiles: tuple[str, ...]
     component_depth: int
@@ -381,16 +448,17 @@ def assemble_staged_pipeline(
     components: Mapping[str, Sequence[Candidate]],
     scores: Mapping[tuple[str, str], float],
     *,
+    track: str,
     benchmark_profile_id: str,
     run_id: str,
 ) -> tuple[tuple[Candidate, ...], tuple[StageRanking, ...], dict[str, JsonValue]]:
-    """Assemble the fixed two-arm RRF and scored reranker stages into one System output."""
+    """Assemble the fixed two-arm RRF and scored reranker stages into one System output.
+
+    ``track`` and ``benchmark_profile_id`` are the run's, which the release has checked against
+    its support rows; the declaration is the same on every Track.
+    """
 
     pipeline = load_staged_pipeline()
-    if benchmark_profile_id not in pipeline.profiles:
-        raise ValueError(
-            f"staged pipeline does not support Benchmark Profile {benchmark_profile_id!r}"
-        )
     if tuple(sorted(components)) != tuple(sorted(pipeline.arms)):
         raise ValueError("staged pipeline components do not match the declared arms")
     fused = tuple(
@@ -428,7 +496,7 @@ def assemble_staged_pipeline(
         "pipeline": {
             "pipeline_id": pipeline.pipeline_id,
             "definition_sha256": pipeline.definition_sha256,
-            "track": pipeline.track,
+            "track": track,
             "profile": benchmark_profile_id,
             "component_depth": pipeline.component_depth,
             "fusion_depth": pipeline.fusion_depth,
@@ -515,19 +583,17 @@ def _validate_reranker_runtime(
     }
     if any(builtins[key] != value for key, value in exact.items()):
         raise ValueError("reranker score artifact runtime does not match the frozen recipe")
-    backend = builtins["attention_backend_selected"]
+    requested = builtins["attention_backend_requested"]
+    enabled = builtins["attention_backend_enabled"]
     if (
-        backend not in {"flash", "mem_efficient", "math"}
-        or builtins["attention_backend_requested"] != backend
+        requested not in {"flash", "mem_efficient", "math"}
         or builtins["attention_implementation"] != "sdpa"
-        or builtins["attention_backend_enabled"]
-        != {
-            "flash": backend == "flash",
-            "math": backend == "math",
-            "mem_efficient": backend == "mem_efficient",
-        }
+        or not isinstance(enabled, dict)
+        or set(enabled) != set(SDPA_FLAGS)
+        or any(not isinstance(value, bool) for value in enabled.values())
+        or any(enabled[flag] != (flag == requested) for flag in SDPA_FLAGS[:3])
     ):
-        raise ValueError("reranker score artifact does not identify one executed attention backend")
+        raise ValueError("reranker score artifact does not record its attention backend flags")
     nonnegative_fields = {
         "f_summary_fallback_count",
         "pairs_resumed_from_checkpoint",
@@ -547,6 +613,24 @@ def _validate_reranker_runtime(
         or cast(int, builtins["f_summary_fallback_count"]) > expected_pairs
     ):
         raise ValueError("reranker score artifact runtime pair counts are inconsistent")
+    # Every batch this process ran names at least one observed kernel, and only enabled ones.
+    batches_run = -(
+        -(expected_pairs - cast(int, builtins["pairs_resumed_from_checkpoint"]))
+        // cast(int, builtins["batch_size"])
+    )
+    observed = builtins["attention_kernels_observed"]
+    if (
+        not isinstance(observed, dict)
+        or any(kernel not in SDPA_FLAGS or not enabled[kernel] for kernel in observed)
+        or any(
+            isinstance(count, bool) or not isinstance(count, int) or count < 1
+            for count in observed.values()
+        )
+        or not batches_run
+        <= sum(cast(int, count) for count in observed.values())
+        <= batches_run * len(SDPA_FLAGS)
+    ):
+        raise ValueError("reranker score artifact does not identify the attention kernels that ran")
     for key in ("batch_composition_sha256", "scoring_input_sha256"):
         try:
             require_sha256(cast(str, builtins[key]), f"reranker runtime {key}")
@@ -605,8 +689,14 @@ def load_reranker_score_artifact(
         "scores",
     }:
         raise ValueError("reranker score artifact has unexpected or missing fields")
+    if payload["schema_version"] == "1.0":
+        raise ValueError(
+            "reranker score artifact schema 1.0 is Release 0.2.0's: it records "
+            "attention_backend_selected, not the kernels that ran, and this release reads schema "
+            "2.0; re-score, or read it with Release 0.2.0"
+        )
     if (
-        payload["schema_version"] != "1.0"
+        payload["schema_version"] != "2.0"
         or payload["pipeline_definition_sha256"] != pipeline_definition_sha256
         or payload["scoring_input_sha256"] != scoring_input_sha256
     ):
@@ -653,7 +743,7 @@ def write_reranker_score_artifact(
         expected_scoring_input_sha256=scoring_input_sha256,
     )
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "pipeline_definition_sha256": pipeline_definition_sha256,
         "scoring_input_sha256": scoring_input_sha256,
         "runtime": validated_runtime,
@@ -814,6 +904,16 @@ def score_staged_pairs(
     torch.backends.cuda.enable_flash_sdp(attention_backend == "flash")
     torch.backends.cuda.enable_mem_efficient_sdp(attention_backend == "mem_efficient")
     torch.backends.cuda.enable_math_sdp(attention_backend == "math")
+    # Read, not assumed. cuDNN is left as torch starts it; with flash requested it serves every
+    # padded batch, since flash takes no attention mask.
+    attention_backend_enabled: dict[str, JsonValue] = {
+        "flash": torch.backends.cuda.flash_sdp_enabled(),
+        "mem_efficient": torch.backends.cuda.mem_efficient_sdp_enabled(),
+        "math": torch.backends.cuda.math_sdp_enabled(),
+        "cudnn": torch.backends.cuda.cudnn_sdp_enabled(),
+    }
+    # Before any download: a torch whose raw profiler event list cannot be read refuses the run.
+    _require_raw_profiler_events(torch)
 
     model_id = cast(str, pipeline.reranker["model_id"])
     revision = cast(str, pipeline.reranker["model_revision"])
@@ -890,6 +990,11 @@ def score_staged_pairs(
     for index in order[:completed_count]:
         row = rows[encoded[index][0]]
         raw_scores[encoded[index][0]] = completed_scores[(row.topic_id, row.trial_id)]
+    # The kernel SDPA dispatches to is observed on every batch this process runs, from the
+    # operator that ran. Pairs resumed from a checkpoint are counted by
+    # pairs_resumed_from_checkpoint, not observed again.
+    kernels_observed: dict[str, int] = {}
+    profiled_activities = [torch.profiler.ProfilerActivity.CPU]
     torch.cuda.reset_peak_memory_stats()
     started_at = time.perf_counter()
     with torch.inference_mode():
@@ -902,12 +1007,18 @@ def score_staged_pairs(
             for row_index, ids in enumerate(batch):
                 input_ids[row_index, width - len(ids) :] = torch.tensor(ids, dtype=torch.long)
                 mask[row_index, width - len(ids) :] = 1
-            logits = model(
-                input_ids=input_ids.to(device),
-                attention_mask=mask.to(device),
-                use_cache=False,
-                **last_position_only,
-            ).logits[:, -1, :]
+            with torch.profiler.profile(activities=profiled_activities) as profiled:
+                logits = model(
+                    input_ids=input_ids.to(device),
+                    attention_mask=mask.to(device),
+                    use_cache=False,
+                    **last_position_only,
+                ).logits[:, -1, :]
+            batch_kernels = sdpa_kernels(profiled_operator_names(torch, profiled))
+            if not batch_kernels:
+                raise ValueError("a reranker batch ran no recognised SDPA kernel")
+            for kernel in batch_kernels:
+                kernels_observed[kernel] = kernels_observed.get(kernel, 0) + 1
             pair_logits = torch.stack([logits[:, no_id], logits[:, yes_id]], dim=1).float()
             normalised = torch.log_softmax(pair_logits, dim=1)
             block_scores = (normalised[:, 1] - normalised[:, 0]).tolist()
@@ -944,13 +1055,9 @@ def score_staged_pairs(
         "max_length": maximum_length,
         "batch_size": batch_size,
         "attention_backend_requested": attention_backend,
-        "attention_backend_selected": attention_backend,
         "attention_implementation": attention_implementation,
-        "attention_backend_enabled": {
-            "flash": torch.backends.cuda.flash_sdp_enabled(),
-            "mem_efficient": torch.backends.cuda.mem_efficient_sdp_enabled(),
-            "math": torch.backends.cuda.math_sdp_enabled(),
-        },
+        "attention_backend_enabled": attention_backend_enabled,
+        "attention_kernels_observed": cast(JsonValue, dict(sorted(kernels_observed.items()))),
         "last_position_only_logits": cast(JsonValue, last_position_only or None),
         "use_cache": False,
         "pairs_scored": len(rows),
@@ -986,6 +1093,8 @@ def score_staged_pairs(
 
 __all__ = [
     "FOLDED_QUERY_BUNDLE_SCHEMA_VERSION",
+    "SDPA_FLAGS",
+    "SDPA_KERNEL_OPERATORS",
     "STAGED_PIPELINE_ID",
     "STAGED_PIPELINE_SYSTEM_ID",
     "FoldedQuery",
@@ -994,9 +1103,11 @@ __all__ = [
     "build_folded_query_bundle",
     "load_reranker_score_artifact",
     "load_staged_pipeline",
+    "profiled_operator_names",
     "render_f_summary",
     "rerank_scored_candidates",
     "score_staged_pairs",
+    "sdpa_kernels",
     "staged_scoring_input_sha256",
     "validate_folded_query_bundle",
     "write_reranker_score_artifact",

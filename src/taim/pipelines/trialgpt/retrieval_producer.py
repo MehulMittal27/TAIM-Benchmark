@@ -110,6 +110,14 @@ TRIALGPT_RETRIEVAL_TARGETS = (
         topic_count=60,
         supplied_pool_membership=False,
     ),
+    TrialGPTRetrievalTarget(
+        track="trec-ct-2023",
+        profile="trec-ct-2023-judgment-union",
+        prepared_dataset_id="trec-ct-2023",
+        snapshot_name="trec-ct-2023",
+        topic_count=40,
+        supplied_pool_membership=False,
+    ),
 )
 
 _GIT_COMMIT = re.compile(r"[0-9a-f]{40}\Z")

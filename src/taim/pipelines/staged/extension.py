@@ -74,7 +74,8 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         "--reranker-attention-backend",
         choices=("flash", "mem_efficient", "math"),
         default="flash",
-        help="the only SDPA kernel the reranker may use; recorded with its scores",
+        help="the SDPA kernel the reranker enables besides cuDNN, which stays as torch starts it; "
+        "the kernels that ran are recorded with its scores",
     )
     parser.add_argument(
         "--reranker-offline",
@@ -288,6 +289,7 @@ def _run_from_components(run: ComponentRun) -> PatientToTrialRunResult:
     candidates, stage_rankings, configuration = assemble_staged_pipeline(
         components,
         scores,
+        track=request.snapshot.benchmark_lineage,
         benchmark_profile_id=run.profile_id,
         run_id=run_id,
     )

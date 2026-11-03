@@ -5,15 +5,16 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from taim.cli_support import read_pool_ids
 from taim.data import PREPARED_MANIFEST_FILENAME, load_prepared_benchmark
 from taim.entity_versions import parse_clinical_as_of, source_grounded_patient_evidence_profile
 from taim.patient_to_trial import PatientToTrialRunRequest
 from taim.pipelines.trialgpt.paper_row_declarations import (
+    SOURCE_STRATUM_FIELDS,
     PaperRowDeclarationError,
     PaperRowStratum,
     paper_row_stratum,
@@ -87,6 +88,29 @@ def package_stratum(
     )
 
 
+def package_source_stratum(data_dir: Path) -> dict[str, str]:
+    """The stratum's own identities, as the complete-eligibility package names its source."""
+
+    prepared = load_prepared_benchmark(data_dir)
+    try:
+        recipe = cast(Mapping[str, Any], prepared.prepared_manifest["snapshot_source_recipe"])
+        source = cast(Mapping[str, Any], recipe["definition"]["source_stratum"])
+        projection = cast(
+            Mapping[str, Any],
+            prepared.evaluation_package.provenance["profile_complete_eligibility_projection"],
+        )
+        derived = {
+            "prepared_snapshot_id": source["prepared_snapshot_id"],
+            "evaluation_package_id": projection["source_evaluation_package_id"],
+            "pool_receipt_id": source["pool_receipt_id"],
+        }
+    except (KeyError, TypeError) as exc:
+        raise PaperRowDeclarationError(
+            f"{data_dir} is not a complete-eligibility package naming its source stratum"
+        ) from exc
+    return {name: str(derived[name]) for name in SOURCE_STRATUM_FIELDS}
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -139,6 +163,7 @@ def main() -> int:
     )
     written = write_paper_row_declarations(
         stratum=stratum,
+        source_stratum=package_source_stratum(args.data_dir),
         release=release,
         trialgpt_run_id=args.trialgpt_run_id,
         trialgpt2_run_id=args.trialgpt2_run_id,

@@ -4,7 +4,9 @@ Protocol v12 Section 7 requires each new paper row to commit a declaration befor
 v14 Section 5 requires both TrialGPT Systems' declarations on a target to be committed before the
 target's generation starts, each carrying ``amendment``. v15 Section 4 replaces the stratum's
 Prepared Snapshot, Task Input, Evaluation Package and pool receipt IDs with those of the target's
-complete-eligibility package.
+complete-eligibility package. Each declaration also names, as ``source_stratum``, the stratum's own
+Prepared Snapshot, Evaluation Package and pool receipt that the package was built from and is
+checked against, so a reader sees which Prepared Snapshot the row's trials come from.
 
 Every field is derived: the release from its verified manifest, wheel and lock, and the stratum
 from the package itself. ``scripts/write_trialgpt_row_declarations.py`` derives the stratum, as the
@@ -17,7 +19,7 @@ row registers no comparison (v14 Section 7).
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,6 +29,7 @@ from typing import cast
 from taim.artifacts import sha256_file
 from taim.benchmark_release import validate_release_package_artifact
 from taim.cli_support import DEFAULT_METRIC_CUTOFF
+from taim.contracts import require_sha256
 from taim.pipelines.trialgpt.trialgpt2_declaration import TRIALGPT2_TAIM_LUNA_V1
 from taim.schemas import JsonValue
 
@@ -55,6 +58,8 @@ PAPER_ROW_COMPARISON_METRICS = (
     "macro and micro judged eligible recall at K=100, 500, and 1,000",
 )
 TRIALGPT_PAPER_SYSTEM_ID = "TrialGPT-TAIM-Luna-v1"
+#: The stratum identities a complete-eligibility package names as its source.
+SOURCE_STRATUM_FIELDS = ("prepared_snapshot_id", "evaluation_package_id", "pool_receipt_id")
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +151,24 @@ PAPER_ROW_STRATA = (
         pool_receipt_id="sha256:9cba221f7271ffff938d70ffd3b44313f2485e86c5703fa4458807c53bb02a69",
         clinical_as_of="2015-12-16T00:00:00Z",
     ),
+    PaperRowStratum(
+        track="trec-ct-2023",
+        profile="trec-ct-2023-judgment-union",
+        profile_definition_sha256=(
+            "sha256:c38d7f0983bdf15954a74d76f63b4f9367aba3c99b42117d5c33f6c3d213aafd"
+        ),
+        prepared_snapshot_id=(
+            "sha256:8835dff29f6635a752f3062287f08a51208e89f2fa039e2294d96997f7797613"
+        ),
+        task_input_id="sha256:c0d21e30fd152b9dbc9a2451cf0bdbed01f50dbd1d73068b48223c24d9f60781",
+        evaluation_package_id=(
+            "sha256:75e7c3ae02fec8dc12ad11364f57d05b07df9ca9cc2b022acf27aeda7cb41e41"
+        ),
+        pool_count=17_105,
+        pool_ids_sha256="sha256:68d02ba21e41ab48a86bd717c19a762715a190b5c0d2000dbe3a670f57d488ad",
+        pool_receipt_id="sha256:4d5c87e6fae98433f9d1ebd7a9df5e90a554d9285f98d3a9061d8a8d339d52ce",
+        clinical_as_of="2023-05-08T00:00:00Z",
+    ),
 )
 
 
@@ -163,18 +186,19 @@ def paper_row_stratum(track: str, profile: str) -> PaperRowStratum:
 
 
 def require_paper_row_stratum(derived: PaperRowStratum) -> None:
-    """Refuse a package whose identities are not protocol v15 Section 4's (v15 Section 9)."""
+    """Refuse a package whose identities are not its protocol's (v15 Section 9; v17 for
+    TREC 2023)."""
 
     expected = asdict(paper_row_stratum(derived.track, derived.profile))
     differing = [
-        f"{name}: the package has {value}, protocol v15 Section 4 has {expected[name]}"
+        f"{name}: the package has {value}, protocol v15 Section 4 or v17 has {expected[name]}"
         for name, value in asdict(derived).items()
         if value != expected[name]
     ]
     if differing:
         raise PaperRowDeclarationError(
-            "this package does not reproduce protocol v15 Section 4, so it is not used and no "
-            "row is declared on it: " + "; ".join(differing)
+            "this package does not reproduce protocol v15 Section 4 or v17, so it is not used "
+            "and no row is declared on it: " + "; ".join(differing)
         )
 
 
@@ -198,17 +222,29 @@ def release_declaration_identity(
     }
 
 
+def _source_stratum(source_stratum: Mapping[str, str]) -> dict[str, JsonValue]:
+    if tuple(sorted(source_stratum)) != tuple(sorted(SOURCE_STRATUM_FIELDS)):
+        raise PaperRowDeclarationError(
+            f"the source stratum names exactly {', '.join(SOURCE_STRATUM_FIELDS)}"
+        )
+    for name in SOURCE_STRATUM_FIELDS:
+        require_sha256(source_stratum[name], f"source stratum {name}")
+    return {name: source_stratum[name] for name in SOURCE_STRATUM_FIELDS}
+
+
 def paper_row_declaration(
     *,
     system_id: str,
     run_id: str,
     release: dict[str, JsonValue],
     stratum: PaperRowStratum,
+    source_stratum: Mapping[str, str],
     comparisons: Sequence[str],
     declared_by: str,
     declared_at: datetime,
 ) -> dict[str, JsonValue]:
-    """One row's declaration: v12 Section 7's fields and v14 Section 5's ``amendment``."""
+    """One row's declaration: v12 Section 7's fields, v14 Section 5's ``amendment``, and the
+    stratum's own identities the package was built from."""
 
     if not run_id or not declared_by.strip():
         raise PaperRowDeclarationError("a declaration names its run ID and who declares it")
@@ -221,6 +257,7 @@ def paper_row_declaration(
         "system_id": system_id,
         "release": release,
         "stratum": {"task": "patient-to-trial", **asdict(stratum)},
+        "source_stratum": _source_stratum(source_stratum),
         "budget_k": PAPER_ROW_BUDGET_K,
         "metric_cutoff": DEFAULT_METRIC_CUTOFF,
         "environment": PAPER_ROW_ENVIRONMENT,
@@ -238,6 +275,7 @@ def paper_row_declaration(
 def write_paper_row_declarations(
     *,
     stratum: PaperRowStratum,
+    source_stratum: Mapping[str, str],
     release: dict[str, JsonValue],
     trialgpt_run_id: str,
     trialgpt2_run_id: str,
@@ -275,6 +313,7 @@ def write_paper_row_declarations(
                 run_id=run_id,
                 release=release,
                 stratum=stratum,
+                source_stratum=source_stratum,
                 comparisons=comparisons,
                 declared_by=declared_by,
                 declared_at=declared_at,
@@ -301,6 +340,7 @@ __all__ = [
     "PAPER_ROW_PROTOCOL_ID",
     "PAPER_ROW_PROTOCOL_SHA256",
     "PAPER_ROW_STRATA",
+    "SOURCE_STRATUM_FIELDS",
     "PaperRowDeclarationError",
     "PaperRowStratum",
     "paper_row_declaration",

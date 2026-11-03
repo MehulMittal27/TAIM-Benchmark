@@ -188,18 +188,20 @@ def test_retrieval_targets_are_the_closed_trialgpt_paper_matrix() -> None:
             60,
         ),
         ("sigir-ct-2016", "sigir-ct-2016-summary-judgment-union", 60),
+        ("trec-ct-2023", "trec-ct-2023-judgment-union", 40),
     ]
-    assert (
-        resolve_trialgpt_retrieval_target(
-            track="trec-ct-2022",
-            profile="trec-ct-2022-judgment-union",
-        ).supplied_pool_membership
-        is False
-    )
+    for track in ("trec-ct-2022", "trec-ct-2023"):
+        assert (
+            resolve_trialgpt_retrieval_target(
+                track=track,
+                profile=f"{track}-judgment-union",
+            ).supplied_pool_membership
+            is False
+        )
     with pytest.raises(ValueError, match="not admitted"):
         resolve_trialgpt_retrieval_target(
             track="trec-ct-2023",
-            profile="trec-ct-2023-judgment-union",
+            profile="confirmation-full",
         )
 
 
@@ -709,8 +711,9 @@ def test_the_four_digests_are_exactly_protocol_v6_section_2() -> None:
     assert re.findall(r"`(sha256:[0-9a-f]{64})`", table) == list(
         producer.PROTOCOL_V6_ADMITTED_QUERY_PLANS.values()
     )
+    # v6 admitted plans for the four targets it knew; the TREC 2023 target came later.
     assert list(producer.PROTOCOL_V6_ADMITTED_QUERY_PLANS) == [
-        target.profile for target in TRIALGPT_RETRIEVAL_TARGETS
+        target.profile for target in TRIALGPT_RETRIEVAL_TARGETS if target.track != "trec-ct-2023"
     ]
 
 

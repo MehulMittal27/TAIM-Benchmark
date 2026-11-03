@@ -175,7 +175,7 @@ trial-benchmark patient-to-trial submission export \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.2.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
   --dependency-lock uv.lock \
   --output submission-2021/task \
   --evaluator-output submission-2021/evaluator

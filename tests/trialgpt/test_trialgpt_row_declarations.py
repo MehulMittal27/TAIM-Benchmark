@@ -46,6 +46,11 @@ _RELEASE = {
     "package_artifact_id": "sha256:" + "3" * 64,
     "dependency_lock_sha256": "sha256:" + "4" * 64,
 }
+_SOURCE_STRATUM = {
+    "prepared_snapshot_id": "sha256:" + "5" * 64,
+    "evaluation_package_id": "sha256:" + "6" * 64,
+    "pool_receipt_id": "sha256:" + "7" * 64,
+}
 
 
 def _script(name: str):
@@ -59,6 +64,7 @@ def _script(name: str):
 
 #: The command derives a package's stratum; pipeline code does not read the release's Profiles.
 package_stratum = _script("write_trialgpt_row_declarations").package_stratum
+package_source_stratum = _script("write_trialgpt_row_declarations").package_source_stratum
 
 
 def _section(document: str, heading: str) -> str:
@@ -76,11 +82,14 @@ def _row(section: str, profile: str) -> str:
 
 def test_the_pinned_identities_are_the_frozen_protocols() -> None:
     v15 = _section("paper-analysis-protocol-2026-10-07-v15.md", "4. The identities")
+    v17 = (_DOCS / "paper-analysis-protocol-2026-11-02-v17.md").read_text(encoding="utf-8")
+    v17 = v17[v17.index("\n### 5.2 ") : v17.index("\n## 6. ")]
     v12 = _section(
         "paper-analysis-protocol-2026-09-28-v12.md", "4. The strata and their identities"
     )
     for stratum in PAPER_ROW_STRATA:
-        row = _row(v15, stratum.profile)
+        # Each stratum is pinned by the one table that lists its Profile: v15's or v17's.
+        row = _row(v17 if f"`{stratum.profile}`" in v17 else v15, stratum.profile)
         for value in (
             stratum.prepared_snapshot_id,
             stratum.task_input_id,
@@ -92,7 +101,7 @@ def test_the_pinned_identities_are_the_frozen_protocols() -> None:
         assert f"| {stratum.pool_count:,} |" in row
         assert f"| {stratum.clinical_as_of[:10]} |" in row
         assert f"`{stratum.profile_definition_sha256}`" in _row(v12, stratum.profile)
-    assert len(PAPER_ROW_STRATA) == len(re.findall(r"^\| (TREC|SIGIR)", v15, re.MULTILINE))
+    assert len(PAPER_ROW_STRATA) == len(re.findall(r"^\| (TREC|SIGIR)", v15 + v17, re.MULTILINE))
     assert sha256_file(_DOCS / "paper-analysis-protocol-2026-09-28-v12.md") == (
         PAPER_ROW_PROTOCOL_SHA256
     )
@@ -157,6 +166,7 @@ def _write(stratum, output: Path, **overrides):
     return write_paper_row_declarations(
         **{
             "stratum": stratum,
+            "source_stratum": _SOURCE_STRATUM,
             "release": _RELEASE,
             "trialgpt_run_id": "paper-trialgpt1-sigirs-row-1",
             "trialgpt2_run_id": "paper-trialgpt2-sigirs-row-1",
@@ -190,8 +200,12 @@ def test_both_rows_are_declared_from_the_package(complete_package, tmp_path, mon
     )
     # Pinned to this synthetic package, as v15 Section 4 pins the real one.
     monkeypatch.setattr(declarations, "PAPER_ROW_STRATA", (derived,))
+    source = package_source_stratum(complete_package)
     first, second = _write(
-        derived, tmp_path / "declarations", trialgpt_comparisons=["paper-bm25-sigirs-row-1"]
+        derived,
+        tmp_path / "declarations",
+        source_stratum=source,
+        trialgpt_comparisons=["paper-bm25-sigirs-row-1"],
     )
     trialgpt, trialgpt2 = (json.loads(path.read_text(encoding="utf-8")) for path in (first, second))
     assert first.name == "paper-trialgpt1-sigirs-row-1.json"
@@ -216,6 +230,7 @@ def test_both_rows_are_declared_from_the_package(complete_package, tmp_path, mon
             "pool_receipt_id": derived.pool_receipt_id,
             "clinical_as_of": "2015-12-16T00:00:00Z",
         }
+        assert declaration["source_stratum"] == source
         assert (declaration["budget_k"], declaration["metric_cutoff"]) == (20, 5)
         assert (declaration["environment"], declaration["ordinal"]) == ("CPU", 1)
         assert declaration["amendment"] == dict(PAPER_ROW_AMENDMENT)
@@ -230,6 +245,38 @@ def test_both_rows_are_declared_from_the_package(complete_package, tmp_path, mon
             tmp_path / "other",
             trialgpt_comparisons=["paper-trialgpt2-sigirs-row-1"],
         )
+
+
+def test_the_source_stratum_is_the_stratum_the_package_was_built_from(complete_package) -> None:
+    stratum = load_prepared_benchmark(complete_package.parent / "stratum")
+    own = inspect_judgment_union_profile(stratum, profile_id=_PROFILE)
+    source = package_source_stratum(complete_package)
+    assert source == {
+        "prepared_snapshot_id": own["prepared_snapshot_id"],
+        "evaluation_package_id": own["evaluation_package_id"],
+        "pool_receipt_id": own["pool_receipt_id"],
+    }
+    assert (
+        source["prepared_snapshot_id"]
+        != load_prepared_benchmark(complete_package).snapshot.snapshot_id
+    )
+    with pytest.raises(PaperRowDeclarationError, match="naming its source stratum"):
+        package_source_stratum(complete_package.parent / "stratum")
+    for broken in (
+        {key: value for key, value in source.items() if key != "pool_receipt_id"},
+        {**source, "pool_receipt_id": "not a digest"},
+    ):
+        with pytest.raises((PaperRowDeclarationError, ValueError)):
+            declarations.paper_row_declaration(
+                system_id="TrialGPT-TAIM-Luna-v1",
+                run_id="row-1",
+                release=_RELEASE,
+                stratum=PAPER_ROW_STRATA[0],
+                source_stratum=broken,
+                comparisons=[],
+                declared_by="A. Researcher",
+                declared_at=datetime(2026, 10, 8, tzinfo=UTC),
+            )
 
 
 def test_a_stratum_package_and_a_wrong_pool_file_are_refused(complete_package, tmp_path) -> None:

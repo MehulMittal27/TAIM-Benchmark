@@ -77,12 +77,12 @@ def _prepare_folded_queries(args: argparse.Namespace) -> int:
     # second, not after the multi-gigabyte prepared corpus has loaded.
     require_qualified_snomed_release(args.snomed_release)
     prepared = load_prepared_benchmark(args.data_dir)
-    if prepared.snapshot.benchmark_lineage != "trec-ct-2021":
-        raise ValueError("folded queries are qualified only for TREC CT 2021")
-    # The folded queries are the input of the System this subcommand is bound to.
+    track = prepared.snapshot.benchmark_lineage
+    # The folded queries are the input of the System this subcommand is bound to, so its support
+    # rows decide the Tracks and Profiles they are prepared for.
     system = SUBCOMMAND_SYSTEMS[("patient-to-trial", "queries")]
     capability = require_supported_combination(
-        track="trec-ct-2021",
+        track=track,
         task="patient_to_trial",
         profile=args.profile,
         system=system,
@@ -106,7 +106,7 @@ def _prepare_folded_queries(args: argparse.Namespace) -> int:
         raise ValueError("full-corpus folded queries cannot claim a protocol approval")
     release_source_identity(
         prepared,
-        track="trec-ct-2021",
+        track=track,
         profile=args.profile,
         evidence_scope=cast(str, capability["evidence_scope"]),
     )
@@ -146,7 +146,7 @@ def _prepare_folded_queries(args: argparse.Namespace) -> int:
     print_payload(
         {
             "release": RELEASE_VERSION,
-            "track": "trec-ct-2021",
+            "track": track,
             "task": "patient_to_trial",
             "profile": args.profile,
             "system": system,
@@ -176,14 +176,15 @@ def _add_commands(commands) -> None:
     query_commands = queries.add_subparsers(dest="query_operation", required=True)
     prepare = query_commands.add_parser(
         "prepare",
-        help="fold the TREC 2021 queries of one Task Input with a local SNOMED CT release and "
-        "write the folded-query bundle",
+        help="fold the queries of one Task Input with a local SNOMED CT release and write the "
+        "folded-query bundle",
     )
     add_real_input_options(prepare)
     prepare.add_argument(
         "--profile",
         default="official-full",
-        help="TREC 2021 Profile whose Task Input the queries are folded for",
+        help="Profile whose Task Input the queries are folded for; bm25-folded's support rows "
+        "name the Profiles it runs on",
     )
     add_pool_options(prepare)
     prepare.add_argument(

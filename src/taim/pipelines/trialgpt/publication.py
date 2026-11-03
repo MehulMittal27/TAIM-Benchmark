@@ -177,7 +177,8 @@ def load_frozen_retrieval_lock(path: Path) -> tuple[dict[str, JsonValue], str]:
         payload["artifact_type"] != "taim-trialgpt-frozen-retrieval-lock"
         or payload["schema_version"] != "1.0"
         or payload["system_id"] != TRIALGPT_TAIM_LUNA_V1_SYSTEM_ID
-        or payload["benchmark_lineage"] not in {"sigir-ct-2016", "trec-ct-2021", "trec-ct-2022"}
+        or payload["benchmark_lineage"]
+        not in {"sigir-ct-2016", "trec-ct-2021", "trec-ct-2022", "trec-ct-2023"}
     ):
         raise TrialGPTPublicationError("unsupported frozen retrieval lock identity")
     for name in ("prepared_snapshot_id", "evaluation_package_id"):

@@ -50,7 +50,7 @@ run one System on the packaged synthetic fixture; its scores are conformance evi
 | `--reranker-score-artifact` | path |  | create or reuse raw, unevaluated scores for the staged reranker pool; required by the staged System |
 | `--reranker-checkpoint` | path |  | resume the pinned reranker from an identity-bound batch checkpoint |
 | `--model-cache` | path |  | Hugging Face cache directory for the pinned reranker; omitted, the default cache |
-| `--reranker-attention-backend` | one of `flash`, `mem_efficient`, `math` | `flash` | the only SDPA kernel the reranker may use; recorded with its scores |
+| `--reranker-attention-backend` | one of `flash`, `mem_efficient`, `math` | `flash` | the SDPA kernel the reranker enables besides cuDNN, which stays as torch starts it; the kernels that ran are recorded with its scores |
 | `--reranker-offline` | none |  | require the pinned reranker revision to exist in the local model cache |
 | `--trialgpt-frozen-retrieval` | path |  | fresh frozen retrieval artifact for this Task Input, from the retrieval producer; required by TrialGPT |
 | `--trialgpt-frozen-retrieval-lock` | path |  | the lock written with that artifact; required by TrialGPT |
@@ -103,7 +103,7 @@ run one System on a real Profile of a prepared Track
 | `--reranker-score-artifact` | path |  | create or reuse raw, unevaluated scores for the staged reranker pool; required by the staged System |
 | `--reranker-checkpoint` | path |  | resume the pinned reranker from an identity-bound batch checkpoint |
 | `--model-cache` | path |  | Hugging Face cache directory for the pinned reranker; omitted, the default cache |
-| `--reranker-attention-backend` | one of `flash`, `mem_efficient`, `math` | `flash` | the only SDPA kernel the reranker may use; recorded with its scores |
+| `--reranker-attention-backend` | one of `flash`, `mem_efficient`, `math` | `flash` | the SDPA kernel the reranker enables besides cuDNN, which stays as torch starts it; the kernels that ran are recorded with its scores |
 | `--reranker-offline` | none |  | require the pinned reranker revision to exist in the local model cache |
 | `--trialgpt-frozen-retrieval` | path |  | fresh frozen retrieval artifact for this Task Input, from the retrieval producer; required by TrialGPT |
 | `--trialgpt-frozen-retrieval-lock` | path |  | the lock written with that artifact; required by TrialGPT |
@@ -207,13 +207,13 @@ prepare the licensed local folded-query transformation
 
 ### `trial-benchmark patient-to-trial queries prepare`
 
-fold the TREC 2021 queries of one Task Input with a local SNOMED CT release and write the folded-query bundle
+fold the queries of one Task Input with a local SNOMED CT release and write the folded-query bundle
 
 | Option | Value | Default | Description |
 | --- | --- | --- | --- |
 | `--data-dir` | path | required | directory written by data prepare for this Track |
 | `--clinical-as-of` | ISO 8601 time with offset | required | clinical as-of time, bound into the Task Input ID: another value is another Task Input |
-| `--profile` | text | `official-full` | TREC 2021 Profile whose Task Input the queries are folded for |
+| `--profile` | text | `official-full` | Profile whose Task Input the queries are folded for; bm25-folded's support rows name the Profiles it runs on |
 | `--pool-file` | path |  | trial IDs of the external-fidelity pool, as a JSON array or one ID per line, written by data external-pool prepare; required on that Profile |
 | `--pool-count` | positive integer |  | pool_count from the Profile's data pool inspect receipt. Judgment-union and external-fidelity Profiles require it, --pool-ids-sha256 and --pool-receipt-id; full-corpus Profiles refuse all three |
 | `--pool-ids-sha256` | `sha256:` digest |  | pool_ids_sha256 from the same receipt |
@@ -273,7 +273,7 @@ check a frozen retrieval artifact against one Task Input and write the publicati
 
 | Option | Value | Default | Description |
 | --- | --- | --- | --- |
-| `--track` | one of `sigir-ct-2016`, `trec-ct-2021`, `trec-ct-2022` | `trec-ct-2021` | Track of the run the contract is for |
+| `--track` | one of `sigir-ct-2016`, `trec-ct-2021`, `trec-ct-2022`, `trec-ct-2023` | `trec-ct-2021` | Track of the run the contract is for |
 | `--profile` | text | `trec-ct-2021-external-fidelity-26149` | Profile of the run the contract is for |
 | `--data-dir` | path | required | directory written by data prepare for this Track |
 | `--clinical-as-of` | ISO 8601 time with offset | required | clinical as-of time, bound into the Task Input ID: another value is another Task Input |

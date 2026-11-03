@@ -1,9 +1,9 @@
 # TrialGPT three-query consensus retrieval
 
-Benchmark Release 0.1 ships the complete producer for the four TrialGPT rows frozen by protocols
-v5 through v7 and v11. The contract is `trialgpt-three-luna-consensus-v2`: three Luna query plans,
-`taim-controlled-bm25-v2` and pinned MedCPT retrieval to depth 2,000, fixed three-query consensus,
-and a 500-candidate handoff to `TrialGPT-TAIM-Luna-v1`. BM25 v2 corrects the older v1
+Benchmark Release 0.1 ships the complete producer for the TrialGPT targets frozen by protocols v5
+through v7, v11 and their amendments. The contract is `trialgpt-three-luna-consensus-v2`: three Luna
+query plans, `taim-controlled-bm25-v2` and pinned MedCPT retrieval to depth 2,000, fixed three-query
+consensus, and a 500-candidate handoff to `TrialGPT-TAIM-Luna-v1`. BM25 v2 corrects the older v1
 implementation's document-frequency defect; the two variants are not interchangeable.
 
 Here, the three inputs to consensus are query-plan variants for the same Topic.
@@ -18,9 +18,9 @@ The supported targets are:
 | `trec-ct-2022` | `trec-ct-2022-judgment-union` | 50 |
 | `sigir-ct-2016` | `sigir-ct-2016-description-judgment-union` | 60 |
 | `sigir-ct-2016` | `sigir-ct-2016-summary-judgment-union` | 60 |
+| `trec-ct-2023` | `trec-ct-2023-judgment-union` | 40 |
 
-Any other pair, including TREC 2023, fails closed. The SIGIR description and summary rows require
-their matching prepared packages.
+Any other pair fails closed. Each SIGIR row requires its matching prepared package.
 
 ## 1. Inspect and freeze pool receipts
 
@@ -67,7 +67,7 @@ refuse a package without complete eligibility text before any provider call or r
 ## 3. Generate query plans
 
 This phase reads only the prepared topic file and verifies its manifest before making provider
-calls. Across all four targets it makes 735 logical Luna calls. Use a separate run ID, cache, and
+calls. Across all five targets it makes 855 logical Luna calls. Use a separate run ID, cache, and
 output path for each target.
 
 ```console

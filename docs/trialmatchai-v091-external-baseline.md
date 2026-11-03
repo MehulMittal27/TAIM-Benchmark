@@ -1,10 +1,10 @@
 # TrialMatchAI v0.9.1 external baseline
 
-The System `trialmatchai-upstream-v091-cuda-trec21-development-v1` runs TrialMatchAI as its
-authors release it: `cbib/TrialMatchAI` tag `v0.9.1`, commit
-`3bc0e5f44d742ef069f8ef73bbc4187573d9db6a`, unchanged, on the tag's own TREC path. TAIM supplies
-the topics, the trial pool and the evaluator; it changes none of their code or settings. The System
-is declared on the TREC 2021 external-fidelity Profile only.
+Each TrialMatchAI v0.9.1 System runs TrialMatchAI as its authors release it: `cbib/TrialMatchAI`
+tag `v0.9.1`, commit `3bc0e5f44d742ef069f8ef73bbc4187573d9db6a`, unchanged, on the tag's own TREC
+path. TAIM supplies the topics, the trial pool and the evaluator; it changes none of their code or
+settings. Each System is one of the tag's Tracks under that Track's own identity; section 6 lists
+each System, its Track, and the Profiles it is declared on.
 
 TAIM pins what the tag leaves open, and the run refuses anything else:
 
@@ -152,12 +152,12 @@ run accepts; it sets the others itself and refuses any it did not set:
 export TRIALMATCHAI_CONCEPT_DB_PATH=/path/to/trialmatchai-store/concepts HF_HUB_CACHE=/path/to/hf-hub HF_HUB_OFFLINE=1 VLLM_WORKER_MULTIPROC_METHOD=spawn
 ```
 
-Then add the System's options to the external-fidelity Profile's common command (the same
-`--pool-file`, receipt values, protocol ID, release manifest, package artifact and dependency lock
-as every row in that stratum):
+Then add the System's options to its Profile's common command (the same receipt values, protocol
+ID, release manifest, package artifact and dependency lock as every row in that stratum, and the
+external-fidelity Profile's `--pool-file`), with its System ID from section 6:
 
 ```console
-  --system trialmatchai-upstream-v091-cuda-trec21-development-v1 \
+  --system <its System ID> \
   --trialmatchai-cwd /path/to/TrialMatchAI \
   --trialmatchai-corpus-dir /path/to/trialmatchai-corpus \
   --trialmatchai-workspace /path/to/empty-workspace \
@@ -185,6 +185,22 @@ tied, that is enough to change a long eligibility answer, and with it a trial's 
 ranking. Everything before eligibility reproduces byte for byte: query expansion, first-level
 retrieval and the reranked shortlist. In the project's runs on H200 cards, a rerun's final top 60
 for a topic shared 43 to 59 of its 60 trials with the project's own run, and 51 at the median.
+
+## 6. The Systems and their Tracks
+
+The tag defines its Tracks itself (`TRACK_KEYS` in `trec/corpus.py`). TAIM gives each Track its own
+System identity, with that Track's key and topic prefix (their `_ID_PREFIX`) and nothing else
+different: the same code, pins and runtime contract.
+
+| System | Track key, topic prefix | Profiles |
+| --- | --- | --- |
+| `trialmatchai-upstream-v091-cuda-trec21-development-v1` | `21`, `trec-2021` | `trec-ct-2021-external-fidelity-26149`, `trec-ct-2021-judgment-union` |
+| `trialmatchai-upstream-v091-cuda-trec22-development-v1` | `22`, `trec-2022` | `trec-ct-2022-judgment-union` |
+| `trialmatchai-upstream-v091-cuda-trec23-development-v1` | `23`, `trec-2023` | `trec-ct-2023-judgment-union` |
+| `trialmatchai-upstream-v091-cuda-sigir16-development-v1` | `sigir`, `sigir-2014` | `sigir-ct-2016-summary-judgment-union`, `sigir-ct-2016-description-judgment-union` |
+
+On a judgment-union Profile, the corpus is cut to that Profile's pool and adopted as in section 4,
+and the run binds it by its receipt.
 
 ## Licences
 

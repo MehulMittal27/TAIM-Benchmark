@@ -1,6 +1,6 @@
 {
   "artifact_type": "taim-benchmark-release-provenance",
-  "release_version": "0.3.0",
+  "release_version": "0.3.1",
   "schema_version": "2.0",
   "source_files": [
     {
@@ -19,7 +19,7 @@
     {
       "byte_size": 431,
       "destination": "CITATION.cff",
-      "sha256": "sha256:ace4434b0233781c183a21ade9db4ea1111d0d0cf18536098738cac8ac4b448c",
+      "sha256": "sha256:0660c78e2dc6b05b5d021113cf4f0b3a22fab8afa749f63f1134f9bb5cb81f55",
       "source": "public/CITATION.cff"
     },
     {
@@ -44,7 +44,7 @@
       "byte_size": 21609,
       "destination": "README.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:14a79142f222f8cb2c644ded1ad4549c9aa8395527589c7f7fb0bc6446abadb4",
+      "sha256": "sha256:7ea0ab1d8ab108f3faaf0cb3ee12adb25ec42abcc7fc12208c7756557c4a8c0d",
       "source": "public/README.md"
     },
     {
@@ -84,19 +84,19 @@
       "byte_size": 3427,
       "destination": "docs/external-fidelity-profile.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:b628aa170ce46ad17f2d14e62af23d8823d56e306fe07291a5715296f948b8fa",
+      "sha256": "sha256:7b62783c031d8e3c7db079cebeae0725494b4a6cbd9f170bb022ed0ac1876542",
       "source": "public/docs/external-fidelity-profile.md"
     },
     {
       "byte_size": 10224,
       "destination": "docs/external-pipelines.md",
-      "sha256": "sha256:47aa40e56b32ecacae7358b7003d53b31742afd765c37cc3e3751ed70f5e04ca",
+      "sha256": "sha256:daf60d362cc2aabcbdc94ea6a1e48d464b499c616c93d6a2c058bc043b54e875",
       "source": "public/docs/external-pipelines.md"
     },
     {
-      "byte_size": 6951,
+      "byte_size": 8845,
       "destination": "docs/known-issues.md",
-      "sha256": "sha256:db0f53ec528ebc51d0dd735ef53aa9c54796d2fb05cc32dd21f3a45249f15856",
+      "sha256": "sha256:a3146a112cb98c32d026c4293d20385328d6a5b36ad9b964c9c3b1151cb90c9d",
       "source": "public/docs/known-issues.md"
     },
     {
@@ -215,10 +215,16 @@
       "source": "public/docs/paper-analysis-protocol-2026-11-02-v17.md"
     },
     {
-      "byte_size": 9176,
+      "byte_size": 7353,
+      "destination": "docs/paper-analysis-protocol-2026-11-06-v18.md",
+      "sha256": "sha256:64800422fb595359917e0e3f3d02fafcd0fc42313286eae0c32de401c73bed53",
+      "source": "public/docs/paper-analysis-protocol-2026-11-06-v18.md"
+    },
+    {
+      "byte_size": 9607,
       "destination": "docs/paper-analysis-rules.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:0bf0a529fc6638a466e6ef3634af7f548d3e051c696d416609ba7d0e47ed0510",
+      "sha256": "sha256:7120d51e5ce306b433bc5d8a4f7f3759f9634fe2ef9cc559e2f92998af325920",
       "source": "public/docs/paper-analysis-rules.md"
     },
     {
@@ -231,7 +237,7 @@
       "byte_size": 8050,
       "destination": "docs/release-verification.md",
       "generator": "markdown-sections",
-      "sha256": "sha256:5c486502fbbf1ed2e8731df7eee24c4a651a53171d44cc9cfc711c0ae6cfa295",
+      "sha256": "sha256:dc2b7971db08210e0b5d890003b13812d2422ee24d471e6f0eef6a520d30e72d",
       "source": "public/docs/release-verification.md"
     },
     {
@@ -268,7 +274,7 @@
     {
       "byte_size": 11915,
       "destination": "docs/trialgpt-external-baseline.md",
-      "sha256": "sha256:5b8884e54358e848409ee6908abd2e84e06d48cf0e703195b7ba1dbc64f099ad",
+      "sha256": "sha256:74e24376433ad2cd1756064f80128a849cdca408c4a8dfc181a44b7ba1bff2a3",
       "source": "public/docs/trialgpt-external-baseline.md"
     },
     {
@@ -330,7 +336,7 @@
       "byte_size": 1929,
       "destination": "pyproject.toml",
       "generator": "pyproject",
-      "sha256": "sha256:3d4299ec4516127236a0a0198797305310f1398b1ffdba6da4e65606cc7e3e99",
+      "sha256": "sha256:e0f401de8b7b774bfb037a9c3a798e4ade611d76db74d0c69c2ae09494041a06",
       "source": "public/pyproject.toml"
     },
     {
@@ -384,7 +390,7 @@
     {
       "byte_size": 1094,
       "destination": "src/taim/__init__.py",
-      "sha256": "sha256:b29033aa725769ce5b255f5cad4e5177c527c5394578209b111f7137ad214332",
+      "sha256": "sha256:48cac22d5511fd0435c574b76e4c97f153add68e5c95d6a05773c74f06bae913",
       "source": "public/src/taim/__init__.py"
     },
     {
@@ -590,7 +596,7 @@
       "byte_size": 93288,
       "destination": "src/taim/data/release-support-v0.1.json",
       "generator": "support-catalogue",
-      "sha256": "sha256:3bbf7c0b5d8291e0ae09580e8444f349c9b544e5c5d9ebf91c8d0f4f6dfc2a71",
+      "sha256": "sha256:af9a85dbf3e11d6d51eabd9bb584529826b41b22d75227dbfe72fe714e7d9dc2",
       "source": "public/src/taim/data/release-support-v0.1.json"
     },
     {
@@ -762,9 +768,9 @@
       "source": "public/src/taim/pipelines/bm25/folded.py"
     },
     {
-      "byte_size": 8040,
+      "byte_size": 8097,
       "destination": "src/taim/pipelines/bm25/folded_extension.py",
-      "sha256": "sha256:41f4834462b788389f884725e38b2ac0dd76ff271297fcfc00137aec77da2bb3",
+      "sha256": "sha256:aae396b7a968851eb0ca2f983a85a9f69e6352274dec164b94ad789fc5c9a0ac",
       "source": "public/src/taim/pipelines/bm25/folded_extension.py"
     },
     {
@@ -858,9 +864,9 @@
       "source": "public/src/taim/pipelines/staged/data/staged-bm25-qwen3-rrf-rerank-v1.json"
     },
     {
-      "byte_size": 18647,
+      "byte_size": 18730,
       "destination": "src/taim/pipelines/staged/extension.py",
-      "sha256": "sha256:2ed0ceb2e9213a9ecbe02bbf14577e81b8edc5e3b6d4fcab1508557fc6312440",
+      "sha256": "sha256:66a56a306a09d50865402788e66c900b8f1c9f948711f19096fb93d2c4afded0",
       "source": "public/src/taim/pipelines/staged/extension.py"
     },
     {
@@ -1194,9 +1200,9 @@
       "source": "public/src/taim/py.typed"
     },
     {
-      "byte_size": 28517,
+      "byte_size": 29582,
       "destination": "src/taim/query_folding.py",
-      "sha256": "sha256:46e36443c2b15fd7255a18044b0e518d759976495c566e03e22c377e63d30d95",
+      "sha256": "sha256:f5ee9d61d8da785ed07835506967e2d7e77bd3519ed86b89b8db7f34f1383a49",
       "source": "public/src/taim/query_folding.py"
     },
     {
@@ -1238,7 +1244,7 @@
     {
       "byte_size": 31835,
       "destination": "src/taim/release_support.py",
-      "sha256": "sha256:473f115ffa7dcec784f98eaa490a0dc0caf1f88a9f961230a5f8000b69f8c03e",
+      "sha256": "sha256:7e05605636b787b5aa62b75ed3503d57ec105a0d88e8c639569c3a4c83d418d9",
       "source": "public/src/taim/release_support.py"
     },
     {
@@ -1342,6 +1348,12 @@
       "destination": "tests/bm25/test_folded_query_unit.py",
       "sha256": "sha256:e0893b4993b7e83d7aa4963ce83e8d627f720eb5c84b375ec4fcd1ccb6e7205d",
       "source": "public/tests/bm25/test_folded_query_unit.py"
+    },
+    {
+      "byte_size": 2882,
+      "destination": "tests/bm25/test_query_folding_line_breaks.py",
+      "sha256": "sha256:23dcef3a72682bf9ea12f7de8fb04be7bb9e2875c25f327f6d848948fbb6b0cf",
+      "source": "public/tests/bm25/test_query_folding_line_breaks.py"
     },
     {
       "byte_size": 2812,
@@ -1850,9 +1862,9 @@
     {
       "byte_size": 542036,
       "destination": "uv.lock",
-      "sha256": "sha256:9a93a90d92e3f55153b9ede1fd9cf45182aad3ac001640d0769dbbda35c49def",
+      "sha256": "sha256:704739ff47074df5370242382880a71e5621ab77cdf45c2892e366673b27e395",
       "source": "public/uv.lock"
     }
   ],
-  "taim_source_commit": "dbded73e738a2ff3968d671a7c999f14e2ed2059"
+  "taim_source_commit": "73b5c54f2b7b0364ace8a45d4933b2352dad0929"
 }

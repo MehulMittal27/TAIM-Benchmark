@@ -463,12 +463,36 @@ def merge_spans(*groups: Sequence[Extraction]) -> list[Extraction]:
     return sorted(kept, key=lambda span: (span.start, span.end))
 
 
+# A ConText cue reaches to the end (or start) of its sentence, so the sentence is
+# the scope of every negation.  PyRuSH, the default splitter, does not always
+# break at a line end: a line that does not end in punctuation runs on into the
+# next when that line starts with "[".  A topic written one item per line then
+# becomes one sentence, and one "no" negates every item after it.  A line is
+# never part of the next line's sentence.
+LINE_BREAK_SENTENCES = "taim_line_break_sentences"
+
+
+def _register_line_break_sentences() -> None:
+    from spacy.language import Language
+
+    if Language.has_factory(LINE_BREAK_SENTENCES):
+        return
+
+    @Language.component(LINE_BREAK_SENTENCES)
+    def line_break_sentences(doc: Any) -> Any:
+        for token in doc[:-1]:
+            if token.is_space and "\n" in token.text:
+                doc[token.i + 1].is_sent_start = True
+        return doc
+
+
 def build_context_pipeline() -> tuple[Any, dict[str, JsonValue]]:
     """medspaCy's default English pipeline, minus its target matcher.
 
     Targets come from the SNOMED lexicon, not from medspaCy's rule matcher, so
-    the matcher is disabled; the sentence splitter is the default, and ConText
-    runs its packaged rules plus :data:`POLARITY_CONTEXT_RULES`.  The returned
+    the matcher is disabled; the sentence splitter is the default plus
+    :data:`LINE_BREAK_SENTENCES`, and ConText runs its packaged rules plus
+    :data:`POLARITY_CONTEXT_RULES`.  The returned
     provenance carries the library version, the SHA-256 of the rule file actually
     loaded and the SHA-256 of the additions, which is what makes an extraction
     reproducible: the same code against a different packaged rule set is a
@@ -479,6 +503,8 @@ def build_context_pipeline() -> tuple[Any, dict[str, JsonValue]]:
     from medspacy.context import ConTextRule
 
     nlp = medspacy.load(medspacy_enable=["medspacy_pyrush", "medspacy_context"])
+    _register_line_break_sentences()
+    nlp.add_pipe(LINE_BREAK_SENTENCES, after="medspacy_pyrush")
     context = nlp.get_pipe("medspacy_context")
     default_rules = Path(context.DEFAULT_RULES_FILEPATH)
     context.add([ConTextRule.from_dict(copy.deepcopy(rule)) for rule in POLARITY_CONTEXT_RULES])
@@ -697,6 +723,7 @@ __all__ = [
     "CONDITION_TAGS",
     "FOLDED_QUERY_JOINER",
     "FOLDED_QUERY_POLICY",
+    "LINE_BREAK_SENTENCES",
     "MAXIMUM_TERM_TOKENS",
     "NEGATING_PREFIX",
     "POLARITY_CONTEXT_RULES",

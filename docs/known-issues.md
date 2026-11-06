@@ -1,5 +1,32 @@
 # Known issues
 
+## Folded queries on multi-line topics: a negation could reach later lines, fixed in 0.3.1
+
+**In short.** In Releases 0.1.0 to 0.3.0, folded-query assertion
+(`taim.query_folding.build_context_pipeline`) took its sentence boundaries from medspaCy's
+default splitter, PyRuSH. A ConText negation cue reaches the rest of its sentence. PyRuSH does not
+end a sentence at a line break when the line has no closing punctuation and the next line starts
+with `[`. In a topic written one item per line in that form, a single negation cue therefore
+negated every item on the lines after it. From Release 0.3.1, a line break always ends a sentence
+(the pipeline component `taim_line_break_sentences`). Nothing else in folding changes.
+
+**Who is affected.** Only topics with line breaks. Releases before 0.3.0 build folded queries for
+TREC CT 2021 only.
+- TREC CT 2021, TREC CT 2022 and both SIGIR 2016 views have none. Their folded-query bundles
+  built with 0.3.1 are byte-identical to those built with 0.3.0.
+- TREC CT 2023 topics are written one `[`-led item per line. With 0.3.0, 38 of its 40 topics were
+  one sentence, 188 of 313 extracted terms (60.1%) were negated, and 15 topics folded to an empty
+  query. `queries prepare` then refuses to write the bundle ("folded query rows require non-empty
+  topic_id and canonical_text"), so no TREC CT 2023 folded-query bundle can be built with 0.3.0.
+- With 0.3.1, no TREC CT 2023 topic is empty, and 44 of 313 terms (14.1%) are negated.
+
+**What to do.** Build TREC CT 2023 folded-query bundles with 0.3.1 or later. Bundles for the other
+Tracks need no rebuild.
+
+**What stays the same.** The ConText rules and TAIM's polarity rules (their digests are unchanged),
+the SNOMED CT lexicon lock and the folding policy. The bundle's provenance records none of the
+pipeline's components, so a 0.3.1 bundle differs from a 0.3.0 one only where its queries differ.
+
 ## nltk 3.10.3: CVE-2026-81726 (GHSA-8mgp-746c-j5xp), fixed in 0.3.0
 
 **In short.** From Release 0.3.0, `uv.lock` pins nltk 3.10.4, the first version the advisory lists

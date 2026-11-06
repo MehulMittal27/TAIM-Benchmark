@@ -434,4 +434,5 @@ EXTENSION = PipelineExtension(
     run_from_components=_run_from_components,
     stage_depths=_STAGE_DEPTHS,
     validate_component_producers=_validate_component_producers,
+    protected_reference_paths=("docs/paper-analysis-protocol-2026-11-06-v18.md",),
 )

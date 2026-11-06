@@ -214,4 +214,5 @@ EXTENSION = PipelineExtension(
     run_options=_options,
     add_patient_to_trial_commands=_add_commands,
     ci_jobs=({"extras": ("folding",), "imports": ("taim.query_folding",)},),
+    protected_reference_paths=("docs/known-issues.md",),
 )

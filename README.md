@@ -178,7 +178,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25 \
   --run-id bm25-trec-2021-judgment-union \
@@ -250,7 +250,7 @@ trial-benchmark patient-to-trial queries prepare \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --snomed-release /path/to/licensed/SnomedCT_InternationalRF2 \
   --output derived/trec-2021-folded-queries.json
@@ -267,7 +267,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system bm25-folded --top-k 5000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
@@ -285,7 +285,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system dense-qwen3-embedding-0.6b-no-template --top-k 5000 \
   --index-dir indexes/qwen3-no-template \
@@ -304,7 +304,7 @@ trial-benchmark patient-to-trial benchmark run \
   --pool-receipt-id sha256:<id-from-receipt> \
   --protocol-approval-id "$PROTOCOL_ID" \
   --release-manifest /path/to/benchmark-release-manifest.json \
-  --package-artifact /path/to/taim_benchmark-0.3.0-py3-none-any.whl \
+  --package-artifact /path/to/taim_benchmark-0.3.1-py3-none-any.whl \
   --dependency-lock uv.lock \
   --system staged-bm25-qwen3-rrf-rerank --top-k 1000 \
   --folded-query-bundle derived/trec-2021-folded-queries.json \
